@@ -1,0 +1,31 @@
+You are analyzing frames from a documentary video to extract its visual style.
+Each frame is labeled with an ID, timestamp, and narration snippet.
+
+For EACH frame in this contact sheet:
+
+1. SCENE TYPE: Classify into one of these categories (or propose a new one):
+   [title_card | archival_photo | archival_video | news_clip | map_animation |
+    text_overlay | quote_card | b_roll_footage | screen_recording |
+    animated_graphic | silhouette | date_card | chapter_header |
+    evidence_document | portrait | location_shot | other: ___]
+
+2. ASSET BREAKDOWN: What distinct visual elements compose this frame?
+   - Background layer: (solid color, gradient, footage, etc.)
+   - Main element: (photo, video, graphic, text, etc.)
+   - Overlays/effects: (grain, scanlines, vignette, color filter, etc.)
+   - Text elements: (if any — describe font style, position, color)
+
+3. CONTENT DESCRIPTION (for footage/b-roll only):
+   Describe WHAT is depicted in the footage.
+   (e.g., "black-and-white cartoon of a man working at a desk",
+    "aerial shot of a rural compound", "vintage factory assembly line")
+   Capture both the literal content and the implied metaphor given the narration.
+
+4. NARRATIVE FUNCTION: Given the narration at this moment,
+   why is this visual type being used here? What concept does it illustrate?
+
+5. CONFIDENCE: Rate 1-5 how clearly you can analyze this frame.
+   If below 3, note what is unclear.
+
+Output as JSON array. Only describe what you can see.
+If you cannot determine something, say "unclear" — do not guess.

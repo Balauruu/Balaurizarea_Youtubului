@@ -100,24 +100,33 @@ def run_stages_0_to_4(config: PipelineConfig) -> dict:
 
 
 def run_stage_6(
-    analysis_results: list[dict],
     manifest_path: str,
     video_title: str,
     video_source: str,
     output_dir: str,
+    analysis_results: list[dict] | None = None,
+    analysis_results_path: str | None = None,
 ) -> str:
     """Run synthesis stage after subagent analysis is complete.
 
     Args:
-        analysis_results: Combined JSON from all subagent outputs.
         manifest_path: Path to frames_manifest.json.
         video_title: Title of the source video.
         video_source: URL or path of the source.
         output_dir: Where to write VISUAL_STYLE_GUIDE.md.
+        analysis_results: Combined JSON from all subagent outputs (inline list).
+        analysis_results_path: Path to a JSON file containing analysis results
+            (alternative to passing analysis_results directly).
 
     Returns:
         Path to the generated VISUAL_STYLE_GUIDE.md.
     """
+    if analysis_results is None and analysis_results_path is not None:
+        with open(analysis_results_path) as f:
+            analysis_results = json.load(f)
+    elif analysis_results is None:
+        raise ValueError("Must provide either analysis_results or analysis_results_path")
+
     with open(manifest_path) as f:
         manifest = json.load(f)
 

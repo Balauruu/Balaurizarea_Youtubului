@@ -39,14 +39,14 @@ def test_multiple_sheets(tmp_path):
 
 
 def test_sheet_dimensions(tmp_path):
-    """Each sheet should be close to 1568px wide."""
+    """Sheet should be 1568x1568px."""
     frames = [_make_frame(i, tmp_path) for i in range(1, 4)]
     output_dir = str(tmp_path / "contact_sheets")
 
     sheets = generate_contact_sheets(frames, output_dir)
     img = Image.open(sheets[0])
-    # Width should be 1568 (3 columns)
     assert img.width == 1568
+    assert img.height == 1568
 
 
 def test_empty_frames(tmp_path):

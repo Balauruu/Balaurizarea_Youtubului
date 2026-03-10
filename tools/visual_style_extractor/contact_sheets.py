@@ -53,12 +53,11 @@ def generate_contact_sheets(frames: list[dict], output_dir: str) -> list[str]:
 
     os.makedirs(output_dir, exist_ok=True)
 
+    SHEET_HEIGHT = 1568
     cell_width = (SHEET_WIDTH - PADDING * (COLS + 1)) // COLS
-    # Maintain ~16:9 aspect ratio for each cell image area
-    cell_img_height = int(cell_width * 9 / 16)
-    cell_height = cell_img_height + LABEL_HEIGHT
-
-    sheet_height = ROWS * cell_height + PADDING * (ROWS + 1)
+    cell_height = (SHEET_HEIGHT - PADDING * (ROWS + 1)) // ROWS
+    cell_img_height = cell_height - LABEL_HEIGHT
+    sheet_height = SHEET_HEIGHT
 
     font = _get_font()
     output_paths = []

@@ -58,16 +58,24 @@ Collect all JSON array outputs and merge them into a single flat list.
 
 **Confidence gating:** Remove any frame entries with `confidence < 3` — flag them to the user as needing manual review.
 
+Save the merged list to a file:
+```bash
+PYTHONPATH=tools python -c "
+import json
+analysis_results = MERGED_LIST_HERE
+with open('OUTPUT_DIR/analysis_results.json', 'w') as f:
+    json.dump(analysis_results, f, indent=2)
+print('Saved analysis_results.json')
+"
+```
+
 ### 4. Run Stage 6: Synthesis
 
 ```bash
 PYTHONPATH=tools python -c "
 from visual_style_extractor.pipeline import run_stage_6
-import json
-
-analysis_results = PASTE_MERGED_JSON_HERE
 result = run_stage_6(
-    analysis_results=analysis_results,
+    analysis_results_path='OUTPUT_DIR/analysis_results.json',
     manifest_path='MANIFEST_PATH',
     video_title='VIDEO_TITLE',
     video_source='VIDEO_SOURCE',

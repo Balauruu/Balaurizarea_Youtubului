@@ -36,7 +36,13 @@ def compute_proportions(
         total_weighted = 0.0
         durations = []
         for frame in frames:
-            fid = frame["frame_id"]
+            raw_fid = frame["frame_id"]
+            # Normalize: accept "F001", "F23", 1, "1" etc.
+            if isinstance(raw_fid, int):
+                fid = f"F{raw_fid:03d}"
+            else:
+                digits = str(raw_fid).lstrip("Ff").lstrip("0") or "0"
+                fid = f"F{int(digits):03d}"
             manifest_frame = frame_lookup.get(fid)
             if manifest_frame:
                 weighted = manifest_frame["scene_duration"] * manifest_frame["represents_count"]

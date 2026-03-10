@@ -4,7 +4,7 @@ import os
 import json
 import subprocess
 from dataclasses import dataclass, asdict
-from scenedetect import detect, AdaptiveDetector, open_video
+from scenedetect import detect, AdaptiveDetector
 
 
 @dataclass

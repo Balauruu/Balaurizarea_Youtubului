@@ -7,6 +7,8 @@ description: Extracts the visual style from a documentary or YouTube video and p
 
 Extracts the visual style from a documentary reference video, producing a `VISUAL_STYLE_GUIDE.md` that the Visual Orchestrator (Agent 1.4) and Generative Visual Engine (Agent 2.2) use to determine what visual assets to create.
 
+The output is a **decision framework** — not an analysis report. Each asset type entry tells the orchestrator *when* to use it, *what* it looks like, and *how much* to use it.
+
 ## Prerequisites
 
 Ensure dependencies are installed:
@@ -42,6 +44,8 @@ print(json.dumps(result, indent=2))
 
 Capture the output JSON — you need `contact_sheet_paths`, `manifest_path`, `output_dir`, `video_title`, `video_source`, and `prompt_path`.
 
+**Output directory:** For YouTube URLs, a subfolder named after the video title is created under `context/visual-references/`. For local input, the source directory is used as-is.
+
 If scene count warnings appear, ask the user if they want to re-run with adjusted threshold.
 
 ### 3. Run Stage 5: LLM Analysis (Subagents)
@@ -53,7 +57,7 @@ For each contact sheet image:
 3. Read the analysis prompt from `prompt_path`
 4. Spawn a subagent (Agent tool, type: general-purpose) with:
    - The contact sheet image path to read
-   - The manifest data for those frames
+   - The manifest data for those frames (frame IDs, timestamps, narration)
    - The analysis prompt
    - Instructions to output a JSON array
 
@@ -63,12 +67,7 @@ Collect all JSON array outputs and merge them into a single flat list.
 
 **Confidence gating:** Remove any frame entries with `confidence < 3` — flag them to the user as needing manual review.
 
-Save the merged list to a file using the bundled helper (write the JSON to a temp file first, then pass it):
-```bash
-# Write merged JSON to temp file, then save via helper
-python .claude/skills/visual-style-extractor/scripts/save_analysis.py OUTPUT_DIR '[...merged json array...]'
-```
-Or write it directly with Python's `json.dump` to `OUTPUT_DIR/analysis_results.json`.
+Save the merged list to `OUTPUT_DIR/analysis_results.json`.
 
 ### 4. Run Stage 6: Synthesis
 
@@ -108,8 +107,12 @@ Show the user:
 ## Output
 
 `VISUAL_STYLE_GUIDE.md` in the output directory, structured as:
-1. **Scene Taxonomy** — each asset type with proportion, appearance, narrative trigger, content descriptions
-2. **Global Aesthetic** — persistent overlays, color palette, motion language
-3. **Structural Flow** — pacing, chapter transitions, opening/closing patterns
-4. **Constraints** — what NOT to do
-5. **Quick Reference Table** — summary for the Visual Orchestrator
+
+1. **Asset Type Menu** — Each asset type with:
+   - Shotlist `visual_type` mapping (for the Visual Orchestrator)
+   - Proportion target, frequency, duration range
+   - Generalized narrative trigger ("when to use")
+   - Visual spec: backgrounds, overlays, dominant colors
+   - Example content descriptions with frame IDs
+2. **Color Palette & Aesthetic** — Dominant colors aggregated across all frames, persistent overlays
+3. **Type Mapping** — Quick-reference table mapping extracted types to shotlist `visual_type` values

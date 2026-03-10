@@ -1,31 +1,41 @@
 You are analyzing frames from a documentary video to extract its visual style.
 Each frame is labeled with an ID, timestamp, and narration snippet.
 
-For EACH frame in this contact sheet:
+For EACH frame in this contact sheet, output a JSON object with these fields:
 
-1. SCENE TYPE: Classify into one of these categories (or propose a new one):
+1. **frame_id**: The frame label (e.g., "F001")
+
+2. **scene_type**: Classify into one of these categories (or propose "other: ___"):
    [title_card | archival_photo | archival_video | news_clip | map_animation |
     text_overlay | quote_card | b_roll_footage | screen_recording |
     animated_graphic | silhouette | date_card | chapter_header |
     evidence_document | portrait | location_shot | other: ___]
 
-2. ASSET BREAKDOWN: What distinct visual elements compose this frame?
-   - Background layer: (solid color, gradient, footage, etc.)
-   - Main element: (photo, video, graphic, text, etc.)
-   - Overlays/effects: (grain, scanlines, vignette, color filter, etc.)
-   - Text elements: (if any — describe font style, position, color)
+3. **shotlist_type**: Map to the closest shotlist category:
+   [archival_photo | archival_video | news_clip | animation | ai_generated | map | text_overlay | document_scan]
+   Use your best judgment. For example: silhouette → ai_generated, chapter_header → text_overlay, date_card → animation.
 
-3. CONTENT DESCRIPTION (for footage/b-roll only):
-   Describe WHAT is depicted in the footage.
-   (e.g., "black-and-white cartoon of a man working at a desk",
-    "aerial shot of a rural compound", "vintage factory assembly line")
-   Capture both the literal content and the implied metaphor given the narration.
+4. **asset_breakdown**:
+   - background: (solid color, gradient, footage, etc.)
+   - main_element: (photo, video, graphic, text, etc.)
+   - overlays: (grain, scanlines, vignette, color filter, etc. — or "none")
+   - text_elements: (describe font style, position, color — or "none")
 
-4. NARRATIVE FUNCTION: Given the narration at this moment,
-   why is this visual type being used here? What concept does it illustrate?
+5. **dominant_colors**: List 2-3 dominant colors as descriptive names (e.g., "deep red", "black", "warm orange").
 
-5. CONFIDENCE: Rate 1-5 how clearly you can analyze this frame.
+6. **content_description**: Describe WHAT is depicted in the frame.
+   Capture the literal visual content.
+   (e.g., "black-and-white archival footage of silhouetted figures near palm trees",
+    "bold red text reading 'CRUEL' with glitch distortion on black background")
+
+7. **narrative_trigger**: Answer the question: "In general, when would a documentary use this type of visual?"
+   Do NOT reference the specific story or script. Write a general rule.
+   (e.g., "Used to present direct testimony or damning primary-source quotes without visual distraction",
+    "Used for geographic orientation when introducing a new location in the narrative",
+    "Used as a pacing device — a beat of darkness between high-density information segments")
+
+8. **confidence**: Rate 1-5 how clearly you can analyze this frame.
    If below 3, note what is unclear.
 
-Output as JSON array. Only describe what you can see.
+Output as a JSON array. Only describe what you can see.
 If you cannot determine something, say "unclear" — do not guess.

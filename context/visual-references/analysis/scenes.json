@@ -1,0 +1,1150 @@
+[
+  {
+    "scene_number": 1,
+    "start_time": 0.0,
+    "end_time": 3.6036,
+    "duration": 3.6036,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0000.jpg"
+  },
+  {
+    "scene_number": 2,
+    "start_time": 3.6036,
+    "end_time": 4.3043000000000005,
+    "duration": 0.7007000000000003,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0001.jpg"
+  },
+  {
+    "scene_number": 3,
+    "start_time": 4.3043000000000005,
+    "end_time": 5.005,
+    "duration": 0.7006999999999994,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0002.jpg"
+  },
+  {
+    "scene_number": 4,
+    "start_time": 5.005,
+    "end_time": 5.6723333333333334,
+    "duration": 0.6673333333333336,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0003.jpg"
+  },
+  {
+    "scene_number": 5,
+    "start_time": 5.6723333333333334,
+    "end_time": 6.6066,
+    "duration": 0.9342666666666668,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0004.jpg"
+  },
+  {
+    "scene_number": 6,
+    "start_time": 6.6066,
+    "end_time": 7.574233333333334,
+    "duration": 0.9676333333333336,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0005.jpg"
+  },
+  {
+    "scene_number": 7,
+    "start_time": 7.574233333333334,
+    "end_time": 8.041366666666667,
+    "duration": 0.46713333333333296,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0006.jpg"
+  },
+  {
+    "scene_number": 8,
+    "start_time": 8.041366666666667,
+    "end_time": 9.743066666666667,
+    "duration": 1.7017000000000007,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0007.jpg"
+  },
+  {
+    "scene_number": 9,
+    "start_time": 9.743066666666667,
+    "end_time": 14.014000000000001,
+    "duration": 4.270933333333334,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0008.jpg"
+  },
+  {
+    "scene_number": 10,
+    "start_time": 14.014000000000001,
+    "end_time": 19.586233333333332,
+    "duration": 5.572233333333331,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0009.jpg"
+  },
+  {
+    "scene_number": 11,
+    "start_time": 19.586233333333332,
+    "end_time": 26.259566666666668,
+    "duration": 6.673333333333336,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0010.jpg"
+  },
+  {
+    "scene_number": 12,
+    "start_time": 26.259566666666668,
+    "end_time": 28.561866666666667,
+    "duration": 2.302299999999999,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0011.jpg"
+  },
+  {
+    "scene_number": 13,
+    "start_time": 28.561866666666667,
+    "end_time": 32.632600000000004,
+    "duration": 4.070733333333337,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0012.jpg"
+  },
+  {
+    "scene_number": 14,
+    "start_time": 32.632600000000004,
+    "end_time": 37.203833333333336,
+    "duration": 4.571233333333332,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0013.jpg"
+  },
+  {
+    "scene_number": 15,
+    "start_time": 37.203833333333336,
+    "end_time": 38.30493333333333,
+    "duration": 1.1010999999999953,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0014.jpg"
+  },
+  {
+    "scene_number": 16,
+    "start_time": 38.30493333333333,
+    "end_time": 55.78906666666667,
+    "duration": 17.48413333333334,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0015.jpg"
+  },
+  {
+    "scene_number": 17,
+    "start_time": 55.78906666666667,
+    "end_time": 57.3573,
+    "duration": 1.5682333333333318,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0016.jpg"
+  },
+  {
+    "scene_number": 18,
+    "start_time": 57.3573,
+    "end_time": 64.93153333333333,
+    "duration": 7.574233333333332,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0017.jpg"
+  },
+  {
+    "scene_number": 19,
+    "start_time": 64.93153333333333,
+    "end_time": 76.2762,
+    "duration": 11.344666666666669,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0018.jpg"
+  },
+  {
+    "scene_number": 20,
+    "start_time": 76.2762,
+    "end_time": 77.04363333333333,
+    "duration": 0.7674333333333294,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0019.jpg"
+  },
+  {
+    "scene_number": 21,
+    "start_time": 77.04363333333333,
+    "end_time": 89.25583333333333,
+    "duration": 12.212199999999996,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0020.jpg"
+  },
+  {
+    "scene_number": 22,
+    "start_time": 89.25583333333333,
+    "end_time": 94.82806666666667,
+    "duration": 5.572233333333344,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0021.jpg"
+  },
+  {
+    "scene_number": 23,
+    "start_time": 94.82806666666667,
+    "end_time": 103.67023333333333,
+    "duration": 8.842166666666657,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0022.jpg"
+  },
+  {
+    "scene_number": 24,
+    "start_time": 103.67023333333333,
+    "end_time": 126.79333333333334,
+    "duration": 23.123100000000008,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0023.jpg"
+  },
+  {
+    "scene_number": 25,
+    "start_time": 126.79333333333334,
+    "end_time": 136.60313333333335,
+    "duration": 9.80980000000001,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0024.jpg"
+  },
+  {
+    "scene_number": 26,
+    "start_time": 136.60313333333335,
+    "end_time": 138.37156666666667,
+    "duration": 1.76843333333332,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0025.jpg"
+  },
+  {
+    "scene_number": 27,
+    "start_time": 138.37156666666667,
+    "end_time": 143.37656666666666,
+    "duration": 5.0049999999999955,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0026.jpg"
+  },
+  {
+    "scene_number": 28,
+    "start_time": 143.37656666666666,
+    "end_time": 147.38056666666668,
+    "duration": 4.004000000000019,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0027.jpg"
+  },
+  {
+    "scene_number": 29,
+    "start_time": 147.38056666666668,
+    "end_time": 151.68486666666666,
+    "duration": 4.304299999999984,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0028.jpg"
+  },
+  {
+    "scene_number": 30,
+    "start_time": 151.68486666666666,
+    "end_time": 156.58976666666666,
+    "duration": 4.904899999999998,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0029.jpg"
+  },
+  {
+    "scene_number": 31,
+    "start_time": 156.58976666666666,
+    "end_time": 163.53003333333334,
+    "duration": 6.940266666666673,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0030.jpg"
+  },
+  {
+    "scene_number": 32,
+    "start_time": 163.53003333333334,
+    "end_time": 168.20136666666667,
+    "duration": 4.671333333333337,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0031.jpg"
+  },
+  {
+    "scene_number": 33,
+    "start_time": 168.20136666666667,
+    "end_time": 170.5704,
+    "duration": 2.369033333333334,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0032.jpg"
+  },
+  {
+    "scene_number": 34,
+    "start_time": 170.5704,
+    "end_time": 175.30846666666667,
+    "duration": 4.738066666666668,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0033.jpg"
+  },
+  {
+    "scene_number": 35,
+    "start_time": 175.30846666666667,
+    "end_time": 178.14463333333333,
+    "duration": 2.8361666666666565,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0034.jpg"
+  },
+  {
+    "scene_number": 36,
+    "start_time": 178.14463333333333,
+    "end_time": 182.0819,
+    "duration": 3.937266666666659,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0035.jpg"
+  },
+  {
+    "scene_number": 37,
+    "start_time": 182.0819,
+    "end_time": 194.66113333333334,
+    "duration": 12.579233333333349,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0036.jpg"
+  },
+  {
+    "scene_number": 38,
+    "start_time": 194.66113333333334,
+    "end_time": 203.203,
+    "duration": 8.541866666666664,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0037.jpg"
+  },
+  {
+    "scene_number": 39,
+    "start_time": 203.203,
+    "end_time": 206.1059,
+    "duration": 2.9028999999999883,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0038.jpg"
+  },
+  {
+    "scene_number": 40,
+    "start_time": 206.1059,
+    "end_time": 211.11090000000002,
+    "duration": 5.005000000000024,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0039.jpg"
+  },
+  {
+    "scene_number": 41,
+    "start_time": 211.11090000000002,
+    "end_time": 215.04816666666667,
+    "duration": 3.937266666666659,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0040.jpg"
+  },
+  {
+    "scene_number": 42,
+    "start_time": 215.04816666666667,
+    "end_time": 218.21800000000002,
+    "duration": 3.1698333333333437,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0041.jpg"
+  },
+  {
+    "scene_number": 43,
+    "start_time": 218.21800000000002,
+    "end_time": 227.36046666666667,
+    "duration": 9.14246666666665,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0042.jpg"
+  },
+  {
+    "scene_number": 44,
+    "start_time": 227.36046666666667,
+    "end_time": 244.47756666666666,
+    "duration": 17.117099999999994,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0043.jpg"
+  },
+  {
+    "scene_number": 45,
+    "start_time": 244.47756666666666,
+    "end_time": 251.18426666666667,
+    "duration": 6.706700000000012,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0044.jpg"
+  },
+  {
+    "scene_number": 46,
+    "start_time": 251.18426666666667,
+    "end_time": 251.68476666666666,
+    "duration": 0.5004999999999882,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0045.jpg"
+  },
+  {
+    "scene_number": 47,
+    "start_time": 251.68476666666666,
+    "end_time": 260.1265333333333,
+    "duration": 8.441766666666666,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0046.jpg"
+  },
+  {
+    "scene_number": 48,
+    "start_time": 260.1265333333333,
+    "end_time": 269.30236666666667,
+    "duration": 9.175833333333344,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0047.jpg"
+  },
+  {
+    "scene_number": 49,
+    "start_time": 269.30236666666667,
+    "end_time": 281.8482333333333,
+    "duration": 12.545866666666655,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0048.jpg"
+  },
+  {
+    "scene_number": 50,
+    "start_time": 281.8482333333333,
+    "end_time": 287.7207666666667,
+    "duration": 5.872533333333365,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0049.jpg"
+  },
+  {
+    "scene_number": 51,
+    "start_time": 287.7207666666667,
+    "end_time": 288.2212666666667,
+    "duration": 0.5004999999999882,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0050.jpg"
+  },
+  {
+    "scene_number": 52,
+    "start_time": 288.2212666666667,
+    "end_time": 289.22226666666666,
+    "duration": 1.0009999999999764,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0051.jpg"
+  },
+  {
+    "scene_number": 53,
+    "start_time": 289.22226666666666,
+    "end_time": 301.73476666666664,
+    "duration": 12.512499999999989,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0052.jpg"
+  },
+  {
+    "scene_number": 54,
+    "start_time": 301.73476666666664,
+    "end_time": 305.07143333333335,
+    "duration": 3.3366666666667015,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0053.jpg"
+  },
+  {
+    "scene_number": 55,
+    "start_time": 305.07143333333335,
+    "end_time": 307.7407666666667,
+    "duration": 2.669333333333327,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0054.jpg"
+  },
+  {
+    "scene_number": 56,
+    "start_time": 307.7407666666667,
+    "end_time": 308.17453333333333,
+    "duration": 0.4337666666666564,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0055.jpg"
+  },
+  {
+    "scene_number": 57,
+    "start_time": 308.17453333333333,
+    "end_time": 308.6083,
+    "duration": 0.4337666666666564,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0056.jpg"
+  },
+  {
+    "scene_number": 58,
+    "start_time": 308.6083,
+    "end_time": 311.87823333333336,
+    "duration": 3.2699333333333698,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0057.jpg"
+  },
+  {
+    "scene_number": 59,
+    "start_time": 311.87823333333336,
+    "end_time": 319.98633333333333,
+    "duration": 8.108099999999979,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0058.jpg"
+  },
+  {
+    "scene_number": 60,
+    "start_time": 319.98633333333333,
+    "end_time": 322.6223,
+    "duration": 2.6359666666666612,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0059.jpg"
+  },
+  {
+    "scene_number": 61,
+    "start_time": 322.6223,
+    "end_time": 324.2239,
+    "duration": 1.601600000000019,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0060.jpg"
+  },
+  {
+    "scene_number": 62,
+    "start_time": 324.2239,
+    "end_time": 331.3643666666667,
+    "duration": 7.1404666666666685,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0061.jpg"
+  },
+  {
+    "scene_number": 63,
+    "start_time": 331.3643666666667,
+    "end_time": 335.1348,
+    "duration": 3.770433333333301,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0062.jpg"
+  },
+  {
+    "scene_number": 64,
+    "start_time": 335.1348,
+    "end_time": 336.96996666666666,
+    "duration": 1.8351666666666802,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0063.jpg"
+  },
+  {
+    "scene_number": 65,
+    "start_time": 336.96996666666666,
+    "end_time": 349.9829666666667,
+    "duration": 13.013000000000034,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0064.jpg"
+  },
+  {
+    "scene_number": 66,
+    "start_time": 349.9829666666667,
+    "end_time": 351.38436666666666,
+    "duration": 1.401399999999967,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0065.jpg"
+  },
+  {
+    "scene_number": 67,
+    "start_time": 351.38436666666666,
+    "end_time": 354.354,
+    "duration": 2.96963333333332,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0066.jpg"
+  },
+  {
+    "scene_number": 68,
+    "start_time": 354.354,
+    "end_time": 356.98996666666665,
+    "duration": 2.6359666666666612,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0067.jpg"
+  },
+  {
+    "scene_number": 69,
+    "start_time": 356.98996666666665,
+    "end_time": 364.43073333333336,
+    "duration": 7.440766666666718,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0068.jpg"
+  },
+  {
+    "scene_number": 70,
+    "start_time": 364.43073333333336,
+    "end_time": 369.4691,
+    "duration": 5.038366666666661,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0069.jpg"
+  },
+  {
+    "scene_number": 71,
+    "start_time": 369.4691,
+    "end_time": 372.8725,
+    "duration": 3.4033999999999764,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0070.jpg"
+  },
+  {
+    "scene_number": 72,
+    "start_time": 372.8725,
+    "end_time": 375.9756,
+    "duration": 3.1030999999999835,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0071.jpg"
+  },
+  {
+    "scene_number": 73,
+    "start_time": 375.9756,
+    "end_time": 376.74303333333336,
+    "duration": 0.767433333333372,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0072.jpg"
+  },
+  {
+    "scene_number": 74,
+    "start_time": 376.74303333333336,
+    "end_time": 377.2101666666667,
+    "duration": 0.4671333333333223,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0073.jpg"
+  },
+  {
+    "scene_number": 75,
+    "start_time": 377.2101666666667,
+    "end_time": 387.4871,
+    "duration": 10.276933333333318,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0074.jpg"
+  },
+  {
+    "scene_number": 76,
+    "start_time": 387.4871,
+    "end_time": 390.5902,
+    "duration": 3.1030999999999835,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0075.jpg"
+  },
+  {
+    "scene_number": 77,
+    "start_time": 390.5902,
+    "end_time": 409.5091,
+    "duration": 18.918900000000008,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0076.jpg"
+  },
+  {
+    "scene_number": 78,
+    "start_time": 409.5091,
+    "end_time": 422.1550666666667,
+    "duration": 12.645966666666709,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0077.jpg"
+  },
+  {
+    "scene_number": 79,
+    "start_time": 422.1550666666667,
+    "end_time": 427.9275,
+    "duration": 5.772433333333311,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0078.jpg"
+  },
+  {
+    "scene_number": 80,
+    "start_time": 427.9275,
+    "end_time": 432.29853333333335,
+    "duration": 4.371033333333344,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0079.jpg"
+  },
+  {
+    "scene_number": 81,
+    "start_time": 432.29853333333335,
+    "end_time": 437.5371,
+    "duration": 5.238566666666657,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0080.jpg"
+  },
+  {
+    "scene_number": 82,
+    "start_time": 437.5371,
+    "end_time": 438.438,
+    "duration": 0.9008999999999787,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0081.jpg"
+  },
+  {
+    "scene_number": 83,
+    "start_time": 438.438,
+    "end_time": 440.97386666666665,
+    "duration": 2.5358666666666636,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0082.jpg"
+  },
+  {
+    "scene_number": 84,
+    "start_time": 440.97386666666665,
+    "end_time": 446.6795666666667,
+    "duration": 5.705700000000036,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0083.jpg"
+  },
+  {
+    "scene_number": 85,
+    "start_time": 446.6795666666667,
+    "end_time": 447.41363333333334,
+    "duration": 0.7340666666666493,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0084.jpg"
+  },
+  {
+    "scene_number": 86,
+    "start_time": 447.41363333333334,
+    "end_time": 471.43763333333334,
+    "duration": 24.024,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0085.jpg"
+  },
+  {
+    "scene_number": 87,
+    "start_time": 471.43763333333334,
+    "end_time": 482.01486666666665,
+    "duration": 10.57723333333331,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0086.jpg"
+  },
+  {
+    "scene_number": 88,
+    "start_time": 482.01486666666665,
+    "end_time": 493.493,
+    "duration": 11.478133333333346,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0087.jpg"
+  },
+  {
+    "scene_number": 89,
+    "start_time": 493.493,
+    "end_time": 500.5,
+    "duration": 7.007000000000005,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0088.jpg"
+  },
+  {
+    "scene_number": 90,
+    "start_time": 500.5,
+    "end_time": 506.50600000000003,
+    "duration": 6.006000000000029,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0089.jpg"
+  },
+  {
+    "scene_number": 91,
+    "start_time": 506.50600000000003,
+    "end_time": 509.5423666666667,
+    "duration": 3.036366666666652,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0090.jpg"
+  },
+  {
+    "scene_number": 92,
+    "start_time": 509.5423666666667,
+    "end_time": 510.7769333333333,
+    "duration": 1.2345666666666375,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0091.jpg"
+  },
+  {
+    "scene_number": 93,
+    "start_time": 510.7769333333333,
+    "end_time": 519.9527666666667,
+    "duration": 9.175833333333344,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0092.jpg"
+  },
+  {
+    "scene_number": 94,
+    "start_time": 519.9527666666667,
+    "end_time": 520.4866333333333,
+    "duration": 0.533866666666654,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0093.jpg"
+  },
+  {
+    "scene_number": 95,
+    "start_time": 520.4866333333333,
+    "end_time": 533.3328,
+    "duration": 12.846166666666704,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0094.jpg"
+  },
+  {
+    "scene_number": 96,
+    "start_time": 533.3328,
+    "end_time": 541.6411,
+    "duration": 8.308300000000031,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0095.jpg"
+  },
+  {
+    "scene_number": 97,
+    "start_time": 541.6411,
+    "end_time": 543.5763666666667,
+    "duration": 1.935266666666621,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0096.jpg"
+  },
+  {
+    "scene_number": 98,
+    "start_time": 543.5763666666667,
+    "end_time": 546.546,
+    "duration": 2.969633333333377,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0097.jpg"
+  },
+  {
+    "scene_number": 99,
+    "start_time": 546.546,
+    "end_time": 555.5883666666667,
+    "duration": 9.04236666666668,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0098.jpg"
+  },
+  {
+    "scene_number": 100,
+    "start_time": 555.5883666666667,
+    "end_time": 557.7238333333333,
+    "duration": 2.135466666666616,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0099.jpg"
+  },
+  {
+    "scene_number": 101,
+    "start_time": 557.7238333333333,
+    "end_time": 558.1909666666667,
+    "duration": 0.4671333333333223,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0100.jpg"
+  },
+  {
+    "scene_number": 102,
+    "start_time": 558.1909666666667,
+    "end_time": 561.0605,
+    "duration": 2.8695333333333792,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0101.jpg"
+  },
+  {
+    "scene_number": 103,
+    "start_time": 561.0605,
+    "end_time": 566.566,
+    "duration": 5.505499999999984,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0102.jpg"
+  },
+  {
+    "scene_number": 104,
+    "start_time": 566.566,
+    "end_time": 571.6043666666667,
+    "duration": 5.038366666666661,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0103.jpg"
+  },
+  {
+    "scene_number": 105,
+    "start_time": 571.6043666666667,
+    "end_time": 572.572,
+    "duration": 0.9676333333333105,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0104.jpg"
+  },
+  {
+    "scene_number": 106,
+    "start_time": 572.572,
+    "end_time": 574.4071666666666,
+    "duration": 1.8351666666666233,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0105.jpg"
+  },
+  {
+    "scene_number": 107,
+    "start_time": 574.4071666666666,
+    "end_time": 586.2189666666667,
+    "duration": 11.811800000000062,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0106.jpg"
+  },
+  {
+    "scene_number": 108,
+    "start_time": 586.2189666666667,
+    "end_time": 590.1896,
+    "duration": 3.970633333333353,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0107.jpg"
+  },
+  {
+    "scene_number": 109,
+    "start_time": 590.1896,
+    "end_time": 605.1378666666667,
+    "duration": 14.948266666666655,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0108.jpg"
+  },
+  {
+    "scene_number": 110,
+    "start_time": 605.1378666666667,
+    "end_time": 609.0417666666667,
+    "duration": 3.9039000000000215,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0109.jpg"
+  },
+  {
+    "scene_number": 111,
+    "start_time": 609.0417666666667,
+    "end_time": 610.1428666666667,
+    "duration": 1.101099999999974,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0110.jpg"
+  },
+  {
+    "scene_number": 112,
+    "start_time": 610.1428666666667,
+    "end_time": 616.2156,
+    "duration": 6.072733333333304,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0111.jpg"
+  },
+  {
+    "scene_number": 113,
+    "start_time": 616.2156,
+    "end_time": 666.4658000000001,
+    "duration": 50.25020000000006,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0112.jpg"
+  },
+  {
+    "scene_number": 114,
+    "start_time": 666.4658000000001,
+    "end_time": 670.4364333333333,
+    "duration": 3.9706333333332395,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0113.jpg"
+  },
+  {
+    "scene_number": 115,
+    "start_time": 670.4364333333333,
+    "end_time": 704.3369666666666,
+    "duration": 33.90053333333333,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0114.jpg"
+  },
+  {
+    "scene_number": 116,
+    "start_time": 704.3369666666666,
+    "end_time": 708.1074,
+    "duration": 3.770433333333358,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0115.jpg"
+  },
+  {
+    "scene_number": 117,
+    "start_time": 708.1074,
+    "end_time": 710.1094,
+    "duration": 2.0020000000000664,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0116.jpg"
+  },
+  {
+    "scene_number": 118,
+    "start_time": 710.1094,
+    "end_time": 712.1114,
+    "duration": 2.0019999999999527,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0117.jpg"
+  },
+  {
+    "scene_number": 119,
+    "start_time": 712.1114,
+    "end_time": 719.7523666666667,
+    "duration": 7.6409666666667135,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0118.jpg"
+  },
+  {
+    "scene_number": 120,
+    "start_time": 719.7523666666667,
+    "end_time": 744.8774666666667,
+    "duration": 25.125099999999975,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0119.jpg"
+  },
+  {
+    "scene_number": 121,
+    "start_time": 744.8774666666667,
+    "end_time": 746.9795666666666,
+    "duration": 2.1020999999999503,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0120.jpg"
+  },
+  {
+    "scene_number": 122,
+    "start_time": 746.9795666666666,
+    "end_time": 750.5164333333333,
+    "duration": 3.536866666666697,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0121.jpg"
+  },
+  {
+    "scene_number": 123,
+    "start_time": 750.5164333333333,
+    "end_time": 759.3919666666667,
+    "duration": 8.875533333333351,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0122.jpg"
+  },
+  {
+    "scene_number": 124,
+    "start_time": 759.3919666666667,
+    "end_time": 801.0335666666667,
+    "duration": 41.64160000000004,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0123.jpg"
+  },
+  {
+    "scene_number": 125,
+    "start_time": 801.0335666666667,
+    "end_time": 825.2911333333334,
+    "duration": 24.257566666666662,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0124.jpg"
+  },
+  {
+    "scene_number": 126,
+    "start_time": 825.2911333333334,
+    "end_time": 862.7619,
+    "duration": 37.47076666666658,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0125.jpg"
+  },
+  {
+    "scene_number": 127,
+    "start_time": 862.7619,
+    "end_time": 868.1339333333334,
+    "duration": 5.372033333333434,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0126.jpg"
+  },
+  {
+    "scene_number": 128,
+    "start_time": 868.1339333333334,
+    "end_time": 871.7709,
+    "duration": 3.6369666666665807,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0127.jpg"
+  },
+  {
+    "scene_number": 129,
+    "start_time": 871.7709,
+    "end_time": 874.8406333333334,
+    "duration": 3.0697333333333745,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0128.jpg"
+  },
+  {
+    "scene_number": 130,
+    "start_time": 874.8406333333334,
+    "end_time": 887.2864000000001,
+    "duration": 12.445766666666714,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0129.jpg"
+  },
+  {
+    "scene_number": 131,
+    "start_time": 887.2864000000001,
+    "end_time": 898.8646333333334,
+    "duration": 11.578233333333287,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0130.jpg"
+  },
+  {
+    "scene_number": 132,
+    "start_time": 898.8646333333334,
+    "end_time": 923.6227,
+    "duration": 24.75806666666665,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0131.jpg"
+  },
+  {
+    "scene_number": 133,
+    "start_time": 923.6227,
+    "end_time": 930.3627666666666,
+    "duration": 6.740066666666621,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0132.jpg"
+  },
+  {
+    "scene_number": 134,
+    "start_time": 930.3627666666666,
+    "end_time": 937.0027333333334,
+    "duration": 6.639966666666737,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0133.jpg"
+  },
+  {
+    "scene_number": 135,
+    "start_time": 937.0027333333334,
+    "end_time": 948.7478,
+    "duration": 11.745066666666617,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0134.jpg"
+  },
+  {
+    "scene_number": 136,
+    "start_time": 948.7478,
+    "end_time": 979.3450333333334,
+    "duration": 30.597233333333406,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0135.jpg"
+  },
+  {
+    "scene_number": 137,
+    "start_time": 979.3450333333334,
+    "end_time": 993.1922000000001,
+    "duration": 13.84716666666668,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0136.jpg"
+  },
+  {
+    "scene_number": 138,
+    "start_time": 993.1922000000001,
+    "end_time": 1004.1031,
+    "duration": 10.91089999999997,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0137.jpg"
+  },
+  {
+    "scene_number": 139,
+    "start_time": 1004.1031,
+    "end_time": 1011.3103,
+    "duration": 7.207199999999943,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0138.jpg"
+  },
+  {
+    "scene_number": 140,
+    "start_time": 1011.3103,
+    "end_time": 1023.7894333333334,
+    "duration": 12.47913333333338,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0139.jpg"
+  },
+  {
+    "scene_number": 141,
+    "start_time": 1023.7894333333334,
+    "end_time": 1035.5345,
+    "duration": 11.745066666666617,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0140.jpg"
+  },
+  {
+    "scene_number": 142,
+    "start_time": 1035.5345,
+    "end_time": 1040.7397,
+    "duration": 5.205200000000104,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0141.jpg"
+  },
+  {
+    "scene_number": 143,
+    "start_time": 1040.7397,
+    "end_time": 1068.1671000000001,
+    "duration": 27.427400000000034,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0142.jpg"
+  },
+  {
+    "scene_number": 144,
+    "start_time": 1068.1671000000001,
+    "end_time": 1069.2682,
+    "duration": 1.1010999999998603,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0143.jpg"
+  },
+  {
+    "scene_number": 145,
+    "start_time": 1069.2682,
+    "end_time": 1078.0102666666667,
+    "duration": 8.742066666666688,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0144.jpg"
+  },
+  {
+    "scene_number": 146,
+    "start_time": 1078.0102666666667,
+    "end_time": 1095.1941,
+    "duration": 17.18383333333327,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0145.jpg"
+  },
+  {
+    "scene_number": 147,
+    "start_time": 1095.1941,
+    "end_time": 1101.8007,
+    "duration": 6.606600000000071,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0146.jpg"
+  },
+  {
+    "scene_number": 148,
+    "start_time": 1101.8007,
+    "end_time": 1124.5901333333334,
+    "duration": 22.789433333333363,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0147.jpg"
+  },
+  {
+    "scene_number": 149,
+    "start_time": 1124.5901333333334,
+    "end_time": 1125.0239,
+    "duration": 0.43376666666654273,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0148.jpg"
+  },
+  {
+    "scene_number": 150,
+    "start_time": 1125.0239,
+    "end_time": 1125.8580666666667,
+    "duration": 0.8341666666667606,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0149.jpg"
+  },
+  {
+    "scene_number": 151,
+    "start_time": 1125.8580666666667,
+    "end_time": 1126.6922333333334,
+    "duration": 0.8341666666667606,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0150.jpg"
+  },
+  {
+    "scene_number": 152,
+    "start_time": 1126.6922333333334,
+    "end_time": 1127.5264,
+    "duration": 0.8341666666665333,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0151.jpg"
+  },
+  {
+    "scene_number": 153,
+    "start_time": 1127.5264,
+    "end_time": 1128.3605666666667,
+    "duration": 0.8341666666667606,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0152.jpg"
+  },
+  {
+    "scene_number": 154,
+    "start_time": 1128.3605666666667,
+    "end_time": 1146.9791666666667,
+    "duration": 18.618600000000015,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0153.jpg"
+  },
+  {
+    "scene_number": 155,
+    "start_time": 1146.9791666666667,
+    "end_time": 1154.2531000000001,
+    "duration": 7.273933333333389,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0154.jpg"
+  },
+  {
+    "scene_number": 156,
+    "start_time": 1154.2531000000001,
+    "end_time": 1162.3945666666666,
+    "duration": 8.141466666666474,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0155.jpg"
+  },
+  {
+    "scene_number": 157,
+    "start_time": 1162.3945666666666,
+    "end_time": 1208.9077,
+    "duration": 46.51313333333337,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0156.jpg"
+  },
+  {
+    "scene_number": 158,
+    "start_time": 1208.9077,
+    "end_time": 1209.8419666666666,
+    "duration": 0.9342666666666446,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0157.jpg"
+  },
+  {
+    "scene_number": 159,
+    "start_time": 1209.8419666666666,
+    "end_time": 1210.9764333333333,
+    "duration": 1.1344666666666399,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0158.jpg"
+  },
+  {
+    "scene_number": 160,
+    "start_time": 1210.9764333333333,
+    "end_time": 1212.8449666666668,
+    "duration": 1.8685333333335166,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0159.jpg"
+  },
+  {
+    "scene_number": 161,
+    "start_time": 1212.8449666666668,
+    "end_time": 1220.4525666666666,
+    "duration": 7.60759999999982,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0160.jpg"
+  },
+  {
+    "scene_number": 162,
+    "start_time": 1220.4525666666666,
+    "end_time": 1226.4252000000001,
+    "duration": 5.972633333333533,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0161.jpg"
+  },
+  {
+    "scene_number": 163,
+    "start_time": 1226.4252000000001,
+    "end_time": 1228.3604666666668,
+    "duration": 1.935266666666621,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0162.jpg"
+  },
+  {
+    "scene_number": 164,
+    "start_time": 1228.3604666666668,
+    "end_time": 1228.5273,
+    "duration": 0.1668333333332157,
+    "keyframe_path": "context\\visual-references\\analysis\\frames\\frame_0163.jpg"
+  }
+]

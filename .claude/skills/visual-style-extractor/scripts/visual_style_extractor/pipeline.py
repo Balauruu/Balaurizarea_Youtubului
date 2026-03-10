@@ -7,8 +7,10 @@ Stage 6 (synthesis) is called after subagent results are collected.
 """
 
 import os
+import re
 import json
-from dataclasses import dataclass, field
+import shutil
+from dataclasses import dataclass
 
 from visual_style_extractor.acquire import validate_local_input, download_from_youtube
 from visual_style_extractor.scene_detect import detect_scenes
@@ -24,11 +26,21 @@ class PipelineConfig:
     output_dir: str | None = None
     adaptive_threshold: float = 3.0
     min_scene_len: int = 15
-    dedup_threshold: int = 10
+    dedup_threshold: int = 6
 
     @property
     def is_youtube(self) -> bool:
         return self.source.startswith("http://") or self.source.startswith("https://")
+
+
+def _sanitize_dirname(name: str) -> str:
+    """Sanitize a string for use as a directory name."""
+    # Remove characters invalid on Windows
+    name = re.sub(r'[<>:"/\\|?*]', '', name)
+    # Collapse whitespace
+    name = re.sub(r'\s+', ' ', name).strip()
+    # Truncate to reasonable length
+    return name[:120] if name else "untitled"
 
 
 def run_stages_0_to_4(config: PipelineConfig) -> dict:
@@ -44,8 +56,28 @@ def run_stages_0_to_4(config: PipelineConfig) -> dict:
     """
     # Stage 0: Acquisition
     if config.is_youtube:
-        output_dir = config.output_dir or os.path.join("context", "visual-references", "analysis")
-        inputs = download_from_youtube(config.source, output_dir)
+        # Download to a temp location first to learn the video title
+        base_dir = config.output_dir or os.path.join("context", "visual-references")
+        temp_dir = os.path.join(base_dir, "_download_temp")
+        inputs = download_from_youtube(config.source, temp_dir)
+        # Create output dir named after video title
+        video_title = os.path.splitext(os.path.basename(inputs["video_path"]))[0]
+        output_dir = os.path.join(base_dir, _sanitize_dirname(video_title))
+        if output_dir != temp_dir:
+            os.makedirs(output_dir, exist_ok=True)
+            # Move downloaded files to named directory
+            for fname in os.listdir(temp_dir):
+                src = os.path.join(temp_dir, fname)
+                dst = os.path.join(output_dir, fname)
+                shutil.move(src, dst)
+            os.rmdir(temp_dir)
+            # Update paths after move
+            inputs["video_path"] = os.path.join(
+                output_dir, os.path.basename(inputs["video_path"])
+            )
+            inputs["transcript_path"] = os.path.join(
+                output_dir, os.path.basename(inputs["transcript_path"])
+            )
     else:
         output_dir = config.source
         inputs = validate_local_input(config.source)

@@ -1,6 +1,8 @@
 """Stage 2: Perceptual hash deduplication using imagededup."""
 
 import os
+import numpy as np
+from PIL import Image
 from imagededup.methods import PHash
 from visual_style_extractor.scene_detect import SceneInfo
 
@@ -11,15 +13,34 @@ def _format_timestamp(seconds: float) -> str:
     return f"{m:02d}:{s:02d}"
 
 
+def _is_near_black(image_path: str, threshold: int = 25, black_ratio: float = 0.92) -> bool:
+    """Check if a frame is nearly all black.
+
+    Args:
+        image_path: Path to the image file.
+        threshold: Pixel brightness below which a pixel counts as "black".
+        black_ratio: Fraction of pixels that must be black to classify the frame.
+    """
+    try:
+        img = Image.open(image_path).convert("L")  # grayscale
+        arr = np.array(img)
+        return float((arr < threshold).mean()) >= black_ratio
+    except (FileNotFoundError, OSError):
+        return False
+
+
 def deduplicate_frames(
     scenes: list[SceneInfo],
     frames_dir: str,
-    max_distance_threshold: int = 10,
+    max_distance_threshold: int = 6,
 ) -> list[dict]:
     """Deduplicate keyframes using perceptual hashing.
 
     Groups visually similar frames and keeps one representative per group
     (the one closest to the group's median timestamp).
+
+    Near-black frames (transitions, fades) are pre-grouped before hashing
+    to prevent duplicates that PHash misses due to noise variation.
 
     Args:
         scenes: List of SceneInfo from scene detection.
@@ -38,15 +59,32 @@ def deduplicate_frames(
         fname = os.path.basename(s.keyframe_path)
         scene_by_filename[fname] = s
 
-    # Run PHash
+    # Pre-group near-black frames
+    black_filenames = set()
+    normal_filenames = []
+    for fname in scene_by_filename:
+        fpath = os.path.join(frames_dir, fname)
+        if _is_near_black(fpath):
+            black_filenames.add(fname)
+        else:
+            normal_filenames.append(fname)
+
+    if black_filenames:
+        print(f"Near-black frames detected: {len(black_filenames)} (will be grouped as one)")
+
+    # Run PHash on non-black frames only
     phasher = PHash()
     encodings = phasher.encode_images(image_dir=frames_dir)
+
+    # Remove black frames from encodings so they don't interfere
+    filtered_encodings = {k: v for k, v in encodings.items() if k not in black_filenames}
+
     duplicates = phasher.find_duplicates(
-        encoding_map=encodings,
+        encoding_map=filtered_encodings,
         max_distance_threshold=max_distance_threshold,
     )
 
-    # Build groups: track which frames have been assigned
+    # Build groups from PHash results
     assigned = set()
     groups = []
 
@@ -57,6 +95,10 @@ def deduplicate_frames(
         for f in group:
             assigned.add(f)
         groups.append(group)
+
+    # Add black frames as a single group (if any)
+    if black_filenames:
+        groups.append(list(black_filenames))
 
     # Select representative per group (closest to median timestamp)
     result = []

@@ -6,6 +6,27 @@ from datetime import date
 from collections import defaultdict, Counter
 
 
+# Maps scene_type -> shotlist visual_type (fallback if subagent doesn't provide one)
+DEFAULT_SHOTLIST_MAP = {
+    "title_card": "text_overlay",
+    "archival_photo": "archival_photo",
+    "archival_video": "archival_video",
+    "news_clip": "news_clip",
+    "map_animation": "map",
+    "text_overlay": "text_overlay",
+    "quote_card": "text_overlay",
+    "b_roll_footage": "archival_video",
+    "screen_recording": "archival_video",
+    "animated_graphic": "animation",
+    "silhouette": "ai_generated",
+    "date_card": "animation",
+    "chapter_header": "text_overlay",
+    "evidence_document": "document_scan",
+    "portrait": "archival_photo",
+    "location_shot": "archival_video",
+}
+
+
 def aggregate_by_scene_type(
     analysis_results: list[dict],
     min_confidence: int = 3,
@@ -15,19 +36,31 @@ def aggregate_by_scene_type(
     for frame in analysis_results:
         if frame.get("confidence", 0) < min_confidence:
             continue
-        grouped[frame["scene_type"]].append(frame)
+        scene_type = _normalize_scene_type(frame.get("scene_type", "unknown"))
+        grouped[scene_type].append(frame)
     return dict(grouped)
+
+
+def _normalize_scene_type(scene_type: str) -> str:
+    """Normalize scene types — merge 'other:' variants that are really transitions."""
+    st = scene_type.strip().lower()
+    # Merge common black/transition variants
+    if any(kw in st for kw in ["black_screen", "transition_black", "black screen", "transition black", "fade_to_black"]):
+        return "black_transition"
+    # Strip "other:" prefix if it's a recognizable type
+    if st.startswith("other:"):
+        inner = st[6:].strip().replace(" ", "_")
+        if inner in DEFAULT_SHOTLIST_MAP:
+            return inner
+        return f"other_{inner}"
+    return st
 
 
 def compute_proportions(
     grouped: dict[str, list[dict]],
     manifest: dict,
 ) -> dict[str, dict]:
-    """Compute runtime proportion for each scene type.
-
-    Uses scene_duration * represents_count from manifest.
-    Returns dict mapping scene_type -> {proportion, total_seconds, avg_duration, count}.
-    """
+    """Compute runtime proportion for each scene type."""
     video_duration = manifest["video_duration"]
     frame_lookup = {f"F{f['frame_id']:03d}": f for f in manifest["frames"]}
 
@@ -36,7 +69,7 @@ def compute_proportions(
         total_weighted = 0.0
         durations = []
         for frame in frames:
-            raw_fid = frame["frame_id"]
+            raw_fid = frame.get("frame_id", "")
             # Normalize: accept "F001", "F23", 1, "1" etc.
             if isinstance(raw_fid, int):
                 fid = f"F{raw_fid:03d}"
@@ -53,29 +86,65 @@ def compute_proportions(
             "proportion": total_weighted / video_duration if video_duration > 0 else 0,
             "total_seconds": total_weighted,
             "avg_duration": sum(durations) / len(durations) if durations else 0,
+            "min_duration": min(durations) if durations else 0,
+            "max_duration": max(durations) if durations else 0,
             "count": len(frames),
         }
 
     return proportions
 
 
-def _find_common_elements(frames: list[dict], key: str) -> list[str]:
-    """Extract common values for a given key across frames."""
+def _extract_field(frame: dict, key: str) -> str | None:
+    """Extract a field from frame, checking both top-level and inside asset_breakdown."""
+    val = frame.get(key)
+    if val and val != "unclear":
+        return val
+    breakdown = frame.get("asset_breakdown", {})
+    if isinstance(breakdown, dict):
+        val = breakdown.get(key)
+        if val and val != "unclear":
+            return val
+    return None
+
+
+def _collect_field_values(frames: list[dict], key: str) -> list[str]:
+    """Collect non-empty values for a key across frames."""
     values = []
     for f in frames:
-        val = f.get(key)
-        if val and val != "unclear":
+        val = _extract_field(f, key)
+        if val:
             if isinstance(val, list):
-                values.extend(val)
+                values.extend(v for v in val if v and v != "unclear")
             else:
                 values.append(val)
-    counts = Counter(values)
-    return [v for v, _ in counts.most_common()]
+    return values
+
+
+def _most_common(values: list[str], n: int = 3) -> list[str]:
+    """Return up to n most common values."""
+    if not values:
+        return []
+    return [v for v, _ in Counter(values).most_common(n)]
 
 
 def _format_scene_type_name(scene_type: str) -> str:
     """Convert snake_case to Title Case."""
-    return scene_type.replace("_", " ").title()
+    name = scene_type.replace("_", " ").title()
+    # Clean up "Other Xxx" prefix
+    if name.startswith("Other "):
+        name = name[6:]
+    return name
+
+
+def _get_shotlist_type(frames: list[dict], scene_type: str) -> str:
+    """Determine the shotlist visual_type for a scene type."""
+    # Check if subagents provided shotlist_type
+    types = [f.get("shotlist_type") for f in frames if f.get("shotlist_type")]
+    if types:
+        return Counter(types).most_common(1)[0][0]
+    # Fall back to default mapping
+    base = scene_type.split(":")[0].strip() if ":" in scene_type else scene_type
+    return DEFAULT_SHOTLIST_MAP.get(base, "ai_generated")
 
 
 def generate_style_guide(
@@ -89,146 +158,162 @@ def generate_style_guide(
     grouped = aggregate_by_scene_type(analysis_results)
     proportions = compute_proportions(grouped, manifest)
 
-    # Sort scene types by proportion (descending)
-    sorted_types = sorted(proportions.keys(), key=lambda t: proportions[t]["proportion"], reverse=True)
+    sorted_types = sorted(
+        proportions.keys(),
+        key=lambda t: proportions[t]["proportion"],
+        reverse=True,
+    )
 
     lines = []
+
+    # Header
     lines.append("# Visual Style Guide")
     lines.append(f"> Source: {video_title} ({video_source})")
-    lines.append(f"> Duration: {int(manifest['video_duration'] // 60)}:{int(manifest['video_duration'] % 60):02d} "
-                 f"| Scenes detected: {manifest['total_scenes_detected']} "
-                 f"| Unique frames analyzed: {manifest['unique_frames_after_dedup']}")
+    dur_min = int(manifest['video_duration'] // 60)
+    dur_sec = int(manifest['video_duration'] % 60)
+    lines.append(
+        f"> Duration: {dur_min}:{dur_sec:02d} "
+        f"| Scenes detected: {manifest['total_scenes_detected']} "
+        f"| Unique frames analyzed: {manifest['unique_frames_after_dedup']}"
+    )
     lines.append(f"> Generated: {date.today().isoformat()}")
     lines.append("")
     lines.append("---")
     lines.append("")
 
-    # Section 1: Scene Taxonomy
-    lines.append("## 1. Scene Taxonomy")
+    # Section 1: Asset Type Menu
+    lines.append("## 1. Asset Type Menu")
     lines.append("")
 
     for scene_type in sorted_types:
         frames = grouped[scene_type]
         props = proportions[scene_type]
         name = _format_scene_type_name(scene_type)
+        shotlist_type = _get_shotlist_type(frames, scene_type)
 
         lines.append(f"### {name}")
-        lines.append(f"- **Proportion:** {props['proportion'] * 100:.1f}% of runtime "
-                     f"(~{props['avg_duration']:.1f}s average per occurrence)")
-        lines.append(f"- **Frequency:** {props['count']} occurrences")
+        lines.append(f"- **Shotlist type:** `{shotlist_type}`")
+        lines.append(f"- **Proportion:** {props['proportion'] * 100:.1f}% of runtime")
+        lines.append(f"- **Frequency:** {props['count']}x")
 
-        backgrounds = _find_common_elements(frames, "background")
-        main_elements = _find_common_elements(frames, "main_element")
-        overlays = _find_common_elements(frames, "overlays")
-        text_elements = _find_common_elements(frames, "text_elements")
+        dur_str = f"{props['avg_duration']:.1f}s avg"
+        if props['count'] > 1 and props['min_duration'] != props['max_duration']:
+            dur_str += f" ({props['min_duration']:.0f}\u2013{props['max_duration']:.0f}s range)"
+        lines.append(f"- **Duration:** {dur_str}")
 
-        lines.append("- **Appearance:**")
-        lines.append(f"  - Background: {', '.join(backgrounds[:3]) if backgrounds else 'N/A'}")
-        lines.append(f"  - Main element: {', '.join(main_elements[:3]) if main_elements else 'N/A'}")
+        # When to use (generalized narrative trigger)
+        triggers = _collect_field_values(frames, "narrative_trigger")
+        if not triggers:
+            triggers = _collect_field_values(frames, "narrative_function")
+        if triggers:
+            lines.append(f"- **When to use:** {triggers[0]}")
+            if len(triggers) > 1:
+                for t in triggers[1:3]:
+                    lines.append(f"  - Also: {t}")
 
-        if overlays:
-            lines.append(f"- **Overlays/Effects:** {', '.join(overlays)}")
-        if text_elements:
-            lines.append(f"- **Text elements:** {', '.join(text_elements)}")
+        # Visual spec
+        backgrounds = _most_common(_collect_field_values(frames, "background"))
+        main_elements = _most_common(_collect_field_values(frames, "main_element"))
+        overlays_list = _most_common(_collect_field_values(frames, "overlays"))
+        colors = _most_common(_collect_field_values(frames, "dominant_colors"))
 
-        functions = _find_common_elements(frames, "narrative_function")
-        if functions:
-            lines.append(f"- **Narrative trigger:** {functions[0]}")
-            if len(functions) > 1:
-                for func in functions[1:3]:
-                    lines.append(f"  - Also: {func}")
+        spec_parts = []
+        if backgrounds:
+            spec_parts.append(f"Background: {', '.join(backgrounds)}")
+        if main_elements:
+            spec_parts.append(f"Main element: {', '.join(main_elements)}")
+        if overlays_list and overlays_list != ["none"]:
+            spec_parts.append(f"Overlays: {', '.join(overlays_list)}")
+        if colors:
+            spec_parts.append(f"Colors: {', '.join(colors)}")
 
-        content_frames = [f for f in frames if f.get("content_description") and f["content_description"] != "unclear"]
-        if content_frames:
-            lines.append("- **Content descriptions:**")
-            lines.append("  | Narration concept | Footage used | Metaphor |")
-            lines.append("  |-------------------|-------------|----------|")
-            for cf in content_frames[:5]:
-                narr_func = cf.get("narrative_function", "")
-                content = cf.get("content_description", "")
-                lines.append(f"  | {narr_func} | {content} | — |")
+        if spec_parts:
+            lines.append(f"- **Visual spec:** {'; '.join(spec_parts)}")
+
+        # Example content descriptions with frame IDs
+        examples = [
+            f for f in frames
+            if f.get("content_description") and f["content_description"] != "unclear"
+        ]
+        if examples:
+            lines.append("- **Examples:**")
+            lines.append("")
+            lines.append("  | Frame | Content |")
+            lines.append("  |-------|---------|")
+            for ex in examples[:4]:
+                fid = ex.get("frame_id", "?")
+                content = ex.get("content_description", "")
+                lines.append(f"  | {fid} | {content} |")
 
         lines.append("")
 
     lines.append("---")
     lines.append("")
 
-    # Section 2: Global Aesthetic
-    lines.append("## 2. Global Aesthetic")
+    # Section 2: Color Palette & Aesthetic
+    lines.append("## 2. Color Palette & Aesthetic")
     lines.append("")
 
+    # Aggregate dominant colors across all frames
+    all_colors = []
+    for frames in grouped.values():
+        for f in frames:
+            dc = f.get("dominant_colors")
+            if isinstance(dc, list):
+                all_colors.extend(dc)
+            elif isinstance(dc, str) and dc != "unclear":
+                all_colors.append(dc)
+
+    if all_colors:
+        color_counts = Counter(all_colors)
+        lines.append("### Dominant Colors")
+        lines.append("| Color | Occurrences |")
+        lines.append("|-------|-------------|")
+        for color, count in color_counts.most_common(10):
+            lines.append(f"| {color} | {count}x |")
+    else:
+        lines.append("*(No color data extracted \u2014 re-run with updated analysis prompt)*")
+
+    lines.append("")
+
+    # Persistent overlays
     all_overlays = []
     for frames in grouped.values():
         for f in frames:
-            if f.get("overlays"):
-                all_overlays.extend(f["overlays"] if isinstance(f["overlays"], list) else [f["overlays"]])
-    overlay_counts = Counter(all_overlays)
-    persistent = [o for o, c in overlay_counts.most_common() if c >= len(grouped) * 0.5]
+            ov = _extract_field(f, "overlays")
+            if ov and ov != "none":
+                if isinstance(ov, list):
+                    all_overlays.extend(ov)
+                else:
+                    all_overlays.append(ov)
 
-    lines.append("### Persistent Overlays")
-    if persistent:
-        for o in persistent:
-            lines.append(f"- {o}")
+    if all_overlays:
+        overlay_counts = Counter(all_overlays)
+        lines.append("### Persistent Overlays & Effects")
+        for ov, count in overlay_counts.most_common(5):
+            lines.append(f"- {ov} ({count}x)")
     else:
-        lines.append("- None identified across all scene types")
-    lines.append("")
-
-    lines.append("### Color Palette")
-    lines.append("| Role | Description | Usage |")
-    lines.append("|------|-------------|-------|")
-    lines.append("| *(Extracted from analysis — fill manually or re-run with programmatic extraction)* | | |")
-    lines.append("")
-
-    lines.append("### Motion Language")
-    lines.append("- *(To be derived from video analysis — contact sheets capture stills only)* ")
-    lines.append("")
-
-    lines.append("---")
-    lines.append("")
-
-    # Section 3: Structural Flow
-    lines.append("## 3. Structural Flow")
-    lines.append("")
-    lines.append("### Pacing")
-    lines.append("| Segment | Dominant Asset Types | Avg Scene Duration |")
-    lines.append("|---------|---------------------|--------------------|")
-
-    all_frames = sorted(analysis_results, key=lambda f: f.get("timestamp", ""))
-    quarter = len(all_frames) // 4 if len(all_frames) >= 4 else 1
-    segments = {
-        "Opening": all_frames[:quarter],
-        "Early-mid": all_frames[quarter:quarter * 2],
-        "Late-mid": all_frames[quarter * 2:quarter * 3],
-        "Closing": all_frames[quarter * 3:],
-    }
-    for seg_name, seg_frames in segments.items():
-        types_count = Counter(f["scene_type"] for f in seg_frames if f.get("confidence", 0) >= 3)
-        top_types = ", ".join(t for t, _ in types_count.most_common(2))
-        lines.append(f"| {seg_name} | {top_types or 'N/A'} | — |")
+        lines.append("### Persistent Overlays & Effects")
+        lines.append("- None identified")
 
     lines.append("")
     lines.append("---")
     lines.append("")
 
-    # Section 4: Constraints
-    lines.append("## 4. Constraints (What NOT to Do)")
-    lines.append("- *(Derive from analysis: note any asset types conspicuously absent)*")
+    # Section 3: Type Mapping
+    lines.append("## 3. Type Mapping (Scene Type \u2192 Shotlist)")
     lines.append("")
-    lines.append("---")
-    lines.append("")
+    lines.append("| # | Extracted Type | Shotlist `visual_type` | Proportion | Frequency |")
+    lines.append("|---|---------------|----------------------|------------|-----------|")
 
-    # Section 5: Quick Reference
-    lines.append("## 5. Asset Type Summary (Quick Reference)")
-    lines.append("")
-    lines.append("| # | Asset Type | Proportion | Avg Duration | Frequency | Narrative Trigger |")
-    lines.append("|---|-----------|------------|--------------|-----------|-------------------|")
     for i, scene_type in enumerate(sorted_types, 1):
-        props = proportions[scene_type]
         name = _format_scene_type_name(scene_type)
-        trigger = _find_common_elements(grouped[scene_type], "narrative_function")
-        trigger_text = trigger[0] if trigger else "—"
-        lines.append(f"| {i} | {name} | {props['proportion'] * 100:.1f}% | "
-                     f"{props['avg_duration']:.1f}s | {props['count']}x | {trigger_text} |")
+        shotlist_type = _get_shotlist_type(grouped[scene_type], scene_type)
+        props = proportions[scene_type]
+        lines.append(
+            f"| {i} | {name} | `{shotlist_type}` | "
+            f"{props['proportion'] * 100:.1f}% | {props['count']}x |"
+        )
 
     lines.append("")
 

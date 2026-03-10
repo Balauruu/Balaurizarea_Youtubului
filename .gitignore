@@ -53,6 +53,7 @@ projects/
 # Claude Code local settings (machine-specific)
 # ============================================================
 .claude/settings.local.json
+.claude/scratch/
 
 # ============================================================
 # OS artifacts

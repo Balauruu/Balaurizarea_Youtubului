@@ -21,11 +21,19 @@ This is an **agentic documentary video generation pipeline** for a YouTube chann
 
 ## Skills
 
-These skills are already installed in Claude's skills directory:
-
 - `yt-dlp` — Video/audio downloading from 1800+ sites
 - `crawl4ai` — Web scraping
 - `remotion` — Remotion animation best practices
+
+## Context Engineering
+
+### Scratch Pad
+- When tool output exceeds ~1500 tokens, write it to `.claude/scratch/` with a descriptive filename
+- Return only a 1-2 line summary in conversation context
+- Read back specific sections with grep or line ranges when needed
+- Sub-agents can read/write to `.claude/scratch/` for collaboration
+- Files in `.claude/scratch/` are transient — not committed, can be deleted between sessions
+
 
 ## Coding Standards
 

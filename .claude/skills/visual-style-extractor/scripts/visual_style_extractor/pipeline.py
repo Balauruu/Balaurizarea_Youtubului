@@ -43,6 +43,72 @@ def _sanitize_dirname(name: str) -> str:
     return name[:120] if name else "untitled"
 
 
+def slice_manifest(
+    manifest_path: str,
+    start_idx: int,
+    end_idx: int,
+    output_path: str,
+) -> str:
+    """Extract a slice of frames from the manifest and write to a new file.
+
+    Args:
+        manifest_path: Path to the full frames_manifest.json.
+        start_idx: Start frame index (inclusive).
+        end_idx: End frame index (exclusive).
+        output_path: Where to write the sliced manifest.
+
+    Returns:
+        The output_path.
+    """
+    with open(manifest_path) as f:
+        manifest = json.load(f)
+
+    sliced = {
+        "video_duration": manifest["video_duration"],
+        "total_scenes_detected": manifest["total_scenes_detected"],
+        "unique_frames_after_dedup": manifest["unique_frames_after_dedup"],
+        "frames": manifest["frames"][start_idx:end_idx],
+    }
+
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(sliced, f, indent=2)
+
+    return output_path
+
+
+def merge_analysis_batches(
+    batch_paths: list[str],
+    output_path: str,
+    min_confidence: int = 3,
+) -> tuple[int, int]:
+    """Merge per-subagent batch result files into a single analysis_results.json.
+
+    Args:
+        batch_paths: List of paths to JSON files, each containing a JSON array.
+        output_path: Where to write the merged results.
+        min_confidence: Minimum confidence score to keep a frame entry.
+
+    Returns:
+        Tuple of (kept_count, removed_count).
+    """
+    all_frames = []
+    for path in sorted(batch_paths):
+        with open(path) as f:
+            batch = json.load(f)
+        if isinstance(batch, list):
+            all_frames.extend(batch)
+
+    kept = [f for f in all_frames if f.get("confidence", 0) >= min_confidence]
+    removed_count = len(all_frames) - len(kept)
+
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(kept, f, indent=2)
+
+    return len(kept), removed_count
+
+
 def run_stages_0_to_4(config: PipelineConfig) -> dict:
     """Run deterministic pipeline stages (0-4).
 

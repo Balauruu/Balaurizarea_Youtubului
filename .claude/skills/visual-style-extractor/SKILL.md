@@ -1,6 +1,6 @@
 ---
 name: visual-style-extractor
-description: Analyzes a reference video to extract a comprehensive visual style guide. Uses scene detection, deduplication, and LLM analysis to produce an actionable VISUAL_STYLE_GUIDE.md organized by asset type. Input: YouTube URL or local directory with video + transcript.
+description: Extracts the visual style from a documentary or YouTube video and produces a VISUAL_STYLE_GUIDE.md that maps every visual asset type used, its narrative function, and proportion of screen time. Use this whenever the user says things like "extract the visual style", "analyze this reference video", "what visual assets does this channel use", "copy the look of this video", "figure out how this video is edited", or wants to understand how a specific YouTube channel structures its visuals. Accepts a YouTube URL or a local folder with a video + transcript.
 ---
 
 # Visual Style Extractor v2
@@ -63,16 +63,12 @@ Collect all JSON array outputs and merge them into a single flat list.
 
 **Confidence gating:** Remove any frame entries with `confidence < 3` — flag them to the user as needing manual review.
 
-Save the merged list to a file:
+Save the merged list to a file using the bundled helper (write the JSON to a temp file first, then pass it):
 ```bash
-PYTHONPATH=.claude/skills/visual-style-extractor/scripts python -c "
-import json
-analysis_results = MERGED_LIST_HERE
-with open('OUTPUT_DIR/analysis_results.json', 'w') as f:
-    json.dump(analysis_results, f, indent=2)
-print('Saved analysis_results.json')
-"
+# Write merged JSON to temp file, then save via helper
+python .claude/skills/visual-style-extractor/scripts/save_analysis.py OUTPUT_DIR '[...merged json array...]'
 ```
+Or write it directly with Python's `json.dump` to `OUTPUT_DIR/analysis_results.json`.
 
 ### 4. Run Stage 6: Synthesis
 

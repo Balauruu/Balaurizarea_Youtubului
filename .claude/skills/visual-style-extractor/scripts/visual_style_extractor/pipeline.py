@@ -3,7 +3,7 @@
 This module is called by the Claude Code skill. Stages 0-4 are automated Python.
 Stage 5 (LLM analysis) requires Claude Code subagents — this script prepares
 everything needed and outputs instructions for the skill to dispatch subagents.
-Stage 6 (synthesis) is called after subagent results are collected.
+Stage 6 (synthesis) prepares data for an LLM synthesis subagent.
 """
 
 import os
@@ -17,7 +17,7 @@ from visual_style_extractor.scene_detect import detect_scenes
 from visual_style_extractor.dedup import deduplicate_frames
 from visual_style_extractor.align import parse_transcript, align_frames, build_manifest
 from visual_style_extractor.contact_sheets import generate_contact_sheets
-from visual_style_extractor.synthesize import generate_style_guide
+from visual_style_extractor.synthesize import prepare_synthesis_input
 
 
 @dataclass
@@ -39,8 +39,10 @@ def _sanitize_dirname(name: str) -> str:
     name = re.sub(r'[<>:"/\\|?*]', '', name)
     # Collapse whitespace
     name = re.sub(r'\s+', ' ', name).strip()
+    # Strip trailing dots (Windows forbids directory names ending with '.')
+    name = name.rstrip('.')
     # Truncate to reasonable length
-    return name[:120] if name else "untitled"
+    return name[:120].rstrip('.') if name else "untitled"
 
 
 def slice_manifest(
@@ -82,7 +84,7 @@ def merge_analysis_batches(
     output_path: str,
     min_confidence: int = 3,
 ) -> tuple[int, int]:
-    """Merge per-subagent batch result files into a single analysis_results.json.
+    """Merge per-subagent batch result files into a single JSON file.
 
     Args:
         batch_paths: List of paths to JSON files, each containing a JSON array.
@@ -215,19 +217,19 @@ def run_stage_6(
     analysis_results: list[dict] | None = None,
     analysis_results_path: str | None = None,
 ) -> str:
-    """Run synthesis stage after subagent analysis is complete.
+    """Prepare synthesis input for the LLM subagent.
 
     Args:
         manifest_path: Path to frames_manifest.json.
         video_title: Title of the source video.
         video_source: URL or path of the source.
-        output_dir: Where to write VISUAL_STYLE_GUIDE.md.
+        output_dir: Output directory (used to locate scratch files).
         analysis_results: Combined JSON from all subagent outputs (inline list).
         analysis_results_path: Path to a JSON file containing analysis results
             (alternative to passing analysis_results directly).
 
     Returns:
-        Path to the generated VISUAL_STYLE_GUIDE.md.
+        Path to the synthesis input file (.claude/scratch/synthesis_input.txt).
     """
     if analysis_results is None and analysis_results_path is not None:
         with open(analysis_results_path) as f:
@@ -238,5 +240,17 @@ def run_stage_6(
     with open(manifest_path) as f:
         manifest = json.load(f)
 
-    output_path = os.path.join(output_dir, "VISUAL_STYLE_GUIDE.md")
-    return generate_style_guide(analysis_results, manifest, video_title, video_source, output_path)
+    synthesis_text = prepare_synthesis_input(
+        analysis_results, manifest, video_title, video_source,
+    )
+
+    scratch_dir = os.path.join(".claude", "scratch")
+    os.makedirs(scratch_dir, exist_ok=True)
+    synthesis_input_path = os.path.join(scratch_dir, "synthesis_input.txt")
+    with open(synthesis_input_path, "w", encoding="utf-8") as f:
+        f.write(synthesis_text)
+
+    print(f"\n[Stage 6/6] Synthesis input prepared")
+    print(f"  Written to: {synthesis_input_path}")
+
+    return synthesis_input_path

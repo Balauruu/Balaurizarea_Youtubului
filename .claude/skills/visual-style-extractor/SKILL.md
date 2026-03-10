@@ -3,11 +3,11 @@ name: visual-style-extractor
 description: Extracts the visual style from a documentary or YouTube video and produces a VISUAL_STYLE_GUIDE.md that maps every visual asset type used, its narrative function, and proportion of screen time. Use this whenever the user says things like "extract the visual style", "analyze this reference video", "what visual assets does this channel use", "copy the look of this video", "figure out how this video is edited", or wants to understand how a specific YouTube channel structures its visuals. Accepts a YouTube URL or a local folder with a video + transcript.
 ---
 
-# Visual Style Extractor v3
+# Visual Style Extractor v4
 
-Extracts the visual style from a documentary reference video, producing a `VISUAL_STYLE_GUIDE.md` that the Visual Orchestrator (Agent 1.4) and Generative Visual Engine (Agent 2.2) use to determine what visual assets to create.
+Extracts the visual style from a documentary reference video, producing a `VISUAL_STYLE_GUIDE.md` decision framework that the Visual Orchestrator (Agent 1.4) and Generative Visual Engine (Agent 2.2) use to determine what visual assets to create.
 
-The output is a **decision framework** — not an analysis report. Asset types are organized hierarchically under 5 categories, with each subtype entry providing Description, Use, Implementation, Variants, Stats, and Examples.
+The output is a **prescriptive toolkit of reusable building blocks** — not a frame analysis report. Each building block includes visual recipe, narrative triggers, anti-patterns, production rules, and variations.
 
 ## Prerequisites
 
@@ -76,7 +76,7 @@ print('Manifest slices ready')
 
 **Dispatch subagents in parallel.** For each batch, spawn one subagent (Agent tool, type: general-purpose) with this prompt:
 
-> You are analyzing documentary video frames to extract visual style information.
+> You are analyzing documentary video frames to identify reusable VISUAL PATTERNS.
 >
 > 1. Read the analysis prompt from: `PROMPT_PATH`
 > 2. Read the manifest slice from: `.claude/scratch/manifest_slice_N.json`
@@ -98,35 +98,46 @@ from visual_style_extractor.pipeline import merge_analysis_batches
 import glob
 
 batch_paths = sorted(glob.glob('.claude/scratch/analysis_batch_*.json'))
-kept, removed = merge_analysis_batches(batch_paths, 'OUTPUT_DIR/analysis_results.json')
+kept, removed = merge_analysis_batches(batch_paths, '.claude/scratch/merged_analysis.json')
 print(f'[Stage 5/6] Merged {kept} frames ({removed} removed for low confidence)')
 "
 ```
 
 If `removed > 0`, tell the user how many low-confidence frames were dropped.
 
-### 4. Run Stage 6: Synthesis
+### 4. Run Stage 6: Synthesis (LLM Subagent)
+
+**Step 1 — Prepare synthesis input data:**
 
 ```bash
 PYTHONPATH=.claude/skills/visual-style-extractor/scripts python -c "
 from visual_style_extractor.pipeline import run_stage_6
 result = run_stage_6(
-    analysis_results_path='OUTPUT_DIR/analysis_results.json',
+    analysis_results_path='.claude/scratch/merged_analysis.json',
     manifest_path='MANIFEST_PATH',
     video_title='VIDEO_TITLE',
     video_source='VIDEO_SOURCE',
     output_dir='OUTPUT_DIR',
 )
-print(f'Style guide saved to: {result}')
+print(f'Synthesis input ready: {result}')
 "
 ```
+
+**Step 2 — Spawn one synthesis subagent** (Agent tool, type: general-purpose):
+
+> You are synthesizing a visual style decision framework for documentary video production.
+>
+> 1. Read the synthesis prompt from: `.claude/skills/visual-style-extractor/scripts/visual_style_extractor/prompts/synthesis_prompt.txt`
+> 2. Read the synthesis input data from: `.claude/scratch/synthesis_input.txt`
+> 3. Follow the synthesis prompt instructions exactly to produce the decision framework
+> 4. Write the final markdown to: `OUTPUT_DIR/VISUAL_STYLE_GUIDE.md`
+> 5. Return a 1-line summary: "Visual Style Decision Framework written to OUTPUT_DIR/VISUAL_STYLE_GUIDE.md"
 
 ### 5. Present Results
 
 Show the user:
 - How many scenes were detected and unique frames analyzed
-- The top 3-5 asset types by proportion (grouped by category)
-- Any low-confidence frames that need manual review
+- The number of building blocks generated (target: 10-15)
 - The path to `VISUAL_STYLE_GUIDE.md`
 - The path to `dedup_report.json` (for auditing frame deduplication)
 
@@ -145,23 +156,24 @@ Show the user:
 
 `VISUAL_STYLE_GUIDE.md` in the output directory, structured as:
 
-1. **Asset Types** — Hierarchically organized under 5 categories:
+1. **Visual Toolkit** — 10-15 building blocks organized under 5 categories:
    - **B-Roll** — live-action/stock footage
-   - **Archival Photos** — still photographs (portraits, locations, historical)
-   - **Graphics & Animation** — motion graphics, silhouettes, maps, date cards
+   - **Archival Photos** — still photographs
+   - **Graphics & Animation** — motion graphics, silhouettes, maps, diagrams
    - **Text Elements** — quote cards, title cards, text overlays, stingers
    - **Evidence & Documentation** — documents, screen recordings, newspaper scans
 
-   Each subtype within a category has:
-   - Shotlist `visual_type` mapping (for the Visual Orchestrator)
-   - **Description**: What it looks like
-   - **Use**: Generalized narrative trigger (when to deploy)
-   - **Implementation**: How to recreate it (background, elements, overlays, colors)
-   - **Variants**: Named sub-variants observed
-   - **Stats**: Proportion, frequency, avg duration (compact)
-   - **Examples**: 2-3 frame content descriptions
+   Each building block has:
+   - **Visual**: Abstract recipe (not a frame description)
+   - **When to use**: General narrative triggers
+   - **When NOT to use**: Anti-patterns to prevent overuse
+   - **Rules**: ALWAYS/NEVER/CONSIDER constraints
+   - **Production spec**: Background, subject, treatment, duration, text, colors
+   - **Variations**: Named sub-variants with descriptions
+   - **Weight**: Relative proportion (Heavy/Medium/Light/Accent + percentage)
 
-   Subtypes are open-ended — discovered from the video, not a fixed list.
-   Transitions (black frames, color holds) are excluded.
+2. **Pacing & Sequencing Rules** — shot duration ranges, sequencing constraints, transition patterns
 
-2. **Type Mapping** — Quick-reference table mapping extracted types to shotlist `visual_type` values, grouped by category
+3. **Type Selection Decision Tree** — IF/THEN rules mapping narrative situations to building blocks
+
+4. **Quick Reference** — table mapping building blocks to shotlist types and weights

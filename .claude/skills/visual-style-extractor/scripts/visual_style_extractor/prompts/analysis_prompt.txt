@@ -1,55 +1,52 @@
-You are analyzing frames from a documentary video to extract its visual style.
-Each frame is labeled with an ID, timestamp, and narration snippet.
+You are analyzing frames from a documentary video to identify reusable VISUAL PATTERNS.
 
-For EACH frame in this contact sheet, output a JSON object with these fields:
+Think of yourself as cataloging an editor's toolkit — each frame is an instance of a
+visual tool. Your job is to identify WHICH tool is being used and document how to
+recreate it from scratch.
+
+For EACH frame in this contact sheet, output a JSON object:
 
 1. **frame_id**: The frame label (e.g., "F001")
 
-2. **category**: Classify into one of these broad categories:
-   - `b_roll` — live-action or stock footage used as visual accompaniment
-   - `archival_photos` — still photographs (portraits, locations, historical images)
-   - `graphics_animation` — motion graphics, silhouettes, maps, date cards, animated elements
-   - `text_elements` — quote cards, title cards, text overlays, keyword stingers
+2. **confidence**: Rate 1-5 how clearly you can analyze this frame.
+
+3. **pattern_name**: A short reusable label for the visual PATTERN this frame represents.
+   Examples: "silhouette_figure", "location_map", "keyword_stinger", "archival_bw_footage",
+   "date_card", "quote_card", "concept_diagram", "document_scan"
+
+   CRITICAL: Use the SAME label for frames that use the SAME visual approach.
+   If frame F005 shows a solo white silhouette on black and frame F022 shows three
+   silhouettes on red — they are BOTH "silhouette_figure". The difference is a variant,
+   not a different pattern.
+
+   Think: "What tool from the editor's toolkit is being used here?"
+
+4. **category**: One of:
+   - `b_roll` — live-action or stock footage
+   - `archival_photos` — still photographs
+   - `graphics_animation` — motion graphics, silhouettes, maps, diagrams, animated elements
+   - `text_elements` — quote cards, title cards, text overlays, stingers
    - `evidence_documentation` — documents, screen recordings, newspaper scans
-   - `transition` — black frames, color holds, film leader (pure editing beats)
+   - `transition` — black frames, color holds, film leader (will be excluded from output)
 
-3. **scene_type**: A descriptive label for this specific visual type.
-   Do NOT pick from a fixed list. Name what you see — e.g., "silhouette_animation",
-   "archival_video", "quote_card", "date_card", "map_animation", "screen_recording",
-   "keyword_stinger", "evidence_document", or any other label that accurately describes the frame.
-   If multiple frames share the same visual approach, use the same label consistently.
+5. **shotlist_type**: Closest shotlist mapping:
+   [archival_photo | archival_video | news_clip | animation | ai_generated | map |
+    text_overlay | document_scan]
 
-4. **shotlist_type**: Map to the closest shotlist category:
-   [archival_photo | archival_video | news_clip | animation | ai_generated | map | text_overlay | document_scan]
-   Use your best judgment. For example: silhouette → ai_generated, date_card → animation.
+6. **visual_recipe**: How to BUILD this pattern from scratch (not what this frame shows):
+   - background: What goes behind everything (e.g., "solid black", "deep crimson with scanlines")
+   - subject: The main visual element IN GENERAL (e.g., "human silhouette", "map outline", "text block")
+   - treatment: Post-processing (e.g., "film grain, scanlines, chromatic aberration glow")
+   - color_palette: 2-3 colors that define this PATTERN (e.g., "black, white, deep red")
+   - text_style: If text is present: font character, position, color. Otherwise "none"
 
-5. **implementation**: How to recreate this visual:
-   - background: (solid color, gradient, footage, texture, etc.)
-   - main_element: (photo, video clip, graphic, text, silhouette, etc.)
-   - overlays: (grain, scanlines, vignette, color filter, chromatic aberration, etc. — or "none")
-   - text_elements: (describe font style, position, color, case, effects — or "none")
+7. **narrative_function**: In what storytelling situation would ANY documentary use this
+   visual tool? Write a GENERAL rule that applies beyond this specific video.
+   GOOD: "Represent anonymous individuals whose identity is protected or symbolic"
+   BAD: "Show the cult leader's followers gathering in the mountains"
 
-6. **dominant_colors**: List 2-3 dominant colors as descriptive names (e.g., "deep red", "black", "warm orange").
+8. **variant_name**: If this frame shows a sub-variant of the pattern, name it.
+   E.g., for silhouette_figure: "solo", "crowd", "power_dynamic"
+   If standard/default, write "default"
 
-7. **content_description**: Describe WHAT is depicted in the frame.
-   Capture the literal visual content.
-   (e.g., "black-and-white archival footage of silhouetted figures near palm trees",
-    "bold red text reading 'CRUEL' with glitch distortion on black background")
-
-8. **narrative_trigger**: Answer: "In general, when would a documentary use this type of visual?"
-   Write a GENERALIZED rule — do NOT reference the specific story, characters, or events.
-   Think about what narrative purpose this visual type serves across any documentary.
-   (e.g., "Present direct testimony or primary-source quotes without visual distraction",
-    "Orient the audience geographically when introducing a new location",
-    "Represent anonymous or unknown individuals whose identity is protected or symbolic")
-
-9. **variants**: If this frame shows a visual variant of its scene_type, name the variant.
-   For example, a silhouette type might have variants like "solo_figure", "crowd", "power_dynamic".
-   A text overlay might have "keyword_stinger", "chapter_title", "date_stamp".
-   If no obvious variant, write "default".
-
-10. **confidence**: Rate 1-5 how clearly you can analyze this frame.
-    If below 3, note what is unclear.
-
-Output as a JSON array. Only describe what you can see.
-If you cannot determine something, say "unclear" — do not guess.
+Output as a JSON array. If you cannot determine something, write "unclear" — do not guess.

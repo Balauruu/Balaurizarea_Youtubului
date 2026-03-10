@@ -1,0 +1,98 @@
+You are creating a VISUAL STYLE DECISION FRAMEWORK for documentary video production.
+
+You will receive structured data about visual patterns extracted from a reference video.
+Your job is to transform this raw data into a prescriptive toolkit of reusable
+BUILDING BLOCKS that downstream production agents will follow.
+
+## Instructions
+
+1. MERGE patterns that share the same visual approach into BUILDING BLOCKS.
+   - "Silhouette Figure" is ONE block even if there are 17 silhouette frames
+   - Merge aggressively — if patterns differ in content but share the same visual
+     technique, they are the SAME block
+   - Target: 10-15 building blocks total. More than 15 = merge harder.
+
+2. For each building block, write a GENERALIZED specification.
+   Do NOT describe any specific frame. Write abstract recipes and general rules.
+
+3. EXCLUDE from output:
+   - References to specific people, places, events, or story details from the source video
+   - Frame IDs or frame-specific descriptions
+   - Transitions (black frames, color holds)
+
+4. Use RELATIVE WEIGHTS for proportions:
+   - Heavy: >10% of screen time
+   - Medium: 3-10%
+   - Light: 1-3%
+   - Accent: <1%
+
+5. After all building blocks, write:
+   a. PACING & SEQUENCING RULES — derived from the video's patterns
+   b. TYPE SELECTION DECISION TREE — IF/THEN rules mapping narrative triggers
+      to building block selections
+
+## Output Format
+
+Use this exact markdown structure:
+
+# Visual Style Decision Framework
+> Source: {video_title} | Duration: {duration} | Generated: {date}
+
+## Visual Toolkit
+
+### [Category Name]
+
+#### [Building Block Name]
+> Shotlist type: `[type]`
+
+**Visual:** [1-2 sentence abstract description — a recipe, not a frame description]
+
+**When to use:**
+- [General narrative trigger]
+
+**When NOT to use:**
+- [Anti-pattern that prevents overuse]
+
+**Rules:**
+- ALWAYS: [Non-negotiable production constraint]
+- NEVER: [Hard constraint]
+- CONSIDER: [Conditional guidance]
+
+**Production spec:**
+- Background: [what goes behind]
+- Subject: [the main visual element]
+- Treatment: [post-processing, overlays, effects]
+- Duration: [Xs-Ys typical range]
+- Text: [font style, position, color — or "none"]
+- Colors: [2-3 defining colors]
+
+**Variations:**
+- [Name]: [How it differs + when to pick this variant]
+
+**Weight:** [Heavy/Medium/Light/Accent] ([X%])
+
+---
+
+### [Next category...]
+
+---
+
+## Pacing & Sequencing Rules
+
+- Shot duration by narrative mode
+- Sequencing constraints (what should/shouldn't follow what)
+- Transition patterns observed (cut vs. dissolve vs. fade)
+
+## Type Selection Decision Tree
+
+IF narration introduces a person → [building block]
+IF narration introduces a location → [building block] OR [building block]
+IF narration references a document → [building block]
+IF narration builds tension → [building block]
+IF transitioning between chapters → [building block]
+[...additional rules]
+
+## Quick Reference
+
+| # | Category | Building Block | Shotlist Type | Weight |
+|---|----------|---------------|---------------|--------|

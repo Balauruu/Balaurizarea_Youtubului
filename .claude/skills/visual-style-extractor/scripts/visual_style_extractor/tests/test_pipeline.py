@@ -38,11 +38,11 @@ def test_slice_manifest(tmp_path):
 def test_merge_analysis_batches(tmp_path):
     """merge_analysis_batches combines batch files and applies confidence gating."""
     batch_0 = [
-        {"frame_id": "F001", "scene_type": "title_card", "confidence": 5},
-        {"frame_id": "F002", "scene_type": "archival_photo", "confidence": 2},
+        {"frame_id": "F001", "pattern_name": "title_card", "confidence": 5},
+        {"frame_id": "F002", "pattern_name": "archival_photo", "confidence": 2},
     ]
     batch_1 = [
-        {"frame_id": "F003", "scene_type": "news_clip", "confidence": 4},
+        {"frame_id": "F003", "pattern_name": "news_clip", "confidence": 4},
     ]
 
     (tmp_path / "batch_0.json").write_text(json.dumps(batch_0))
@@ -67,73 +67,64 @@ def test_merge_analysis_batches(tmp_path):
     assert results[1]["frame_id"] == "F003"
 
 
-def test_synthesize_hierarchical_output(tmp_path):
-    """Synthesis produces hierarchical categories with subtypes."""
-    from visual_style_extractor.synthesize import generate_style_guide
+def test_prepare_synthesis_input():
+    """prepare_synthesis_input produces structured text with pattern data."""
+    from visual_style_extractor.synthesize import prepare_synthesis_input
 
     analysis_results = [
         {
             "frame_id": "F001",
             "category": "b_roll",
-            "scene_type": "archival_video",
+            "pattern_name": "archival_bw_footage",
             "shotlist_type": "archival_video",
-            "implementation": {
+            "visual_recipe": {
                 "background": "grainy footage",
-                "main_element": "black and white scene",
-                "overlays": "film grain",
-                "text_elements": "none",
+                "subject": "black and white scene",
+                "treatment": "film grain",
+                "color_palette": "black, dark gray",
+                "text_style": "none",
             },
-            "dominant_colors": ["black", "dark gray"],
-            "content_description": "Black-and-white archival footage of a rural village.",
-            "narrative_trigger": "Establish historical context with period-authentic footage.",
-            "variants": "default",
+            "narrative_function": "Establish historical context with period-authentic footage.",
+            "variant_name": "default",
             "confidence": 5,
         },
         {
             "frame_id": "F002",
             "category": "text_elements",
-            "scene_type": "quote_card",
+            "pattern_name": "quote_card",
             "shotlist_type": "text_overlay",
-            "implementation": {
+            "visual_recipe": {
                 "background": "solid black",
-                "main_element": "white text quote",
-                "overlays": "none",
-                "text_elements": "serif font, centered, white on black",
+                "subject": "text block",
+                "treatment": "none",
+                "color_palette": "black, white",
+                "text_style": "serif font, centered, white on black",
             },
-            "dominant_colors": ["black", "white"],
-            "content_description": "White text quote on black background.",
-            "narrative_trigger": "Present direct testimony without visual distraction.",
-            "variants": "default",
+            "narrative_function": "Present direct testimony without visual distraction.",
+            "variant_name": "default",
             "confidence": 4,
         },
         {
             "frame_id": "F003",
             "category": "graphics_animation",
-            "scene_type": "silhouette_animation",
+            "pattern_name": "silhouette_figure",
             "shotlist_type": "ai_generated",
-            "implementation": {
+            "visual_recipe": {
                 "background": "deep red",
-                "main_element": "glowing white silhouette",
-                "overlays": "grain, vignette",
-                "text_elements": "none",
+                "subject": "human silhouette",
+                "treatment": "grain, vignette, chromatic aberration glow",
+                "color_palette": "black, deep red, white",
+                "text_style": "none",
             },
-            "dominant_colors": ["black", "deep red", "white"],
-            "content_description": "Glowing white silhouette on dark red background.",
-            "narrative_trigger": "Represent anonymous or unknown individuals.",
-            "variants": "solo_figure",
+            "narrative_function": "Represent anonymous or unknown individuals.",
+            "variant_name": "solo",
             "confidence": 5,
         },
         {
-            # Transition — should be excluded from output
+            # Transition — should be excluded
             "frame_id": "F004",
             "category": "transition",
-            "scene_type": "black_transition",
-            "shotlist_type": "archival_video",
-            "implementation": {"background": "pure black", "main_element": "none", "overlays": "none", "text_elements": "none"},
-            "dominant_colors": ["black"],
-            "content_description": "Pure black frame.",
-            "narrative_trigger": "Beat of silence between scenes.",
-            "variants": "default",
+            "pattern_name": "black_transition",
             "confidence": 5,
         },
     ]
@@ -149,49 +140,52 @@ def test_synthesize_hierarchical_output(tmp_path):
         ],
     }
 
-    output_path = str(tmp_path / "VISUAL_STYLE_GUIDE.md")
-    result = generate_style_guide(
-        analysis_results, manifest, "Test Video", "test_source", output_path,
+    result = prepare_synthesis_input(
+        analysis_results, manifest, "Test Video", "test_source",
     )
 
-    assert result == output_path
-    content = (tmp_path / "VISUAL_STYLE_GUIDE.md").read_text()
+    # Should be a string
+    assert isinstance(result, str)
 
-    # Check hierarchical structure
-    assert "### B-Roll" in content
-    assert "### Text Elements" in content
-    assert "### Graphics & Animation" in content
-    assert "#### Archival Video" in content
-    assert "#### Quote Card" in content
-    assert "#### Silhouette Animation" in content
+    # Should contain video metadata
+    assert "VIDEO_TITLE: Test Video" in result
+    assert "DURATION:" in result
+
+    # Should contain category headers
+    assert "=== CATEGORY: B-Roll" in result
+    assert "=== CATEGORY: Text Elements" in result
+    assert "=== CATEGORY: Graphics & Animation" in result
+
+    # Should contain pattern data
+    assert "--- PATTERN: archival_bw_footage ---" in result
+    assert "--- PATTERN: quote_card ---" in result
+    assert "--- PATTERN: silhouette_figure ---" in result
+
+    # Should include visual recipe data
+    assert "subject: human silhouette" in result
+    assert "treatment: grain, vignette, chromatic aberration glow" in result
+
+    # Should include narrative functions
+    assert "Represent anonymous or unknown individuals." in result
+
+    # Should include variants
+    assert "Variants: solo" in result
 
     # Transition should be excluded
-    assert "Black Transition" not in content
-    assert "transition" not in content.lower().split("## 2.")[0].split("### ")[1:].__str__() or True
-
-    # Check per-subtype fields
-    assert "**Description:**" in content
-    assert "**Use:**" in content
-    assert "**Implementation:**" in content
-    assert "**Variants:**" in content
-    assert "**Stats:**" in content
-    assert "**Examples:**" in content
-
-    # Check type mapping table
-    assert "## 2. Type Mapping" in content
-    assert "| Category |" in content
+    assert "black_transition" not in result
+    assert "CATEGORY: Transition" not in result
 
 
-def test_synthesize_excludes_transitions(tmp_path):
-    """Transitions are fully excluded from output."""
+def test_aggregate_excludes_transitions():
+    """Transitions are fully excluded from aggregation."""
     from visual_style_extractor.synthesize import aggregate_by_category_and_type
 
     frames = [
-        {"frame_id": "F001", "category": "transition", "scene_type": "black_transition", "confidence": 5},
-        {"frame_id": "F002", "category": "transition", "scene_type": "color_hold", "confidence": 5},
-        {"frame_id": "F003", "category": "b_roll", "scene_type": "archival_video", "confidence": 5},
-        # No category field — should infer from scene_type
-        {"frame_id": "F004", "scene_type": "fade_to_black", "confidence": 5},
+        {"frame_id": "F001", "category": "transition", "pattern_name": "black_transition", "confidence": 5},
+        {"frame_id": "F002", "category": "transition", "pattern_name": "color_hold", "confidence": 5},
+        {"frame_id": "F003", "category": "b_roll", "pattern_name": "archival_video", "confidence": 5},
+        # No category field — should infer from pattern_name
+        {"frame_id": "F004", "pattern_name": "fade_to_black", "confidence": 5},
     ]
 
     result = aggregate_by_category_and_type(frames)
@@ -204,15 +198,15 @@ def test_synthesize_excludes_transitions(tmp_path):
     assert "transition" not in result
 
 
-def test_synthesize_infers_category_from_scene_type(tmp_path):
-    """When no category field, infer from scene_type."""
+def test_aggregate_infers_category_from_pattern_name():
+    """When no category field, infer from pattern_name."""
     from visual_style_extractor.synthesize import aggregate_by_category_and_type
 
     frames = [
-        {"frame_id": "F001", "scene_type": "portrait", "confidence": 5},
-        {"frame_id": "F002", "scene_type": "location_shot", "confidence": 5},
-        {"frame_id": "F003", "scene_type": "quote_card", "confidence": 5},
-        {"frame_id": "F004", "scene_type": "screen_recording", "confidence": 4},
+        {"frame_id": "F001", "pattern_name": "portrait", "confidence": 5},
+        {"frame_id": "F002", "pattern_name": "location_shot", "confidence": 5},
+        {"frame_id": "F003", "pattern_name": "quote_card", "confidence": 5},
+        {"frame_id": "F004", "pattern_name": "screen_recording", "confidence": 4},
     ]
 
     result = aggregate_by_category_and_type(frames)
@@ -224,3 +218,82 @@ def test_synthesize_infers_category_from_scene_type(tmp_path):
     assert "quote_card" in result["text_elements"]
     assert "evidence_documentation" in result
     assert "screen_recording" in result["evidence_documentation"]
+
+
+def test_aggregate_supports_v3_scene_type_field():
+    """Backward compatibility: aggregate works with v3 scene_type field."""
+    from visual_style_extractor.synthesize import aggregate_by_category_and_type
+
+    frames = [
+        {"frame_id": "F001", "category": "b_roll", "scene_type": "archival_video", "confidence": 5},
+        {"frame_id": "F002", "category": "text_elements", "scene_type": "quote_card", "confidence": 4},
+    ]
+
+    result = aggregate_by_category_and_type(frames)
+
+    assert "b_roll" in result
+    assert "archival_video" in result["b_roll"]
+    assert "text_elements" in result
+    assert "quote_card" in result["text_elements"]
+
+
+def test_run_stage_6_writes_synthesis_input(tmp_path):
+    """run_stage_6 writes synthesis input to scratch directory."""
+    import os
+    from visual_style_extractor.pipeline import run_stage_6
+
+    analysis_results = [
+        {
+            "frame_id": "F001",
+            "category": "b_roll",
+            "pattern_name": "archival_bw_footage",
+            "shotlist_type": "archival_video",
+            "visual_recipe": {
+                "background": "grainy footage",
+                "subject": "scene",
+                "treatment": "film grain",
+                "color_palette": "black, gray",
+                "text_style": "none",
+            },
+            "narrative_function": "Historical context.",
+            "variant_name": "default",
+            "confidence": 5,
+        },
+    ]
+
+    manifest = {
+        "video_duration": 60.0,
+        "total_scenes_detected": 5,
+        "unique_frames_after_dedup": 1,
+        "frames": [
+            {"frame_id": 1, "timestamp": 0.0, "narration": "",
+             "scene_duration": 10.0, "represents_count": 1},
+        ],
+    }
+
+    # Write test data to tmp files
+    analysis_path = str(tmp_path / "analysis.json")
+    manifest_path = str(tmp_path / "manifest.json")
+    with open(analysis_path, "w") as f:
+        json.dump(analysis_results, f)
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f)
+
+    # Change to tmp_path so .claude/scratch is created there
+    original_dir = os.getcwd()
+    os.chdir(str(tmp_path))
+    try:
+        result = run_stage_6(
+            manifest_path=manifest_path,
+            video_title="Test Video",
+            video_source="test_url",
+            output_dir=str(tmp_path),
+            analysis_results_path=analysis_path,
+        )
+
+        assert os.path.exists(result)
+        content = open(result).read()
+        assert "VIDEO_TITLE: Test Video" in content
+        assert "archival_bw_footage" in content
+    finally:
+        os.chdir(original_dir)

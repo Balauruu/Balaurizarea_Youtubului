@@ -1,0 +1,62 @@
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# ============================================================
+# Testing
+# ============================================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ============================================================
+# Generated media — extracted frames, rendered outputs
+# Tracked: source reference videos and VISUAL_LANGUAGE.md
+# Not tracked: pipeline-generated intermediates (hundreds of files)
+# ============================================================
+context/visual references/*/frames/
+context/visual references/*/contact_sheets/
+context/visual references/*/cd/
+
+# Large binary video/audio source files
+*.webm
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wav
+*.mp3
+*.aac
+
+# ============================================================
+# Pipeline output projects
+# ============================================================
+projects/
+
+# ============================================================
+# Claude Code local settings (machine-specific)
+# ============================================================
+.claude/settings.local.json
+
+# ============================================================
+# OS artifacts
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini

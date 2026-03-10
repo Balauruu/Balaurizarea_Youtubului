@@ -3,11 +3,11 @@ name: visual-style-extractor
 description: Extracts the visual style from a documentary or YouTube video and produces a VISUAL_STYLE_GUIDE.md that maps every visual asset type used, its narrative function, and proportion of screen time. Use this whenever the user says things like "extract the visual style", "analyze this reference video", "what visual assets does this channel use", "copy the look of this video", "figure out how this video is edited", or wants to understand how a specific YouTube channel structures its visuals. Accepts a YouTube URL or a local folder with a video + transcript.
 ---
 
-# Visual Style Extractor v2
+# Visual Style Extractor v3
 
 Extracts the visual style from a documentary reference video, producing a `VISUAL_STYLE_GUIDE.md` that the Visual Orchestrator (Agent 1.4) and Generative Visual Engine (Agent 2.2) use to determine what visual assets to create.
 
-The output is a **decision framework** — not an analysis report. Each asset type entry tells the orchestrator *when* to use it, *what* it looks like, and *how much* to use it.
+The output is a **decision framework** — not an analysis report. Asset types are organized hierarchically under 5 categories, with each subtype entry providing Description, Use, Implementation, Variants, Stats, and Examples.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Ask the user for either:
 - **A YouTube URL** (preferred — downloads video + auto-subs automatically)
 - **A local directory path** containing a video file and a `.vtt`/`.srt`/`.txt` transcript
 
-### 2. Run Stages 0–4 (Automated Python)
+### 2. Run Stages 0-4 (Automated Python)
 
 ```bash
 PYTHONPATH=.claude/skills/visual-style-extractor/scripts python -c "
@@ -52,6 +52,8 @@ print(f'Video title: {result[\"video_title\"]}')
 Read back only the fields you need from `.claude/scratch/pipeline_result.json` using grep or targeted reads. You need: `output_dir`, `contact_sheet_paths` (count and paths), `manifest_path`, `video_title`, `video_source`, `prompt_path`.
 
 **Output directory:** For YouTube URLs, a subfolder named after the video title is created under `context/visual-references/`. For local input, the source directory is used as-is.
+
+**Progress output:** Stages 0-4 print progress to stdout automatically. The dedup stage also writes `dedup_report.json` to the output directory for auditing which frames were merged.
 
 If scene count warnings appear, ask the user if they want to re-run with adjusted threshold.
 
@@ -97,7 +99,7 @@ import glob
 
 batch_paths = sorted(glob.glob('.claude/scratch/analysis_batch_*.json'))
 kept, removed = merge_analysis_batches(batch_paths, 'OUTPUT_DIR/analysis_results.json')
-print(f'Merged {kept} frames ({removed} removed for low confidence)')
+print(f'[Stage 5/6] Merged {kept} frames ({removed} removed for low confidence)')
 "
 ```
 
@@ -123,9 +125,10 @@ print(f'Style guide saved to: {result}')
 
 Show the user:
 - How many scenes were detected and unique frames analyzed
-- The top 3-5 asset types by proportion
+- The top 3-5 asset types by proportion (grouped by category)
 - Any low-confidence frames that need manual review
 - The path to `VISUAL_STYLE_GUIDE.md`
+- The path to `dedup_report.json` (for auditing frame deduplication)
 
 ## Error Handling
 
@@ -142,11 +145,23 @@ Show the user:
 
 `VISUAL_STYLE_GUIDE.md` in the output directory, structured as:
 
-1. **Asset Type Menu** — Each asset type with:
+1. **Asset Types** — Hierarchically organized under 5 categories:
+   - **B-Roll** — live-action/stock footage
+   - **Archival Photos** — still photographs (portraits, locations, historical)
+   - **Graphics & Animation** — motion graphics, silhouettes, maps, date cards
+   - **Text Elements** — quote cards, title cards, text overlays, stingers
+   - **Evidence & Documentation** — documents, screen recordings, newspaper scans
+
+   Each subtype within a category has:
    - Shotlist `visual_type` mapping (for the Visual Orchestrator)
-   - Proportion target, frequency, duration range
-   - Generalized narrative trigger ("when to use")
-   - Visual spec: backgrounds, overlays, dominant colors
-   - Example content descriptions with frame IDs
-2. **Color Palette & Aesthetic** — Dominant colors aggregated across all frames, persistent overlays
-3. **Type Mapping** — Quick-reference table mapping extracted types to shotlist `visual_type` values
+   - **Description**: What it looks like
+   - **Use**: Generalized narrative trigger (when to deploy)
+   - **Implementation**: How to recreate it (background, elements, overlays, colors)
+   - **Variants**: Named sub-variants observed
+   - **Stats**: Proportion, frequency, avg duration (compact)
+   - **Examples**: 2-3 frame content descriptions
+
+   Subtypes are open-ended — discovered from the video, not a fixed list.
+   Transitions (black frames, color holds) are excluded.
+
+2. **Type Mapping** — Quick-reference table mapping extracted types to shotlist `visual_type` values, grouped by category

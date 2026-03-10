@@ -5,37 +5,51 @@ For EACH frame in this contact sheet, output a JSON object with these fields:
 
 1. **frame_id**: The frame label (e.g., "F001")
 
-2. **scene_type**: Classify into one of these categories (or propose "other: ___"):
-   [title_card | archival_photo | archival_video | news_clip | map_animation |
-    text_overlay | quote_card | b_roll_footage | screen_recording |
-    animated_graphic | silhouette | date_card | chapter_header |
-    evidence_document | portrait | location_shot | other: ___]
+2. **category**: Classify into one of these broad categories:
+   - `b_roll` — live-action or stock footage used as visual accompaniment
+   - `archival_photos` — still photographs (portraits, locations, historical images)
+   - `graphics_animation` — motion graphics, silhouettes, maps, date cards, animated elements
+   - `text_elements` — quote cards, title cards, text overlays, keyword stingers
+   - `evidence_documentation` — documents, screen recordings, newspaper scans
+   - `transition` — black frames, color holds, film leader (pure editing beats)
 
-3. **shotlist_type**: Map to the closest shotlist category:
+3. **scene_type**: A descriptive label for this specific visual type.
+   Do NOT pick from a fixed list. Name what you see — e.g., "silhouette_animation",
+   "archival_video", "quote_card", "date_card", "map_animation", "screen_recording",
+   "keyword_stinger", "evidence_document", or any other label that accurately describes the frame.
+   If multiple frames share the same visual approach, use the same label consistently.
+
+4. **shotlist_type**: Map to the closest shotlist category:
    [archival_photo | archival_video | news_clip | animation | ai_generated | map | text_overlay | document_scan]
-   Use your best judgment. For example: silhouette → ai_generated, chapter_header → text_overlay, date_card → animation.
+   Use your best judgment. For example: silhouette → ai_generated, date_card → animation.
 
-4. **asset_breakdown**:
-   - background: (solid color, gradient, footage, etc.)
-   - main_element: (photo, video, graphic, text, etc.)
-   - overlays: (grain, scanlines, vignette, color filter, etc. — or "none")
-   - text_elements: (describe font style, position, color — or "none")
+5. **implementation**: How to recreate this visual:
+   - background: (solid color, gradient, footage, texture, etc.)
+   - main_element: (photo, video clip, graphic, text, silhouette, etc.)
+   - overlays: (grain, scanlines, vignette, color filter, chromatic aberration, etc. — or "none")
+   - text_elements: (describe font style, position, color, case, effects — or "none")
 
-5. **dominant_colors**: List 2-3 dominant colors as descriptive names (e.g., "deep red", "black", "warm orange").
+6. **dominant_colors**: List 2-3 dominant colors as descriptive names (e.g., "deep red", "black", "warm orange").
 
-6. **content_description**: Describe WHAT is depicted in the frame.
+7. **content_description**: Describe WHAT is depicted in the frame.
    Capture the literal visual content.
    (e.g., "black-and-white archival footage of silhouetted figures near palm trees",
     "bold red text reading 'CRUEL' with glitch distortion on black background")
 
-7. **narrative_trigger**: Answer the question: "In general, when would a documentary use this type of visual?"
-   Do NOT reference the specific story or script. Write a general rule.
-   (e.g., "Used to present direct testimony or damning primary-source quotes without visual distraction",
-    "Used for geographic orientation when introducing a new location in the narrative",
-    "Used as a pacing device — a beat of darkness between high-density information segments")
+8. **narrative_trigger**: Answer: "In general, when would a documentary use this type of visual?"
+   Write a GENERALIZED rule — do NOT reference the specific story, characters, or events.
+   Think about what narrative purpose this visual type serves across any documentary.
+   (e.g., "Present direct testimony or primary-source quotes without visual distraction",
+    "Orient the audience geographically when introducing a new location",
+    "Represent anonymous or unknown individuals whose identity is protected or symbolic")
 
-8. **confidence**: Rate 1-5 how clearly you can analyze this frame.
-   If below 3, note what is unclear.
+9. **variants**: If this frame shows a visual variant of its scene_type, name the variant.
+   For example, a silhouette type might have variants like "solo_figure", "crowd", "power_dynamic".
+   A text overlay might have "keyword_stinger", "chapter_title", "date_stamp".
+   If no obvious variant, write "default".
+
+10. **confidence**: Rate 1-5 how clearly you can analyze this frame.
+    If below 3, note what is unclear.
 
 Output as a JSON array. Only describe what you can see.
 If you cannot determine something, say "unclear" — do not guess.

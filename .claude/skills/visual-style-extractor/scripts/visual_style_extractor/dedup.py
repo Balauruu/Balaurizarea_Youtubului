@@ -1,6 +1,7 @@
 """Stage 2: Perceptual hash deduplication using imagededup."""
 
 import os
+import json
 import numpy as np
 from PIL import Image
 from imagededup.methods import PHash
@@ -13,12 +14,13 @@ def _format_timestamp(seconds: float) -> str:
     return f"{m:02d}:{s:02d}"
 
 
-def _is_near_black(image_path: str, threshold: int = 25, black_ratio: float = 0.92) -> bool:
+def _is_near_black(image_path: str, threshold: int = 15, black_ratio: float = 0.92) -> bool:
     """Check if a frame is nearly all black.
 
     Args:
         image_path: Path to the image file.
         threshold: Pixel brightness below which a pixel counts as "black".
+            Default 15 — catches only true black frames, not dark footage.
         black_ratio: Fraction of pixels that must be black to classify the frame.
     """
     try:
@@ -32,7 +34,8 @@ def _is_near_black(image_path: str, threshold: int = 25, black_ratio: float = 0.
 def deduplicate_frames(
     scenes: list[SceneInfo],
     frames_dir: str,
-    max_distance_threshold: int = 6,
+    max_distance_threshold: int = 8,
+    report_path: str | None = None,
 ) -> list[dict]:
     """Deduplicate keyframes using perceptual hashing.
 
@@ -46,6 +49,9 @@ def deduplicate_frames(
         scenes: List of SceneInfo from scene detection.
         frames_dir: Directory containing extracted keyframe images.
         max_distance_threshold: Hamming distance threshold for grouping.
+            Default 8 — less aggressive than 6, preserves more dark footage.
+        report_path: If provided, write a dedup_report.json showing every
+            group, its members, the selected representative, and the reason.
 
     Returns:
         List of dicts with frame_id, frame_path, timestamp, scene_duration, represents_count.
@@ -70,7 +76,7 @@ def deduplicate_frames(
             normal_filenames.append(fname)
 
     if black_filenames:
-        print(f"Near-black frames detected: {len(black_filenames)} (will be grouped as one)")
+        print(f"  Near-black frames detected: {len(black_filenames)} (grouped as one)")
 
     # Run PHash on non-black frames only
     phasher = PHash()
@@ -87,6 +93,7 @@ def deduplicate_frames(
     # Build groups from PHash results
     assigned = set()
     groups = []
+    group_reasons = []
 
     for fname, dupes in duplicates.items():
         if fname in assigned:
@@ -95,16 +102,19 @@ def deduplicate_frames(
         for f in group:
             assigned.add(f)
         groups.append(group)
+        group_reasons.append("phash" if len(group) > 1 else "unique")
 
     # Add black frames as a single group (if any)
     if black_filenames:
         groups.append(list(black_filenames))
+        group_reasons.append("near_black")
 
     # Select representative per group (closest to median timestamp)
     result = []
+    report_groups = []
     frame_id = 1
 
-    for group in groups:
+    for group, reason in zip(groups, group_reasons):
         group_scenes = [scene_by_filename[f] for f in group if f in scene_by_filename]
         if not group_scenes:
             continue
@@ -122,6 +132,24 @@ def deduplicate_frames(
             "scene_duration": representative.duration,
             "represents_count": len(group_scenes),
         })
+
+        # Build report entry
+        report_groups.append({
+            "group_id": frame_id,
+            "reason": reason,
+            "representative": os.path.basename(representative.keyframe_path),
+            "representative_timestamp": _format_timestamp(representative.start_time),
+            "member_count": len(group),
+            "members": [
+                {
+                    "filename": f,
+                    "timestamp": _format_timestamp(scene_by_filename[f].start_time)
+                    if f in scene_by_filename else "unknown",
+                }
+                for f in group
+            ],
+        })
+
         frame_id += 1
 
     # Sort by timestamp
@@ -130,9 +158,29 @@ def deduplicate_frames(
     for i, r in enumerate(result):
         r["frame_id"] = i + 1
 
-    print(f"Deduplication: {len(scenes)} frames -> {len(result)} unique ({len(scenes) - len(result)} removed)")
+    # Count removals by reason
+    phash_removed = sum(len(g) - 1 for g, r in zip(groups, group_reasons) if r == "phash")
+    black_removed = max(0, len(black_filenames) - 1) if black_filenames else 0
+
+    print(f"  Deduplication: {len(scenes)} frames -> {len(result)} unique "
+          f"({phash_removed} phash dupes, {black_removed} near-black merged)")
 
     if len(result) < len(scenes) * 0.1:
-        print("WARNING: Dedup removed >90% of frames. Video may be too visually uniform for meaningful analysis.")
+        print("  WARNING: Dedup removed >90% of frames. Video may be too visually uniform.")
+
+    # Write dedup report if requested
+    if report_path:
+        report = {
+            "total_input_frames": len(scenes),
+            "unique_output_frames": len(result),
+            "removed_phash": phash_removed,
+            "removed_near_black": black_removed,
+            "threshold": max_distance_threshold,
+            "near_black_brightness": 15,
+            "groups": report_groups,
+        }
+        os.makedirs(os.path.dirname(report_path) or ".", exist_ok=True)
+        with open(report_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2)
 
     return result

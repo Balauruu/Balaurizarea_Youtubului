@@ -26,7 +26,7 @@ class PipelineConfig:
     output_dir: str | None = None
     adaptive_threshold: float = 3.0
     min_scene_len: int = 15
-    dedup_threshold: int = 6
+    dedup_threshold: int = 8
 
     @property
     def is_youtube(self) -> bool:
@@ -151,26 +151,34 @@ def run_stages_0_to_4(config: PipelineConfig) -> dict:
     video_path = inputs["video_path"]
     transcript_path = inputs["transcript_path"]
 
-    print(f"\n{'='*60}")
-    print(f"Video: {video_path}")
-    print(f"Transcript: {transcript_path}")
-    print(f"Output dir: {output_dir}")
-    print(f"{'='*60}\n")
+    video_title = os.path.splitext(os.path.basename(video_path))[0]
+
+    print(f"\n[Stage 0/6] Acquiring video...")
+    print(f"  Done: {video_title}")
+    print(f"  Output dir: {output_dir}")
 
     # Stage 1: Scene Detection
+    print(f"\n[Stage 1/6] Detecting scenes...")
     scenes = detect_scenes(
         video_path, output_dir,
         adaptive_threshold=config.adaptive_threshold,
         min_scene_len=config.min_scene_len,
     )
+    print(f"  Done: {len(scenes)} scenes detected (threshold: {config.adaptive_threshold})")
 
     # Stage 2: Deduplication
+    print(f"\n[Stage 2/6] Deduplicating frames...")
     frames_dir = os.path.join(output_dir, "frames")
-    unique_frames = deduplicate_frames(scenes, frames_dir, config.dedup_threshold)
+    report_path = os.path.join(output_dir, "dedup_report.json")
+    unique_frames = deduplicate_frames(
+        scenes, frames_dir, config.dedup_threshold, report_path=report_path,
+    )
 
     # Stage 3: Alignment
+    print(f"\n[Stage 3/6] Aligning transcript...")
     segments = parse_transcript(transcript_path)
     aligned_frames = align_frames(unique_frames, segments)
+    print(f"  Done: {len(segments)} subtitle cues aligned")
 
     # Get video duration from last scene
     video_duration = scenes[-1].end_time if scenes else 0.0
@@ -179,8 +187,10 @@ def run_stages_0_to_4(config: PipelineConfig) -> dict:
     build_manifest(aligned_frames, video_duration, len(scenes), manifest_path)
 
     # Stage 4: Contact Sheets
+    print(f"\n[Stage 4/6] Generating contact sheets...")
     contact_sheets_dir = os.path.join(output_dir, "contact_sheets")
     contact_sheet_paths = generate_contact_sheets(aligned_frames, contact_sheets_dir)
+    print(f"  Done: {len(contact_sheet_paths)} contact sheets ({len(aligned_frames)} frames)")
 
     # Locate prompt template
     prompt_path = os.path.join(
@@ -192,7 +202,7 @@ def run_stages_0_to_4(config: PipelineConfig) -> dict:
         "manifest_path": manifest_path,
         "contact_sheet_paths": contact_sheet_paths,
         "prompt_path": prompt_path,
-        "video_title": os.path.splitext(os.path.basename(video_path))[0],
+        "video_title": video_title,
         "video_source": config.source,
     }
 

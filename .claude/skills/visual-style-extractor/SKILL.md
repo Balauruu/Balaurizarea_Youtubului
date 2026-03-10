@@ -11,7 +11,12 @@ Extracts the visual style from a documentary reference video, producing a `VISUA
 
 Ensure dependencies are installed:
 ```bash
-pip install -r tools/visual_style_extractor/requirements.txt
+pip install -r .claude/skills/visual-style-extractor/scripts/requirements.txt
+```
+
+Verify ffmpeg is available:
+```bash
+ffmpeg -version
 ```
 
 ## Process
@@ -25,7 +30,7 @@ Ask the user for either:
 ### 2. Run Stages 0–4 (Automated Python)
 
 ```bash
-PYTHONPATH=tools python -c "
+PYTHONPATH=.claude/skills/visual-style-extractor/scripts python -c "
 from visual_style_extractor.pipeline import run_stages_0_to_4, PipelineConfig
 import json
 
@@ -60,7 +65,7 @@ Collect all JSON array outputs and merge them into a single flat list.
 
 Save the merged list to a file:
 ```bash
-PYTHONPATH=tools python -c "
+PYTHONPATH=.claude/skills/visual-style-extractor/scripts python -c "
 import json
 analysis_results = MERGED_LIST_HERE
 with open('OUTPUT_DIR/analysis_results.json', 'w') as f:
@@ -72,7 +77,7 @@ print('Saved analysis_results.json')
 ### 4. Run Stage 6: Synthesis
 
 ```bash
-PYTHONPATH=tools python -c "
+PYTHONPATH=.claude/skills/visual-style-extractor/scripts python -c "
 from visual_style_extractor.pipeline import run_stage_6
 result = run_stage_6(
     analysis_results_path='OUTPUT_DIR/analysis_results.json',

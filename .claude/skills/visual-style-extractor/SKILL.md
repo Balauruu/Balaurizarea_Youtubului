@@ -38,11 +38,18 @@ import json
 
 config = PipelineConfig(source='USER_INPUT_HERE')
 result = run_stages_0_to_4(config)
-print(json.dumps(result, indent=2))
+
+# Write result to scratch pad — do NOT keep in context
+with open('.claude/scratch/pipeline_result.json', 'w') as f:
+    json.dump(result, f, indent=2)
+print('Pipeline result saved to .claude/scratch/pipeline_result.json')
+print(f'Output dir: {result[\"output_dir\"]}')
+print(f'Contact sheets: {len(result[\"contact_sheet_paths\"])}')
+print(f'Video title: {result[\"video_title\"]}')
 "
 ```
 
-Capture the output JSON — you need `contact_sheet_paths`, `manifest_path`, `output_dir`, `video_title`, `video_source`, and `prompt_path`.
+Read back only the fields you need from `.claude/scratch/pipeline_result.json` using grep or targeted reads. You need: `output_dir`, `contact_sheet_paths` (count and paths), `manifest_path`, `video_title`, `video_source`, `prompt_path`.
 
 **Output directory:** For YouTube URLs, a subfolder named after the video title is created under `context/visual-references/`. For local input, the source directory is used as-is.
 
@@ -50,24 +57,51 @@ If scene count warnings appear, ask the user if they want to re-run with adjuste
 
 ### 3. Run Stage 5: LLM Analysis (Subagents)
 
-For each contact sheet image:
+**Preparation — generate manifest slices for each batch:**
 
-1. Read the contact sheet image using the Read tool
-2. Read the corresponding slice of `frames_manifest.json` for full narration context
-3. Read the analysis prompt from `prompt_path`
-4. Spawn a subagent (Agent tool, type: general-purpose) with:
-   - The contact sheet image path to read
-   - The manifest data for those frames (frame IDs, timestamps, narration)
-   - The analysis prompt
-   - Instructions to output a JSON array
+Group contact sheets into batches of 3-4 sheets each. For each batch, generate a manifest slice:
 
-Dispatch subagents **in parallel** (one per contact sheet, or group 2 sheets per subagent if there are many).
+```bash
+PYTHONPATH=.claude/skills/visual-style-extractor/scripts python -c "
+from visual_style_extractor.pipeline import slice_manifest
+# Repeat for each batch — adjust start/end indices (9 frames per sheet)
+slice_manifest('MANIFEST_PATH', start_idx=0, end_idx=27, output_path='.claude/scratch/manifest_slice_0.json')
+slice_manifest('MANIFEST_PATH', start_idx=27, end_idx=54, output_path='.claude/scratch/manifest_slice_1.json')
+# ... continue for remaining batches
+print('Manifest slices ready')
+"
+```
 
-Collect all JSON array outputs and merge them into a single flat list.
+**Dispatch subagents in parallel.** For each batch, spawn one subagent (Agent tool, type: general-purpose) with this prompt:
 
-**Confidence gating:** Remove any frame entries with `confidence < 3` — flag them to the user as needing manual review.
+> You are analyzing documentary video frames to extract visual style information.
+>
+> 1. Read the analysis prompt from: `PROMPT_PATH`
+> 2. Read the manifest slice from: `.claude/scratch/manifest_slice_N.json`
+> 3. For each contact sheet in your batch, read the image using the Read tool:
+>    - `CONTACT_SHEET_PATH_1`
+>    - `CONTACT_SHEET_PATH_2`
+>    - `CONTACT_SHEET_PATH_3`
+> 4. Analyze every frame following the prompt instructions
+> 5. Write your JSON array result to: `.claude/scratch/analysis_batch_N.json`
+> 6. Return only a 1-line summary: "Analyzed X frames, wrote to .claude/scratch/analysis_batch_N.json"
 
-Save the merged list to `OUTPUT_DIR/analysis_results.json`.
+Do NOT pass the prompt text, manifest data, or image contents in the subagent prompt. The subagent reads everything from files itself.
+
+**After all subagents complete — merge results:**
+
+```bash
+PYTHONPATH=.claude/skills/visual-style-extractor/scripts python -c "
+from visual_style_extractor.pipeline import merge_analysis_batches
+import glob
+
+batch_paths = sorted(glob.glob('.claude/scratch/analysis_batch_*.json'))
+kept, removed = merge_analysis_batches(batch_paths, 'OUTPUT_DIR/analysis_results.json')
+print(f'Merged {kept} frames ({removed} removed for low confidence)')
+"
+```
+
+If `removed > 0`, tell the user how many low-confidence frames were dropped.
 
 ### 4. Run Stage 6: Synthesis
 

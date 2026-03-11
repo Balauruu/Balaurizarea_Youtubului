@@ -29,11 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can trigger a scrape and video metadata (title, views, upload date, description, duration, tags) appears in the SQLite database
   3. Re-running the scraper updates existing records without creating duplicates (idempotent upserts)
   4. Scraper uses randomized delays between channels and falls back to cached data when yt-dlp fails
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Data models, registry, database layer, and tests
+- [ ] 01-02-PLAN.md -- yt-dlp scraper, CLI entry point, and data migration
 
 ### Phase 2: Query Layer + Competitor Analysis
 **Goal**: User can ask questions about competitor strategy and get data-backed answers

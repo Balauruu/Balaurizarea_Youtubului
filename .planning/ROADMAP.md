@@ -12,7 +12,7 @@ Build a competitor intelligence and topic ideation skill for a dark mysteries Yo
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Scraping Infrastructure + Data Model** - Competitor registry, yt-dlp metadata scraping, SQLite storage with resilience
+- [x] **Phase 1: Scraping Infrastructure + Data Model** - Competitor registry, yt-dlp metadata scraping, SQLite storage with resilience (completed 2026-03-11)
 - [ ] **Phase 2: Query Layer + Competitor Analysis** - Channel stats, outlier detection, topic clustering, title pattern extraction
 - [ ] **Phase 3: Topic Generation + Scoring** - Scored topic briefs with calibrated rubrics and past-topic deduplication
 - [ ] **Phase 4: Project Initialization + Metadata** - Topic selection flow, project directory creation, title variants, description
@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can trigger a scrape and video metadata (title, views, upload date, description, duration, tags) appears in the SQLite database
   3. Re-running the scraper updates existing records without creating duplicates (idempotent upserts)
   4. Scraper uses randomized delays between channels and falls back to cached data when yt-dlp fails
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 01-01-PLAN.md -- Data models, registry, database layer, and tests
@@ -100,7 +100,7 @@ Note: Phase 5 depends on Phase 2, not Phase 4. Phases 3-4 and Phase 5 could theo
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scraping Infrastructure + Data Model | 1/2 | In progress | - |
+| 1. Scraping Infrastructure + Data Model | 2/2 | Complete   | 2026-03-11 |
 | 2. Query Layer + Competitor Analysis | 0/2 | Not started | - |
 | 3. Topic Generation + Scoring | 0/2 | Not started | - |
 | 4. Project Initialization + Metadata | 0/1 | Not started | - |

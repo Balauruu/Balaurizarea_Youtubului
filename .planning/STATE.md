@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-11T17:17:43.125Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-11T17:23:27.907Z"
 last_activity: 2026-03-11 -- Plan 02-03 executed (gap closure - heuristic analysis + pytest.ini)
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 ---
@@ -67,6 +67,7 @@ Progress: [#####.....] 50%
 
 *Updated after each plan completion*
 | Phase 03-topic-generation-scoring P01 | 8 | 2 tasks | 2 files |
+| Phase 03-topic-generation-scoring P02 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,8 @@ Recent decisions affecting current work:
 - [Phase 03-topic-generation-scoring]: SequenceMatcher over fuzzywuzzy/rapidfuzz: stdlib-only, zero new dependencies
 - [Phase 03-topic-generation-scoring]: Near-duplicates flagged with warning tag rather than silently dropped -- user sees all candidates
 - [Phase 03-topic-generation-scoring]: write_topic_briefs uses overwrite semantics -- latest snapshot, no history (Phase 4 reads as current state)
+- [Phase 03-topic-generation-scoring]: cmd_topics is context-loader only: prints structured context to stdout, Claude does all heuristic generation per Architecture.md Rule 1
+- [Phase 03-topic-generation-scoring]: Prompt file stores anchored rubric verbatim: Jack the Ripper=Obscurity 1 through obscure regional cults=Obscurity 5 for consistent cross-run scoring
 
 ### Pending Todos
 
@@ -106,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T17:17:43.123Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-11T17:23:27.905Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

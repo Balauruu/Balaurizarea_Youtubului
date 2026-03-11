@@ -88,11 +88,11 @@ Plans:
   1. System scrapes YouTube search results for niche keywords sorted by recency and surfaces what is currently trending
   2. System compares YouTube autocomplete search demand against competitor topic coverage and identifies underserved topics
   3. System detects when 3+ competitors cover adjacent topics within a 30-day window and flags the convergence
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- TDD: trend_scanner.py module (autocomplete scraping, search results parsing, convergence queries, analysis.md updates)
+- [ ] 05-02-PLAN.md -- CLI trends subcommand, heuristic prompt, topics.py gap injection
 
 ## Progress
 

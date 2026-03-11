@@ -25,8 +25,8 @@
 
 ### Output
 
-- [ ] **OUTP-01**: System generates 5 scored topic briefs per run following the Topic Brief Schema (title, hook, timeline, complexity/obscurity/shock scores, estimated runtime)
-- [ ] **OUTP-02**: Generated topics are checked against `context/channel/past_topics.md` and duplicates/near-duplicates are rejected
+- [x] **OUTP-01**: System generates 5 scored topic briefs per run following the Topic Brief Schema (title, hook, timeline, complexity/obscurity/shock scores, estimated runtime)
+- [x] **OUTP-02**: Generated topics are checked against `context/channel/past_topics.md` and duplicates/near-duplicates are rejected
 - [ ] **OUTP-03**: User selects a topic from chat, and system creates `projects/N. [Video Title]/` with sequential numbering
 - [ ] **OUTP-04**: System generates 3-5 YouTube title variants per selected topic, varying hook type (question, statement, revelation)
 - [ ] **OUTP-05**: System generates 1 YouTube description per selected topic
@@ -77,8 +77,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLZ-05 | Phase 5 | Pending |
 | ANLZ-06 | Phase 5 | Pending |
 | ANLZ-07 | Phase 5 | Pending |
-| OUTP-01 | Phase 3 | Pending |
-| OUTP-02 | Phase 3 | Pending |
+| OUTP-01 | Phase 3 | Complete |
+| OUTP-02 | Phase 3 | Complete |
 | OUTP-03 | Phase 4 | Pending |
 | OUTP-04 | Phase 4 | Pending |
 | OUTP-05 | Phase 4 | Pending |

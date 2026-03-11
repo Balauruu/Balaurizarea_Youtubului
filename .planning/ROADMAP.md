@@ -59,7 +59,7 @@ Plans:
   1. System generates 5 topic briefs per run, each following the Topic Brief Schema (title, hook, timeline, scores, estimated runtime)
   2. Each topic is scored on obscurity, complexity, shock factor, and verifiability using concrete rubric anchors (not subjective LLM judgment)
   3. Generated topics are checked against past_topics.md and duplicates or near-duplicates are rejected before presentation
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 03-01-PLAN.md -- TDD: topics.py deterministic helpers (load inputs, dedup check, write briefs, chat cards)
@@ -103,6 +103,6 @@ Note: Phase 5 depends on Phase 2, not Phase 4. Phases 3-4 and Phase 5 could theo
 |-------|----------------|--------|-----------|
 | 1. Scraping Infrastructure + Data Model | 2/2 | Complete   | 2026-03-11 |
 | 2. Query Layer + Competitor Analysis | 3/3 | Complete | 2026-03-11 |
-| 3. Topic Generation + Scoring | 0/2 | Not started | - |
+| 3. Topic Generation + Scoring | 1/2 | In Progress|  |
 | 4. Project Initialization + Metadata | 0/1 | Not started | - |
 | 5. Trend Scanning + Content Gaps | 0/2 | Not started | - |

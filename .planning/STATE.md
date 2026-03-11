@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-11T21:12:22.225Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-11T21:48:33.273Z"
 last_activity: 2026-03-11 -- Plan 05-02 executed (trends CLI subcommand + heuristic prompt + topic injection)
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 12
+  completed_plans: 12
 ---
 
 ---
@@ -72,6 +72,7 @@ Progress: [##########] 100%
 | Phase 04-project-initialization-metadata P02 | 3 | 2 tasks | 2 files |
 | Phase 05-trend-scanning-content-gaps P01 | 4 | 1 tasks | 2 files |
 | Phase 05-trend-scanning-content-gaps P02 | 12 | 2 tasks | 4 files |
+| Phase 06-tech-debt-cleanup-outp02-wiring P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [05-02]: _extract_section() added independently to topics.py and cli.py — avoids cross-module import, both identical
 - [05-02]: Trend data printed before competitor analysis in cmd_topics() — Claude sees content gaps first to prioritise underserved topics
 - [05-02]: Graceful degradation explicit in load_topic_inputs() docstring — empty strings for missing trend sections
+- [Phase 06-tech-debt-cleanup-outp02-wiring]: check_duplicates() injected via instruction text in cmd_topics() — keeps dedup heuristic (Claude evaluates), deterministic function provides mechanical check
+- [Phase 06-tech-debt-cleanup-outp02-wiring]: scraper.py flat-playlist fallback committed as-is — production behavior correct, test was stale artifact
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T21:00:00Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-11T21:48:33.271Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None

@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Topic Generation + Scoring** - Scored topic briefs with calibrated rubrics and past-topic deduplication
 - [x] **Phase 4: Project Initialization + Metadata** - Topic selection flow, project directory creation, title variants, description (completed 2026-03-11)
 - [x] **Phase 5: Trend Scanning + Content Gaps** - YouTube search trends, content gap detection, cross-channel convergence (completed 2026-03-11)
-- [ ] **Phase 6: Tech Debt Cleanup + OUTP-02 Wiring** - Wire check_duplicates(), fix test regression, fix SKILL.md entry point
+- [x] **Phase 6: Tech Debt Cleanup + OUTP-02 Wiring** - Wire check_duplicates(), fix test regression, fix SKILL.md entry point (completed 2026-03-11)
 
 ## Phase Details
 
@@ -104,7 +104,7 @@ Plans:
   1. `check_duplicates()` is called as a programmatic safety net in the topics generation path
   2. `test_raises_scrape_error_after_retries_exhausted` passes with committed scraper.py changes
   3. SKILL.md documents `python -m channel_assistant.cli` as the correct entry point
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md -- Wire OUTP-02 dedup, fix scraper test regression, update SKILL.md entry point and subcommands
@@ -122,4 +122,4 @@ Note: Phase 5 depends on Phase 2, not Phase 4. Phase 6 is gap closure from v1.0 
 | 3. Topic Generation + Scoring | 1/2 | In Progress|  |
 | 4. Project Initialization + Metadata | 2/2 | Complete   | 2026-03-11 |
 | 5. Trend Scanning + Content Gaps | 2/2 | Complete   | 2026-03-11 |
-| 6. Tech Debt Cleanup + OUTP-02 Wiring | 0/1 | Pending | |
+| 6. Tech Debt Cleanup + OUTP-02 Wiring | 1/1 | Complete   | 2026-03-11 |

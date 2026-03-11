@@ -28,13 +28,14 @@ This phase manages the intellectual rigor of the documentary. It requires three 
 
 - **Agent 1.1: Channel Assistant (Strategy & Ideation)**
     - **Main Function:** Select viable topics, for future videos.
+    - **Logic:** Filters for obscurity, complexity and shock factor. Rejects previously covered topics to maintain novelty.
+    - Other Functions: Write the metadata, for the video: title, description. (this should also be done after analyzing competitors)
         - Subagents:
             - Competitor subagent :
                 1. Searches for competitors in my niche, analyzes topic selection, title selection. Retrives useful information for my channel. 
                 2. Evaluates competitor data
                 3. Retrieves useful information for my channel. 
-    - **Logic:** Filters for obscurity, complexity and shock factor. Rejects previously covered topics to maintain novelty.
-    - **Output:** A list of topics, each with 50-100 word brief estimated runtime. User will choose from chat window the topic
+    - **Output:** A list of topics, each with 50-100 word brief estimated runtime. User will choose from chat window the topic after which a file with the name of the topic selected will be created in projects with the following format “1. [Video Title]”. In the created directory a .md file with the metadata will also be created.
     
     ```
     ## Topic Brief Schema
@@ -52,11 +53,10 @@ This phase manages the intellectual rigor of the documentary. It requires three 
     ```
     - @context/Channel.md -- Channel DNA
     - @context/channel/past_topics.md -- Past topics to avoid duplication
-    - @context/competitors.md -- Competitor Data
     ```
     
 - Needs: A better way to keep track of competitors.
-- **Agent 1.2: Deep Research (The Researcher)**
+- **Agent 1.2: The Researcher**
     - **Function:** Executes comprehensive web scraping to build a factual foundation.
     - **Logic:** Uses a scrapper to scrape sources and write an in depth research about the subject.
     - **Output:** Research.md file that can be used for script writting
@@ -99,20 +99,33 @@ This phase manages the intellectual rigor of the documentary. It requires three 
     ```
     
 - **Agent 1.4: Visual Orchestrator (The Director)**
-    - ***Function:***  Parses the script to map visual continuity and determine the necessary media for every scene. This aligns with the industry standard of programmatic shot-listing.
-    - **Output: s**hotlist.json + needed_assets.json
-    
-    ```jsx
-    ## Shot List Entry
-    - **chapter**: Which script chapter
-    - **timestamp_range**: Start-end in script (by word count or narration time)
-    - **visual_type**: [archival_photo | archival_video | news_clip | animation | ai_generated | map | text_overlay | document_scan]
-    - **description**: What should be shown
-    - **source_hint**: Suggested search query or asset reference
-    - **duration_seconds**: How long this visual holds
-    - **transition**: [cut | fade | dissolve | zoom]
-    - **motion**: [ken_burns_in | ken_burns_out | pan_left | static]
+    - ***Function:***  Parses the script to map visual continuity and determine the necessary media for every scene. Outputs a loose shot list of narrative needs — not strict asset types.
+    - **Output:** `shotlist.json`
+
+    ```json
+    {
+      "shots": [
+        {
+          "id": "S001",
+          "chapter": "intro",
+          "narrative_context": "Narrator describes the remote mountain commune in 1970s Mexico",
+          "visual_need": "Remote rural settlement, mountainous terrain, 1970s feel",
+          "suggested_types": ["archival_video", "archival_photo", "broll"]
+        }
+      ]
+    }
     ```
+
+    **Shot Entry Fields:**
+    - **id**: Unique shot identifier (S001, S002, ...)
+    - **chapter**: Script chapter this shot belongs to
+    - **narrative_context**: What the narrator is saying during this shot
+    - **visual_need**: Free-text description of what visual is needed (intentionally loose)
+    - **suggested_types**: Hints, not constraints — acquisition agent can use any type that fits
+
+    **Design Principles:**
+    - No duration, priority, effects, transitions, or post-production instructions — those are the editor's domain
+    - `needed_assets.json` is no longer a separate output — the manifest serves this role
     
 
 ---
@@ -121,6 +134,14 @@ This phase manages the intellectual rigor of the documentary. It requires three 
 
 This phase translates the text script into individual, tangible media assets.
 
+**Logic:**
+
+1. All available data is gathered, archival footage, pics, clippings screenshots and B-roll.
+2. **Vectors**
+    1. https://www.svgrepo.com/ - clean, public domain SVGs
+        1. filter by solid
+    2. Vector generation - more customizable
+3. Create all animations necessary
 - Module 2.0: Asset Management System
 
 example:
@@ -148,10 +169,11 @@ example:
 
 - **Agent 2.1: Media Acquisition**
     - **Function:** Sources historical and contextual media.
-    - Triggers scrapper to execute targeted web searches historical media, documents, and news clippings and more TBD, such as: official voice recordings, old-cartoon B-roll, old footage b-roll in general that fits the visual.
+    - **Logic:** Triggers scrapper to execute targeted web searches historical media, documents, and news clippings and more TBD, such as: official voice recordings, old-cartoon B-roll, old footage b-roll in general that fits the visual.
+        - Gathered assets, especially archival don’t have to be 100% accurate, just from the same period and convey the same idea.
     - **Output:** Downloaded assets.
     - **Quality Target:** https://www.opus.pro/agent (for research only, not use in my stack.)
-- **Agent 2.2: Generative Visual Engine**
+- **Agent 2.2: Generative Visuals**
     - **Main Function:** Fills visual gaps where media is unavailable.
         - Subagents: Be able to generate prompts for different (style/assets) in parallel
             - realistic: B-roll Footage
@@ -183,6 +205,36 @@ example:
     - **Output:** The final target. A consolidated, sequentially ordered local folder.
 
 ---
+
+### Assets:
+
+**Scraping:**
+
+- archival_video
+- archival_photo
+- **Evidence & Documentation (these are all screenshotted, or pictures)**
+    - **Wiki/Encyclopedia Text Block**
+    - **Newspaper Clipping**
+    - **Document Scan**
+    - **Digital Screen Capture**
+
+**Animations (remotion):**
+
+- silhouettes animation
+- map animations
+
+**Text elements: (I will do myself)**
+
+- Quote Card
+- Testimony Card
+- Date Card
+- Keyword Stinger
+
+**Davinci Resolve: (these I will search for myself)**
+
+- BG’s
+- Overlays
+- Effects
 
 ### Resources:
 

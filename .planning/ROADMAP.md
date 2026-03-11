@@ -59,11 +59,11 @@ Plans:
   1. System generates 5 topic briefs per run, each following the Topic Brief Schema (title, hook, timeline, scores, estimated runtime)
   2. Each topic is scored on obscurity, complexity, shock factor, and verifiability using concrete rubric anchors (not subjective LLM judgment)
   3. Generated topics are checked against past_topics.md and duplicates or near-duplicates are rejected before presentation
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md -- TDD: topics.py deterministic helpers (load inputs, dedup check, write briefs, chat cards)
+- [ ] 03-02-PLAN.md -- CLI topics subcommand + anchored scoring rubric prompt
 
 ### Phase 4: Project Initialization + Metadata
 **Goal**: User can select a topic and the system creates a ready-to-use project directory with YouTube-optimized metadata

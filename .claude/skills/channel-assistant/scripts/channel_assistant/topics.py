@@ -18,6 +18,21 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 
+def _extract_section(content: str, header: str) -> str:
+    """Extract text between '## Header' and next '## ' heading or EOF.
+
+    Returns empty string if header not found.
+    """
+    pattern = re.compile(
+        r"^## " + re.escape(header) + r"\s*\n(.*?)(?=^## |\Z)",
+        re.DOTALL | re.MULTILINE,
+    )
+    match = pattern.search(content)
+    if match:
+        return match.group(1).strip()
+    return ""
+
+
 def _load_past_topics(path: Path) -> list[str]:
     """Read past_topics.md and return a list of title strings.
 
@@ -82,13 +97,16 @@ def load_topic_inputs(root: Path) -> dict:
 
     Returns:
         {
-            "analysis": str,      # contents of context/competitors/analysis.md
-            "channel_dna": str,   # contents of context/channel/channel.md
+            "analysis": str,           # contents of context/competitors/analysis.md
+            "channel_dna": str,        # contents of context/channel/channel.md
             "past_topics": list[str],  # titles from context/channel/past_topics.md
+            "trends": str,             # ## Trending Topics section from analysis.md (empty if absent)
+            "content_gaps": str,       # ## Content Gaps section from analysis.md (empty if absent)
         }
 
     Raises FileNotFoundError for missing analysis.md or channel.md.
     Returns empty list for missing past_topics.md.
+    Returns empty strings for trends/content_gaps if trends has not been run yet.
     """
     analysis_path = root / "context" / "competitors" / "analysis.md"
     channel_dna_path = root / "context" / "channel" / "channel.md"
@@ -103,10 +121,16 @@ def load_topic_inputs(root: Path) -> dict:
     channel_dna = channel_dna_path.read_text(encoding="utf-8")
     past_topics = _load_past_topics(past_topics_path)
 
+    # Extract trend sections from analysis.md (empty strings if not yet present)
+    trends_section = _extract_section(analysis, "Trending Topics")
+    gaps_section = _extract_section(analysis, "Content Gaps")
+
     return {
         "analysis": analysis,
         "channel_dna": channel_dna,
         "past_topics": past_topics,
+        "trends": trends_section,
+        "content_gaps": gaps_section,
     }
 
 

@@ -302,6 +302,21 @@ def cmd_topics(args: argparse.Namespace, root: Path) -> None:
     analysis = inputs["analysis"]
     channel_dna = inputs["channel_dna"]
     past_topics = inputs["past_topics"]
+    trends = inputs.get("trends", "")
+    content_gaps = inputs.get("content_gaps", "")
+
+    # Print trend data if available (injected before analysis so Claude prioritises gaps)
+    if trends or content_gaps:
+        print("## Trend Data")
+        print()
+        if content_gaps:
+            print("### Content Gaps (prioritize these)")
+            print(content_gaps)
+            print()
+        if trends:
+            print("### Trending Topics")
+            print(trends)
+            print()
 
     # Print Competitor Analysis summary (first 50 lines or full if short)
     analysis_lines = analysis.splitlines()

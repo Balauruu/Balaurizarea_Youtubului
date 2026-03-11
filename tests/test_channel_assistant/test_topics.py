@@ -199,11 +199,13 @@ class TestLoadTopicInputs:
         )
 
         inputs = load_topic_inputs(tmp_path)
-        assert set(inputs.keys()) == {"analysis", "channel_dna", "past_topics"}
+        assert set(inputs.keys()) == {"analysis", "channel_dna", "past_topics", "trends", "content_gaps"}
         assert isinstance(inputs["analysis"], str)
         assert isinstance(inputs["channel_dna"], str)
         assert isinstance(inputs["past_topics"], list)
         assert inputs["past_topics"] == ["The Matamoros Murders"]
+        assert isinstance(inputs["trends"], str)
+        assert isinstance(inputs["content_gaps"], str)
 
     def test_reads_file_contents_correctly(self, tmp_path):
         from channel_assistant.topics import load_topic_inputs

@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Data models, registry, database layer, and tests
+- [x] 01-01-PLAN.md -- Data models, registry, database layer, and tests
 - [ ] 01-02-PLAN.md -- yt-dlp scraper, CLI entry point, and data migration
 
 ### Phase 2: Query Layer + Competitor Analysis
@@ -100,7 +100,7 @@ Note: Phase 5 depends on Phase 2, not Phase 4. Phases 3-4 and Phase 5 could theo
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scraping Infrastructure + Data Model | 0/2 | Not started | - |
+| 1. Scraping Infrastructure + Data Model | 1/2 | In progress | - |
 | 2. Query Layer + Competitor Analysis | 0/2 | Not started | - |
 | 3. Topic Generation + Scoring | 0/2 | Not started | - |
 | 4. Project Initialization + Metadata | 0/1 | Not started | - |

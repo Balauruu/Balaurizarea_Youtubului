@@ -7,9 +7,9 @@
 
 ### Data Foundation
 
-- [ ] **DATA-01**: User can define a competitor watchlist in a JSON config file with channel name, YouTube channel ID/URL, and notes
+- [x] **DATA-01**: User can define a competitor watchlist in a JSON config file with channel name, YouTube channel ID/URL, and notes
 - [ ] **DATA-02**: System scrapes video metadata (title, views, upload date, description, duration, tags) for all channels in the registry via yt-dlp
-- [ ] **DATA-03**: Scraped data is stored in a SQLite database with `channels` and `videos` tables, each record timestamped with `scraped_at`
+- [x] **DATA-03**: Scraped data is stored in a SQLite database with `channels` and `videos` tables, each record timestamped with `scraped_at`
 - [ ] **DATA-04**: Scraper uses rate limiting (jittered delays) and falls back to cached data on yt-dlp failure
 - [ ] **DATA-05**: User can view per-channel summary stats: total videos, average views, median views, upload frequency, most recent upload
 
@@ -65,9 +65,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete (01-01) |
 | DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Complete (01-01) |
 | DATA-04 | Phase 1 | Pending |
 | DATA-05 | Phase 2 | Pending |
 | ANLZ-01 | Phase 2 | Pending |

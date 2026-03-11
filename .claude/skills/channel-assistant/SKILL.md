@@ -18,7 +18,7 @@ Competitor intelligence and topic ideation for the dark mysteries YouTube channe
 Register a new competitor channel. Validates the URL/handle, adds to `competitors.json`. Does NOT auto-scrape.
 
 ```bash
-python .claude/skills/channel-assistant/scripts/channel_assistant/cli.py add "https://www.youtube.com/@ChannelHandle"
+python -m channel_assistant.cli add "https://www.youtube.com/@ChannelHandle"
 ```
 
 ### `scrape`
@@ -26,7 +26,7 @@ python .claude/skills/channel-assistant/scripts/channel_assistant/cli.py add "ht
 Scrape all registered competitor channels. Fetches all video metadata via yt-dlp and stores in SQLite. Uses 3-8 second jittered delays between channels. Retries up to 2 times per channel on failure, falls back to cached data.
 
 ```bash
-python .claude/skills/channel-assistant/scripts/channel_assistant/cli.py scrape
+python -m channel_assistant.cli scrape
 ```
 
 Output format:
@@ -45,7 +45,7 @@ Done. 1 channel failed (cached data used).
 Scrape a specific channel by name (case-insensitive partial match).
 
 ```bash
-python .claude/skills/channel-assistant/scripts/channel_assistant/cli.py scrape "barely"
+python -m channel_assistant.cli scrape "barely"
 ```
 
 ### `status`
@@ -53,7 +53,7 @@ python .claude/skills/channel-assistant/scripts/channel_assistant/cli.py scrape 
 Show summary table of all tracked channels with video counts and scrape status.
 
 ```bash
-python .claude/skills/channel-assistant/scripts/channel_assistant/cli.py status
+python -m channel_assistant.cli status
 ```
 
 Output format:
@@ -63,6 +63,30 @@ Channel            Videos  Last Scraped   Latest Upload
 Barely Sociable     47      2026-03-11     2026-02-15
 Unnamed TV          23      2026-03-05     2026-01-20
 Fredrik Knudsen     39      2026-03-11     2025-12-01
+```
+
+### `analyze`
+
+Run competitor analysis: channel stats, outlier detection, topic clustering, title patterns. Generates `context/competitors/analysis.md` and writes serialized video data to `.claude/scratch/video_data_for_analysis.md` for Claude heuristic reasoning.
+
+```bash
+python -m channel_assistant.cli analyze
+```
+
+### `topics`
+
+Load context for topic generation: competitor analysis, channel DNA, past topics, trend data. Prints structured context to stdout for Claude to generate scored topic briefs. After context is printed, Claude performs the [HEURISTIC] generation, scoring, and deduplication steps using `check_duplicates()`.
+
+```bash
+python -m channel_assistant.cli topics
+```
+
+### `trends`
+
+Scan YouTube for trending topics and content gaps. Scrapes autocomplete suggestions and recent search results for niche keywords, detects cross-channel convergence, updates `analysis.md` with trend sections.
+
+```bash
+python -m channel_assistant.cli trends
 ```
 
 ## File Locations
@@ -81,6 +105,10 @@ Fredrik Knudsen     39      2026-03-11     2025-12-01
 | `registry.py` | `Registry` | Read/write/validate competitors.json |
 | `database.py` | `Database` | SQLite schema creation, upserts, queries |
 | `cli.py` | (entry point) | Argparse CLI with subcommands |
+| `analyzer.py` | `compute_channel_stats`, `detect_outliers`, `format_stats_table`, `serialize_videos_for_analysis` | Channel statistics and outlier detection |
+| `topics.py` | `load_topic_inputs`, `check_duplicates`, `write_topic_briefs`, `format_chat_cards` | Topic generation helpers and dedup |
+| `trend_scanner.py` | `scrape_autocomplete`, `scrape_search_results`, `get_recent_competitor_videos`, `derive_keywords` | YouTube trend scanning |
+| `project_init.py` | `load_project_inputs`, `init_project` | Project directory creation and metadata |
 
 ## Schema Notes
 
@@ -98,5 +126,5 @@ Fredrik Knudsen     39      2026-03-11     2025-12-01
 ## Entry Point
 
 ```bash
-python .claude/skills/channel-assistant/scripts/channel_assistant/cli.py <subcommand> [args]
+python -m channel_assistant.cli <subcommand> [args]
 ```

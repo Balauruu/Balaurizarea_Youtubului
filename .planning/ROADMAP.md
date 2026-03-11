@@ -104,9 +104,10 @@ Plans:
   1. `check_duplicates()` is called as a programmatic safety net in the topics generation path
   2. `test_raises_scrape_error_after_retries_exhausted` passes with committed scraper.py changes
   3. SKILL.md documents `python -m channel_assistant.cli` as the correct entry point
+**Plans:** 1 plan
 
 Plans:
-- [ ] 06-01-PLAN.md -- Wire OUTP-02 dedup, fix scraper test regression, fix SKILL.md
+- [ ] 06-01-PLAN.md -- Wire OUTP-02 dedup, fix scraper test regression, update SKILL.md entry point and subcommands
 
 ## Progress
 

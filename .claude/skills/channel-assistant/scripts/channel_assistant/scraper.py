@@ -91,10 +91,73 @@ def _parse_channel(raw: dict, scraped_at: str) -> Channel:
     )
 
 
+def _run_ytdlp(cmd: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
+    """Run yt-dlp with retry logic.
+
+    Returns:
+        CompletedProcess with stdout containing JSON lines.
+
+    Raises:
+        ScrapeError: After all retries exhausted.
+    """
+    max_attempts = 3
+    delay = 5
+    last_error = ""
+
+    for attempt in range(max_attempts):
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout
+        )
+
+        if result.returncode == 0 and result.stdout.strip():
+            return result
+
+        last_error = result.stderr.strip() or "Unknown error"
+
+        if attempt < max_attempts - 1:
+            time.sleep(delay * (attempt + 1))
+
+    raise ScrapeError(
+        f"yt-dlp failed after {max_attempts} attempts: {last_error}"
+    )
+
+
+def _parse_flat_video(raw: dict, channel_id: str, scraped_at: str) -> Video:
+    """Parse a flat-playlist JSON entry into a Video dataclass."""
+    return Video(
+        video_id=raw.get("id", ""),
+        channel_id=channel_id,
+        title=raw.get("title", ""),
+        url=raw.get("webpage_url") or raw.get("url"),
+        views=raw.get("view_count"),
+        upload_date=_format_upload_date(raw.get("upload_date")),
+        description=raw.get("description"),
+        duration=int(raw["duration"]) if raw.get("duration") else None,
+        tags=raw.get("tags"),
+        likes=raw.get("like_count"),
+        scraped_at=scraped_at,
+    )
+
+
+def _parse_flat_channel(raw: dict, scraped_at: str) -> Channel:
+    """Extract Channel metadata from a flat-playlist JSON entry."""
+    return Channel(
+        name=raw.get("playlist_channel") or raw.get("playlist_uploader") or raw.get("playlist", ""),
+        youtube_id=raw.get("playlist_channel_id") or raw.get("channel_id") or "",
+        handle=raw.get("playlist_uploader_id"),
+        url=raw.get("channel_url") or f"https://www.youtube.com/{raw.get('playlist_uploader_id', '')}",
+        subscribers=raw.get("channel_follower_count"),
+        scraped_at=scraped_at,
+    )
+
+
 def scrape_channel(
     channel_url: str, timeout: int = 300
 ) -> tuple[Channel, list[Video]]:
     """Scrape all video metadata from a YouTube channel via yt-dlp.
+
+    Tries full metadata first, falls back to --flat-playlist if the
+    channel requires authentication (e.g. age-restricted).
 
     Args:
         channel_url: YouTube channel URL (e.g. https://www.youtube.com/@BarelySociable)
@@ -110,36 +173,50 @@ def scrape_channel(
     if not url.endswith("/videos"):
         url = url + "/videos"
 
-    cmd = [
+    # Try full metadata first
+    cmd_full = [
         "yt-dlp",
         "--dump-json",
         "--skip-download",
         "--no-warnings",
+        "--ignore-errors",
         url,
     ]
 
-    max_attempts = 3  # 1 initial + 2 retries
-    delay = 5
-    last_error = ""
+    try:
+        result = _run_ytdlp(cmd_full, timeout)
+    except ScrapeError:
+        # Fall back to --flat-playlist (bypasses age gate)
+        logger.info("Full scrape failed, trying --flat-playlist for %s", url)
+        cmd_flat = [
+            "yt-dlp",
+            "--flat-playlist",
+            "--dump-json",
+            "--skip-download",
+            "--no-warnings",
+            url,
+        ]
+        result = _run_ytdlp(cmd_flat, timeout)
 
-    for attempt in range(max_attempts):
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout
-        )
+        scraped_at = _now_iso()
+        raw_videos = []
+        for line in result.stdout.strip().split("\n"):
+            line = line.strip()
+            if line:
+                raw_videos.append(json.loads(line))
 
-        if result.returncode == 0 and result.stdout.strip():
-            break
+        if not raw_videos:
+            raise ScrapeError(f"No videos found for {channel_url}")
 
-        last_error = result.stderr.strip() or "Unknown error"
+        channel = _parse_flat_channel(raw_videos[0], scraped_at)
+        channel_id = channel.youtube_id
+        videos = [
+            _parse_flat_video(raw, channel_id, scraped_at)
+            for raw in raw_videos
+        ]
+        return channel, videos
 
-        if attempt < max_attempts - 1:
-            time.sleep(delay * (attempt + 1))
-    else:
-        raise ScrapeError(
-            f"yt-dlp failed after {max_attempts} attempts: {last_error}"
-        )
-
-    # Parse JSON-lines output
+    # Parse full JSON-lines output
     scraped_at = _now_iso()
     raw_videos = []
     for line in result.stdout.strip().split("\n"):

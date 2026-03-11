@@ -23,7 +23,7 @@ from .database import Database
 from .registry import Registry
 from .scraper import scrape_all_channels, scrape_single_channel
 from .migrate import run_migration, delete_old_files
-from .topics import load_topic_inputs
+from .topics import load_topic_inputs, check_duplicates
 from .project_init import load_project_inputs
 from .trend_scanner import (
     scrape_autocomplete,
@@ -371,8 +371,10 @@ def cmd_topics(args: argparse.Namespace, root: Path) -> None:
     # Instruction line for Claude
     print(
         "Context loaded. Use the generation prompt to generate 10-15 topic briefs. "
-        "Write results using write_topic_briefs() and format_chat_cards() "
-        "from channel_assistant.topics"
+        "REQUIRED dedup step: call check_duplicates(title, past_topics, threshold=0.85) "
+        "for each brief title and set brief['duplicate_of'] = result before calling "
+        "write_topic_briefs(). Import: from channel_assistant.topics import check_duplicates. "
+        "Then format_chat_cards() for display."
     )
 
     # Project initialization guidance (printed after topic briefs are generated

@@ -186,7 +186,7 @@ class TestScrapeChannel:
         with pytest.raises(ScrapeError, match="yt-dlp timeout"):
             scrape_channel("https://www.youtube.com/@TestChannel")
 
-        assert mock_run.call_count == 3  # 1 initial + 2 retries
+        assert mock_run.call_count == 6  # 3 attempts (full) + 3 attempts (flat-playlist fallback)
 
     @patch("channel_assistant.scraper.subprocess.run")
     def test_tags_preserved_as_list(self, mock_run):

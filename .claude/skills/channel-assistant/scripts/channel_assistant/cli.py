@@ -21,6 +21,7 @@ from .registry import Registry
 from .scraper import scrape_all_channels, scrape_single_channel
 from .migrate import run_migration, delete_old_files
 from .topics import load_topic_inputs
+from .project_init import load_project_inputs
 
 
 def _get_project_root() -> Path:
@@ -348,6 +349,20 @@ def cmd_topics(args: argparse.Namespace, root: Path) -> None:
         "Write results using write_topic_briefs() and format_chat_cards() "
         "from channel_assistant.topics"
     )
+
+    # Project initialization guidance (printed after topic briefs are generated
+    # and the user selects a topic number)
+    prompt_path = root / ".claude" / "skills" / "channel-assistant" / "prompts" / "project_init.md"
+    print()
+    print("## Project Initialization")
+    print()
+    print("After generating topic briefs and the user selects a topic by number [N]:")
+    print("1. Call load_project_inputs(root, N) to get the selected brief and title patterns")
+    print("2. Read the project_init prompt: .claude/skills/channel-assistant/prompts/project_init.md")
+    print("3. Generate 5 title variants + 1 description (HEURISTIC)")
+    print("4. Call init_project() with structured data (DETERMINISTIC)")
+    print()
+    print(f"Prompt file: {prompt_path}")
 
 
 def main() -> None:

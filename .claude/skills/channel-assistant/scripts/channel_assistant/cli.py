@@ -1,14 +1,21 @@
 """CLI entry point for the channel assistant skill.
 
-Provides subcommands: add, scrape, status, migrate.
+Provides subcommands: add, scrape, status, migrate, analyze.
 """
 
 import argparse
 import json
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
+from .analyzer import (
+    compute_channel_stats,
+    detect_outliers,
+    format_stats_table,
+    serialize_videos_for_analysis,
+)
 from .database import Database
 from .registry import Registry
 from .scraper import scrape_all_channels, scrape_single_channel
@@ -148,6 +155,121 @@ def cmd_migrate(args: argparse.Namespace, db: Database, root: Path) -> None:
     print("\nMigration complete.")
 
 
+def cmd_analyze(args: argparse.Namespace, db: Database, root: Path) -> None:
+    """Handle 'analyze' subcommand: compute stats, detect outliers, write report."""
+    db.init_db()
+
+    channels = db.get_all_channels()
+    if not channels:
+        print("No channels in database. Run 'scrape' first.")
+        return
+
+    # Freshness check
+    now = datetime.now(timezone.utc)
+    for ch in channels:
+        ch_stats = db.get_channel_stats(ch.youtube_id)
+        last_scraped = ch_stats.get("last_scraped")
+        if last_scraped:
+            try:
+                scraped_dt = datetime.fromisoformat(
+                    last_scraped.replace("Z", "+00:00")
+                )
+                age_days = (now - scraped_dt).days
+                if age_days > 7:
+                    print(
+                        f"Warning: {ch.name} data is {age_days} days old "
+                        f"(last scraped: {last_scraped[:10]})"
+                    )
+            except (ValueError, TypeError):
+                pass
+
+    # Compute stats and outliers for each channel
+    all_stats = []
+    all_outliers = []
+    all_videos_by_channel: dict[str, list] = {}
+    total_video_count = 0
+
+    for ch in channels:
+        videos = db.get_videos_by_channel(ch.youtube_id)
+        total_video_count += len(videos)
+
+        stats = compute_channel_stats(ch, videos)
+        all_stats.append(stats)
+
+        outliers = detect_outliers(ch, videos)
+        all_outliers.extend(outliers)
+
+        all_videos_by_channel[ch.name] = videos
+
+    # Sort all outliers by multiplier descending
+    all_outliers.sort(key=lambda x: x["multiplier"], reverse=True)
+
+    # Build report
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    stats_table = format_stats_table(all_stats)
+
+    report_lines = [
+        "# Competitor Analysis Report",
+        "",
+        f"*Generated: {timestamp}*",
+        "",
+        "## Channel Stats",
+        "",
+        stats_table,
+        "",
+        "## Outlier Videos",
+        "",
+    ]
+
+    if all_outliers:
+        for o in all_outliers:
+            report_lines.append(
+                f"- **{o['title']}** ({o['channel']}) -- "
+                f"{o['views']:,} views -- {o['multiplier']}x median"
+            )
+    else:
+        report_lines.append(
+            "No outlier videos detected (threshold: 2x channel median)."
+        )
+
+    report_lines.extend([
+        "",
+        "## Topic Clusters",
+        "",
+        "<!-- HEURISTIC: To be completed by Claude reasoning over video_data_for_analysis.md -->",
+        "",
+        "## Title Patterns",
+        "",
+        "<!-- HEURISTIC: To be completed by Claude reasoning over video_data_for_analysis.md -->",
+        "",
+    ])
+
+    # Write report
+    report_path = root / "context" / "competitors" / "analysis.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text("\n".join(report_lines), encoding="utf-8")
+
+    # Write serialized video data for heuristic analysis
+    scratch_path = root / ".claude" / "scratch" / "video_data_for_analysis.md"
+    scratch_path.parent.mkdir(parents=True, exist_ok=True)
+    serialized = serialize_videos_for_analysis(all_videos_by_channel)
+    scratch_header = (
+        "# Video Data for Heuristic Analysis\n\n"
+        "This file contains all competitor video data grouped by channel, "
+        "sorted by views descending.\n"
+        "Use this data for topic clustering and title pattern analysis.\n\n"
+    )
+    scratch_path.write_text(scratch_header + serialized, encoding="utf-8")
+
+    # Summary
+    print(
+        f"Analysis complete. {len(channels)} channels, "
+        f"{total_video_count} videos analyzed. "
+        f"{len(all_outliers)} outliers found. "
+        f"Full report: context/competitors/analysis.md"
+    )
+
+
 def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -181,6 +303,11 @@ def main() -> None:
         "migrate", help="Migrate existing competitor data into SQLite"
     )
 
+    # analyze subcommand
+    subparsers.add_parser(
+        "analyze", help="Analyze competitor channels: stats, outliers, and data export"
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -200,6 +327,8 @@ def main() -> None:
         cmd_status(args, db)
     elif args.command == "migrate":
         cmd_migrate(args, db, root)
+    elif args.command == "analyze":
+        cmd_analyze(args, db, root)
 
 
 if __name__ == "__main__":

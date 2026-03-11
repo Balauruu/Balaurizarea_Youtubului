@@ -1,6 +1,6 @@
 """CLI entry point for the channel assistant skill.
 
-Provides subcommands: add, scrape, status, migrate, analyze.
+Provides subcommands: add, scrape, status, migrate, analyze, topics.
 """
 
 import argparse
@@ -20,6 +20,7 @@ from .database import Database
 from .registry import Registry
 from .scraper import scrape_all_channels, scrape_single_channel
 from .migrate import run_migration, delete_old_files
+from .topics import load_topic_inputs
 
 
 def _get_project_root() -> Path:
@@ -270,6 +271,85 @@ def cmd_analyze(args: argparse.Namespace, db: Database, root: Path) -> None:
     )
 
 
+def cmd_topics(args: argparse.Namespace, root: Path) -> None:
+    """Handle 'topics' subcommand: load context for topic generation.
+
+    Loads competitor analysis, channel DNA, and past topics from disk.
+    Prints a structured summary to stdout for Claude to reason over.
+    Claude (the agent running this command) then performs the [HEURISTIC]
+    generation, scoring, and deduplication steps.
+
+    Does NOT call any LLM API — context-loader only.
+    """
+    try:
+        inputs = load_topic_inputs(root)
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        print("Run 'analyze' first to generate context/competitors/analysis.md")
+        sys.exit(1)
+
+    analysis = inputs["analysis"]
+    channel_dna = inputs["channel_dna"]
+    past_topics = inputs["past_topics"]
+
+    # Print Competitor Analysis summary (first 50 lines or full if short)
+    analysis_lines = analysis.splitlines()
+    print("## Competitor Analysis Summary")
+    print()
+    if len(analysis_lines) <= 50:
+        print(analysis)
+    else:
+        print("\n".join(analysis_lines[:50]))
+        print(f"... [{len(analysis_lines) - 50} more lines — full file at context/competitors/analysis.md]")
+    print()
+
+    # Print Past Topics list
+    print("## Past Topics")
+    print()
+    if past_topics:
+        for title in past_topics:
+            print(f"- {title}")
+    else:
+        print("None yet")
+    print()
+
+    # Print Channel DNA (content pillars section)
+    print("## Channel DNA")
+    print()
+    # Extract just the content pillars section if possible, else print full content
+    pillar_start = channel_dna.find("## Core Content Pillars")
+    criteria_end = channel_dna.find("## Differentiation Strategy")
+    if pillar_start != -1 and criteria_end != -1:
+        print(channel_dna[pillar_start:criteria_end].strip())
+    elif pillar_start != -1:
+        # Print from pillars to end of topic selection criteria
+        print(channel_dna[pillar_start:].strip()[:1500])
+    else:
+        print(channel_dna[:1500])
+    print()
+
+    # Print generation prompt path
+    prompt_path = root / ".claude" / "skills" / "channel-assistant" / "prompts" / "topic_generation.md"
+    print("## Generation Prompt")
+    print()
+    print(f"Prompt file: {prompt_path}")
+    print()
+
+    # Print output target
+    output_path = root / "context" / "topics" / "topic_briefs.md"
+    print("## Output Target")
+    print()
+    print(f"{output_path}")
+    print()
+
+    # Instruction line for Claude
+    print(
+        "Context loaded. Use the generation prompt to generate 10-15 topic briefs. "
+        "Write results using write_topic_briefs() and format_chat_cards() "
+        "from channel_assistant.topics"
+    )
+
+
 def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -308,6 +388,11 @@ def main() -> None:
         "analyze", help="Analyze competitor channels: stats, outliers, and data export"
     )
 
+    # topics subcommand
+    subparsers.add_parser(
+        "topics", help="Load context for topic generation (10-15 scored briefs)"
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -329,6 +414,8 @@ def main() -> None:
         cmd_migrate(args, db, root)
     elif args.command == "analyze":
         cmd_analyze(args, db, root)
+    elif args.command == "topics":
+        cmd_topics(args, root)
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Query Layer + Competitor Analysis** - Channel stats, outlier detection, topic clustering, title pattern extraction (completed 2026-03-11)
 - [ ] **Phase 3: Topic Generation + Scoring** - Scored topic briefs with calibrated rubrics and past-topic deduplication
 - [x] **Phase 4: Project Initialization + Metadata** - Topic selection flow, project directory creation, title variants, description (completed 2026-03-11)
-- [ ] **Phase 5: Trend Scanning + Content Gaps** - YouTube search trends, content gap detection, cross-channel convergence
+- [x] **Phase 5: Trend Scanning + Content Gaps** - YouTube search trends, content gap detection, cross-channel convergence (completed 2026-03-11)
 
 ## Phase Details
 
@@ -88,11 +88,11 @@ Plans:
   1. System scrapes YouTube search results for niche keywords sorted by recency and surfaces what is currently trending
   2. System compares YouTube autocomplete search demand against competitor topic coverage and identifies underserved topics
   3. System detects when 3+ competitors cover adjacent topics within a 30-day window and flags the convergence
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 05-01-PLAN.md -- TDD: trend_scanner.py module (autocomplete scraping, search results parsing, convergence queries, analysis.md updates)
-- [ ] 05-02-PLAN.md -- CLI trends subcommand, heuristic prompt, topics.py gap injection
+- [x] 05-01-PLAN.md -- TDD: trend_scanner.py module (autocomplete scraping, search results parsing, convergence queries, analysis.md updates)
+- [x] 05-02-PLAN.md -- CLI trends subcommand, heuristic prompt, topics.py gap injection
 
 ## Progress
 
@@ -106,4 +106,4 @@ Note: Phase 5 depends on Phase 2, not Phase 4. Phases 3-4 and Phase 5 could theo
 | 2. Query Layer + Competitor Analysis | 3/3 | Complete | 2026-03-11 |
 | 3. Topic Generation + Scoring | 1/2 | In Progress|  |
 | 4. Project Initialization + Metadata | 2/2 | Complete   | 2026-03-11 |
-| 5. Trend Scanning + Content Gaps | 1/2 | In Progress|  |
+| 5. Trend Scanning + Content Gaps | 2/2 | Complete   | 2026-03-11 |

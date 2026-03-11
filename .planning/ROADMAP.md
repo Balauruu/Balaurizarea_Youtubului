@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md -- Data models, registry, database layer, and tests
-- [ ] 01-02-PLAN.md -- yt-dlp scraper, CLI entry point, and data migration
+- [x] 01-02-PLAN.md -- yt-dlp scraper, CLI entry point, and data migration
 
 ### Phase 2: Query Layer + Competitor Analysis
 **Goal**: User can ask questions about competitor strategy and get data-backed answers
@@ -44,11 +44,11 @@ Plans:
   2. System flags outlier videos that got 2x or more the channel median views, with the performance multiplier shown
   3. System groups competitor videos into topic clusters and reports which topics are oversaturated vs. underserved
   4. System extracts title patterns from top-performing videos (e.g., "Question + Location" or "Number + Superlative") and reports them
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- Analyzer module: channel stats, outlier detection, formatting, serialization (TDD)
+- [ ] 02-02-PLAN.md -- CLI analyze subcommand, report generation, heuristic data prep
 
 ### Phase 3: Topic Generation + Scoring
 **Goal**: System generates scored topic briefs that surface obscure, high-impact topics the channel has not covered

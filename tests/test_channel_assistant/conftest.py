@@ -79,3 +79,82 @@ def tmp_empty_competitors_json(tmp_path):
 def tmp_db_path(tmp_path):
     """Return a temporary database path."""
     return tmp_path / "test.db"
+
+
+@pytest.fixture
+def sample_channel():
+    """Return a Channel dataclass instance."""
+    from channel_assistant.models import Channel
+
+    return Channel(
+        name="Barely Sociable",
+        youtube_id="@BarelySociable",
+        handle="@BarelySociable",
+        url="https://www.youtube.com/@BarelySociable",
+        subscribers=1200000,
+        scraped_at="2026-03-11T10:00:00Z",
+    )
+
+
+@pytest.fixture
+def sample_channel_2():
+    """Return a second Channel dataclass instance."""
+    from channel_assistant.models import Channel
+
+    return Channel(
+        name="Fredrik Knudsen",
+        youtube_id="@FredrikKnudsen",
+        handle="@FredrikKnudsen",
+        url="https://www.youtube.com/@FredrikKnudsen",
+        subscribers=800000,
+        scraped_at="2026-03-11T10:00:00Z",
+    )
+
+
+@pytest.fixture
+def sample_videos_varied():
+    """Return 5 Video objects with diverse views, dates, and tags for a single channel."""
+    from channel_assistant.models import Video
+
+    return [
+        Video(
+            video_id="v1",
+            channel_id="@BarelySociable",
+            title="The Silk Road Deep Dive",
+            views=5000,
+            upload_date="2026-01-01",
+            tags=["dark web", "crime"],
+        ),
+        Video(
+            video_id="v2",
+            channel_id="@BarelySociable",
+            title="Cicada 3301",
+            views=1000,
+            upload_date="2026-01-11",
+            tags=["mystery", "internet"],
+        ),
+        Video(
+            video_id="v3",
+            channel_id="@BarelySociable",
+            title="The Most Dangerous Hacker",
+            views=500,
+            upload_date="2026-01-21",
+            tags=["hacking"],
+        ),
+        Video(
+            video_id="v4",
+            channel_id="@BarelySociable",
+            title="Lake City Quiet Pills",
+            views=200,
+            upload_date="2026-01-31",
+            tags=["conspiracy"],
+        ),
+        Video(
+            video_id="v5",
+            channel_id="@BarelySociable",
+            title="The Dark Web Iceberg",
+            views=100,
+            upload_date="2026-02-10",
+            tags=["dark web", "iceberg"],
+        ),
+    ]

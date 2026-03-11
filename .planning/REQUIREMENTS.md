@@ -65,30 +65,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| DATA-05 | — | Pending |
-| ANLZ-01 | — | Pending |
-| ANLZ-02 | — | Pending |
-| ANLZ-03 | — | Pending |
-| ANLZ-04 | — | Pending |
-| ANLZ-05 | — | Pending |
-| ANLZ-06 | — | Pending |
-| ANLZ-07 | — | Pending |
-| OUTP-01 | — | Pending |
-| OUTP-02 | — | Pending |
-| OUTP-03 | — | Pending |
-| OUTP-04 | — | Pending |
-| OUTP-05 | — | Pending |
-| OUTP-06 | — | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| DATA-05 | Phase 2 | Pending |
+| ANLZ-01 | Phase 2 | Pending |
+| ANLZ-02 | Phase 2 | Pending |
+| ANLZ-03 | Phase 2 | Pending |
+| ANLZ-04 | Phase 3 | Pending |
+| ANLZ-05 | Phase 5 | Pending |
+| ANLZ-06 | Phase 5 | Pending |
+| ANLZ-07 | Phase 5 | Pending |
+| OUTP-01 | Phase 3 | Pending |
+| OUTP-02 | Phase 3 | Pending |
+| OUTP-03 | Phase 4 | Pending |
+| OUTP-04 | Phase 4 | Pending |
+| OUTP-05 | Phase 4 | Pending |
+| OUTP-06 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-11*
-*Last updated: 2026-03-11 after initial definition*
+*Last updated: 2026-03-11 after roadmap creation*

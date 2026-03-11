@@ -190,35 +190,73 @@ Agent 2.4 (Asset Manager) — number, consolidate, final manifest
 
 ---
 
-### Assets:
+### Asset Categories
 
-**Scraping:**
+**Pipeline-acquired (Agent 2.1):**
+- `archival_footage/` — Video clips from the era/event
+- `archival_photos/` — Period photographs, mugshots, press photos
+- `documents/` — Newspaper clippings, document scans, wiki screenshots, web page captures
+- `broll/` — Atmospheric/illustrative footage including old cartoons
 
-- archival_video
-- archival_photo
-- **Evidence & Documentation (these are all screenshotted, or pictures)**
-    - **Wiki/Encyclopedia Text Block**
-    - **Newspaper Clipping**
-    - **Document Scan**
-    - **Digital Screen Capture**
+**Pipeline-generated (Agent 2.2):**
+- `vectors/` — ComfyUI Z-image turbo generated figures and assets
 
-**Animations (remotion):**
+**Pipeline-generated (Agent 2.3):**
+- `animations/` — Remotion-rendered motion graphics (maps, silhouettes, diagrams)
 
-- silhouettes animation
-- map animations
+**Unmatched:**
+- `_pool/` — Assets acquired but not mapped to any shot (kept for manual use)
 
-**Text elements: (I will do myself)**
+**Editor handles manually (DaVinci Resolve):**
+- All text elements (quote cards, testimony cards, date cards, keyword stingers, warning cards)
+- Backgrounds, overlays, effects
+- Color grading, film grain, vignettes, CRT/VHS effects
+- All glitch/distortion effects
 
-- Quote Card
-- Testimony Card
-- Date Card
-- Keyword Stinger
+### Output Folder Structure
 
-**Davinci Resolve: (these I will search for myself)**
+```
+projects/1. [Video Title]/
+  shotlist.json
+  assets/
+    archival_footage/     # 001_compound_aerial.mp4
+    archival_photos/      # 002_leader_portrait.jpg
+    documents/            # 003_wikipedia_article.png
+    broll/                # 004_rural_workers.mp4 (old cartoons go here)
+    vectors/              # 009_silhouette_leader.png
+    animations/           # 010_map_mexico.mp4
+    _pool/                # unmatched extras (unnumbered)
+    manifest.json
+```
 
-- BG’s
-- Overlays
-- Effects
+### Manifest Schema
+
+The manifest is the central coordination artifact between all Phase 2 agents. It lives at `assets/manifest.json` from the moment Agent 2.1 creates it.
+
+```json
+{
+  "project": "The Cult of XYZ",
+  "assets": [
+    {
+      "filename": "compound_aerial.mp4",
+      "numbered_filename": null,
+      "folder": "archival_footage",
+      "description": "Aerial view of remote mountain settlement, 1970s film stock",
+      "mapped_shots": ["S001", "S014"],
+      "acquired_by": "agent_2.1"
+    }
+  ],
+  "gaps": [
+    {
+      "shot_id": "S002",
+      "visual_need": "Portrait or silhouette of male authority figure",
+      "status": "pending_generation"
+    }
+  ]
+}
+```
+
+**Gap status lifecycle:** `pending_generation` → `filled` (by Agent 2.2 or 2.3) → or `unfilled` (set by Agent 2.4 as terminal state)
 
 ### Resources:
 

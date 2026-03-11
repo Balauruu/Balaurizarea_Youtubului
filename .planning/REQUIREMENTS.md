@@ -19,9 +19,9 @@
 - [x] **ANLZ-02**: System clusters competitor videos by topic/theme and reports saturation level per cluster
 - [x] **ANLZ-03**: System extracts title patterns/formulas from top-performing competitor videos
 - [x] **ANLZ-04**: System scores each generated topic on obscurity, complexity, shock factor, and verifiability using anchored rubrics with concrete criteria per score level
-- [ ] **ANLZ-05**: System detects content gaps by comparing search demand (YouTube autocomplete via crawl4ai) against competitor topic coverage
-- [ ] **ANLZ-06**: System surfaces trending topics by scraping YouTube search results for niche keywords sorted by recency
-- [ ] **ANLZ-07**: System detects cross-channel trend convergence when 3+ competitors cover adjacent topics within a 30-day window
+- [x] **ANLZ-05**: System detects content gaps by comparing search demand (YouTube autocomplete via crawl4ai) against competitor topic coverage
+- [x] **ANLZ-06**: System surfaces trending topics by scraping YouTube search results for niche keywords sorted by recency
+- [x] **ANLZ-07**: System detects cross-channel trend convergence when 3+ competitors cover adjacent topics within a 30-day window
 
 ### Output
 
@@ -74,9 +74,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANLZ-02 | Phase 2 | Complete |
 | ANLZ-03 | Phase 2 | Complete |
 | ANLZ-04 | Phase 3 | Complete |
-| ANLZ-05 | Phase 5 | Pending |
-| ANLZ-06 | Phase 5 | Pending |
-| ANLZ-07 | Phase 5 | Pending |
+| ANLZ-05 | Phase 5 | Complete |
+| ANLZ-06 | Phase 5 | Complete |
+| ANLZ-07 | Phase 5 | Complete |
 | OUTP-01 | Phase 3 | Complete |
 | OUTP-02 | Phase 3 | Complete |
 | OUTP-03 | Phase 4 | Complete |

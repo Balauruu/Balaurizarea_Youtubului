@@ -132,77 +132,61 @@ This phase manages the intellectual rigor of the documentary. It requires three 
 
 ### Phase 2: Asset Pipeline
 
-This phase translates the text script into individual, tangible media assets.
+This phase translates the shot list into tangible media assets. Agents run sequentially, each triggered manually by the user.
 
-**Logic:**
+**Architecture:** Sequential pipeline. Each agent reads/writes a shared `manifest.json` at `projects/[Video Title]/assets/manifest.json`.
 
-1. All available data is gathered, archival footage, pics, clippings screenshots and B-roll.
-2. **Vectors**
-    1. https://www.svgrepo.com/ - clean, public domain SVGs
-        1. filter by solid
-    2. Vector generation - more customizable
-3. Create all animations necessary
-- Module 2.0: Asset Management System
+**Source Policy:** All footage and media must be free (public domain, CC0, or Creative Commons). No paid or subscription sources.
 
-example:
+**Tools:** Crawl4ai for web scraping, yt-dlp for video downloads.
 
-```jsx
-{
-  "assets": [
-    {
-      "id": "001",
-      "type": "audio_narration",
-      "chapter": "intro",
-      "file": "001_Audio_Intro.wav",
-      "status": "ready"
-    },
-    {
-      "id": "002",
-      "type": "visual_archival",
-      "chapter": "intro",
-      "file": "001_Visual_HistoricalPhoto.jpg",
-      "source_url": "https://...",
-    }
-  ]
-}
+```
+Agent 1.4 writes shotlist.json
+    |
+Agent 2.1 (Media Acquisition) — bulk scrape + gap analysis
+    |
+Agent 2.2 (Vector Generation) — ComfyUI prompts for gaps
+    |
+Agent 2.3 (Remotion Animations) — motion graphics [details deferred]
+    |
+Agent 2.4 (Asset Manager) — number, consolidate, final manifest
 ```
 
 - **Agent 2.1: Media Acquisition**
-    - **Function:** Sources historical and contextual media.
-    - **Logic:** Triggers scrapper to execute targeted web searches historical media, documents, and news clippings and more TBD, such as: official voice recordings, old-cartoon B-roll, old footage b-roll in general that fits the visual.
-        - Gathered assets, especially archival don’t have to be 100% accurate, just from the same period and convey the same idea.
-    - **Output:** Downloaded assets.
-    - **Quality Target:** https://www.opus.pro/agent (for research only, not use in my stack.)
-- **Agent 2.2: Generative Visuals**
-    - **Main Function:** Fills visual gaps where media is unavailable.
-        - Subagents: Be able to generate prompts for different (style/assets) in parallel
-            - realistic: B-roll Footage
-            - vector: Assets for Remotion
-    - **Output:** Text-based prompts optimized for image generation (ComfyUI).
-    - **Context:**
-        
-        ```jsx
-        - `context/Styles/` -- Style formats for different visual prompts.
-        ```
-        
+    - **Function:** Two-pass design. Sources all relevant media for the topic.
+    - **Input:** Reads only `shotlist.json` (not the script — Agent 1.4 already distilled the script into shot needs).
+    - **Pass 1 — Bulk Acquisition:**
+        - Reads shotlist.json to understand the topic (era, location, key figures, events)
+        - Builds search queries from the topic context
+        - Scrapes free/public domain sources for everything relevant
+        - Downloads into type folders, unnumbered, with descriptive filenames
+        - Writes each asset as an entry in `manifest.json`
+    - **Pass 2 — Gap Analysis [HEURISTIC]:**
+        - Matches acquired assets to shot list entries
+        - Updates manifest.json with shot mappings
+        - Outputs unmatched shots into the `gaps` section for downstream agents
+    - **Output:** Downloaded assets in type folders + manifest.json with mappings and gaps
+    - **Source Domains:**
+        - Tier 1: archive.org, loc.gov, archives.gov, commons.wikimedia.org
+        - Tier 2: publicdomainreview.org, images.nasa.gov, nps.gov, pdimagearchive.org, nationalarchives.gov.uk
+        - Tier 3 (screenshots): en.wikipedia.org, britannica.com, news sites
+        - Old cartoons: archive.org/details/19201928publicdomainanimation, publicdomainreview.org, LOC National Film Registry PD list, Wikimedia Commons animated shorts category
+        - YouTube (via yt-dlp) for CC-licensed and public domain footage
+    - **Rules:** Verify soundtracks on old cartoons are also PD (video may be PD but added music may not)
+- **Agent 2.2: Vector Generation (ComfyUI)**
+    - **Function:** Generates vector assets for shots that couldn’t be filled by acquisition.
+    - **Logic:** Reads `gaps` section of manifest.json. [HEURISTIC] Generates ComfyUI prompts optimized for Z-image turbo. Updates manifest and marks gaps as filled.
+    - **Scope:** Vector/figure generation only. Realistic AI-generated b-roll is out of scope — gaps requiring realistic imagery remain unfilled for the editor to address manually.
+    - **Output:** Vector images in `assets/vectors/`, manifest.json updated.
 - **Agent 2.3: Animation Agent (Remotion)**
-    - **Logic:** Runs independently to generate isolated visual components, mainly animation.
-        1. Shot list specifies which animations are needed (maps, timelines, text reveals, data visualizations)
-        2. A `remotion-templates/` folder contains reusable React components for each animation type
-        3. The agent generates a `compositions.json` that parameterizes each template
-        4. Remotion renders via CLI: `npx remotion render --props compositions.json`
+    - **Function:** Renders motion graphics (maps, silhouettes, diagrams, other animations).
+    - **Logic:** Details deferred to later design session.
+    - **Interface:** Reads shotlist.json, can use vectors from Agent 2.2, outputs to `assets/animations/`, updates manifest.json.
     - **Output:** `.mp4` or `.mov` files.
-    - **Animations Quality Target:** https://hera.video/ (for research only, not use in my stack)
-    - **Context:**
-    
-    ```jsx
-    Assets Folder
-    + Remotion global skill
-    ```
-    
 - **Agent 2.4: Asset Manager**
-    - **Logic:** Gathers all generated audio, scraped media, and Remotion animations. Renames files sequentially based on their appearance order (e.g., `001_Audio_Intro.wav`, `001_Visual_MapAnim.mp4`, `002_Audio_Main.wav`, `002_Visual_Prompt_Cult.txt`).
-    - **Output:** The final target. A consolidated, sequentially ordered local folder.
+    - **Function:** Final consolidation and sequential numbering.
+    - **Logic:** Reads manifest.json. Assigns sequential prefixes based on order of appearance in shotlist.json (e.g., `001_compound_aerial.mp4`). Assets mapped to multiple shots get the number of their first appearance. Moves unmatched assets to `_pool/`. Sets remaining gaps to `unfilled`.
+    - **Output:** Numbered assets in type folders + final manifest.json.
 
 ---
 

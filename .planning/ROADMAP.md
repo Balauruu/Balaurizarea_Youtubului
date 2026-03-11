@@ -13,7 +13,7 @@ Build a competitor intelligence and topic ideation skill for a dark mysteries Yo
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Scraping Infrastructure + Data Model** - Competitor registry, yt-dlp metadata scraping, SQLite storage with resilience (completed 2026-03-11)
-- [ ] **Phase 2: Query Layer + Competitor Analysis** - Channel stats, outlier detection, topic clustering, title pattern extraction
+- [x] **Phase 2: Query Layer + Competitor Analysis** - Channel stats, outlier detection, topic clustering, title pattern extraction (completed 2026-03-11)
 - [ ] **Phase 3: Topic Generation + Scoring** - Scored topic briefs with calibrated rubrics and past-topic deduplication
 - [ ] **Phase 4: Project Initialization + Metadata** - Topic selection flow, project directory creation, title variants, description
 - [ ] **Phase 5: Trend Scanning + Content Gaps** - YouTube search trends, content gap detection, cross-channel convergence
@@ -44,11 +44,11 @@ Plans:
   2. System flags outlier videos that got 2x or more the channel median views, with the performance multiplier shown
   3. System groups competitor videos into topic clusters and reports which topics are oversaturated vs. underserved
   4. System extracts title patterns from top-performing videos (e.g., "Question + Location" or "Number + Superlative") and reports them
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 02-01-PLAN.md -- Analyzer module: channel stats, outlier detection, formatting, serialization (TDD)
-- [ ] 02-02-PLAN.md -- CLI analyze subcommand, report generation, heuristic data prep
+- [x] 02-01-PLAN.md -- Analyzer module: channel stats, outlier detection, formatting, serialization (TDD)
+- [x] 02-02-PLAN.md -- CLI analyze subcommand, report generation, heuristic data prep
 
 ### Phase 3: Topic Generation + Scoring
 **Goal**: System generates scored topic briefs that surface obscure, high-impact topics the channel has not covered
@@ -101,7 +101,7 @@ Note: Phase 5 depends on Phase 2, not Phase 4. Phases 3-4 and Phase 5 could theo
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scraping Infrastructure + Data Model | 2/2 | Complete   | 2026-03-11 |
-| 2. Query Layer + Competitor Analysis | 1/2 | In Progress|  |
+| 2. Query Layer + Competitor Analysis | 2/2 | Complete   | 2026-03-11 |
 | 3. Topic Generation + Scoring | 0/2 | Not started | - |
 | 4. Project Initialization + Metadata | 0/1 | Not started | - |
 | 5. Trend Scanning + Content Gaps | 0/2 | Not started | - |

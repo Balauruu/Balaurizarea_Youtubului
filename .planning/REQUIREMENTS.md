@@ -11,11 +11,11 @@
 - [x] **DATA-02**: System scrapes video metadata (title, views, upload date, description, duration, tags) for all channels in the registry via yt-dlp
 - [x] **DATA-03**: Scraped data is stored in a SQLite database with `channels` and `videos` tables, each record timestamped with `scraped_at`
 - [x] **DATA-04**: Scraper uses rate limiting (jittered delays) and falls back to cached data on yt-dlp failure
-- [ ] **DATA-05**: User can view per-channel summary stats: total videos, average views, median views, upload frequency, most recent upload
+- [x] **DATA-05**: User can view per-channel summary stats: total videos, average views, median views, upload frequency, most recent upload
 
 ### Analysis
 
-- [ ] **ANLZ-01**: System detects outlier videos per channel (views >= 2x channel median) and reports them with performance multiplier
+- [x] **ANLZ-01**: System detects outlier videos per channel (views >= 2x channel median) and reports them with performance multiplier
 - [ ] **ANLZ-02**: System clusters competitor videos by topic/theme and reports saturation level per cluster
 - [ ] **ANLZ-03**: System extracts title patterns/formulas from top-performing competitor videos
 - [ ] **ANLZ-04**: System scores each generated topic on obscurity, complexity, shock factor, and verifiability using anchored rubrics with concrete criteria per score level
@@ -69,8 +69,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Complete (01-01) |
 | DATA-04 | Phase 1 | Complete |
-| DATA-05 | Phase 2 | Pending |
-| ANLZ-01 | Phase 2 | Pending |
+| DATA-05 | Phase 2 | Complete |
+| ANLZ-01 | Phase 2 | Complete |
 | ANLZ-02 | Phase 2 | Pending |
 | ANLZ-03 | Phase 2 | Pending |
 | ANLZ-04 | Phase 3 | Pending |

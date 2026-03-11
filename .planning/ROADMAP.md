@@ -44,7 +44,7 @@ Plans:
   2. System flags outlier videos that got 2x or more the channel median views, with the performance multiplier shown
   3. System groups competitor videos into topic clusters and reports which topics are oversaturated vs. underserved
   4. System extracts title patterns from top-performing videos (e.g., "Question + Location" or "Number + Superlative") and reports them
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md -- Analyzer module: channel stats, outlier detection, formatting, serialization (TDD)
@@ -101,7 +101,7 @@ Note: Phase 5 depends on Phase 2, not Phase 4. Phases 3-4 and Phase 5 could theo
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scraping Infrastructure + Data Model | 2/2 | Complete   | 2026-03-11 |
-| 2. Query Layer + Competitor Analysis | 0/2 | Not started | - |
+| 2. Query Layer + Competitor Analysis | 1/2 | In Progress|  |
 | 3. Topic Generation + Scoring | 0/2 | Not started | - |
 | 4. Project Initialization + Metadata | 0/1 | Not started | - |
 | 5. Trend Scanning + Content Gaps | 0/2 | Not started | - |

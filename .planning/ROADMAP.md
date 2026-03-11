@@ -17,6 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Topic Generation + Scoring** - Scored topic briefs with calibrated rubrics and past-topic deduplication
 - [x] **Phase 4: Project Initialization + Metadata** - Topic selection flow, project directory creation, title variants, description (completed 2026-03-11)
 - [x] **Phase 5: Trend Scanning + Content Gaps** - YouTube search trends, content gap detection, cross-channel convergence (completed 2026-03-11)
+- [ ] **Phase 6: Tech Debt Cleanup + OUTP-02 Wiring** - Wire check_duplicates(), fix test regression, fix SKILL.md entry point
 
 ## Phase Details
 
@@ -94,11 +95,24 @@ Plans:
 - [x] 05-01-PLAN.md -- TDD: trend_scanner.py module (autocomplete scraping, search results parsing, convergence queries, analysis.md updates)
 - [x] 05-02-PLAN.md -- CLI trends subcommand, heuristic prompt, topics.py gap injection
 
+### Phase 6: Tech Debt Cleanup + OUTP-02 Wiring
+**Goal**: Close the one partial requirement (OUTP-02) and fix accumulated tech debt from the audit
+**Depends on**: Phase 3
+**Requirements**: OUTP-02
+**Gap Closure**: Closes gaps from v1.0 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. `check_duplicates()` is called as a programmatic safety net in the topics generation path
+  2. `test_raises_scrape_error_after_retries_exhausted` passes with committed scraper.py changes
+  3. SKILL.md documents `python -m channel_assistant.cli` as the correct entry point
+
+Plans:
+- [ ] 06-01-PLAN.md -- Wire OUTP-02 dedup, fix scraper test regression, fix SKILL.md
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
-Note: Phase 5 depends on Phase 2, not Phase 4. Phases 3-4 and Phase 5 could theoretically run in parallel after Phase 2 completes.
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Note: Phase 5 depends on Phase 2, not Phase 4. Phase 6 is gap closure from v1.0 audit.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -107,3 +121,4 @@ Note: Phase 5 depends on Phase 2, not Phase 4. Phases 3-4 and Phase 5 could theo
 | 3. Topic Generation + Scoring | 1/2 | In Progress|  |
 | 4. Project Initialization + Metadata | 2/2 | Complete   | 2026-03-11 |
 | 5. Trend Scanning + Content Gaps | 2/2 | Complete   | 2026-03-11 |
+| 6. Tech Debt Cleanup + OUTP-02 Wiring | 0/1 | Pending | |

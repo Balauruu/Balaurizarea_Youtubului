@@ -1,12 +1,15 @@
 """CLI entry point for the channel assistant skill.
 
-Provides subcommands: add, scrape, status, migrate, analyze, topics.
+Provides subcommands: add, scrape, status, migrate, analyze, topics, trends.
 """
 
 import argparse
 import json
+import random
+import re
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,6 +25,13 @@ from .scraper import scrape_all_channels, scrape_single_channel
 from .migrate import run_migration, delete_old_files
 from .topics import load_topic_inputs
 from .project_init import load_project_inputs
+from .trend_scanner import (
+    scrape_autocomplete,
+    scrape_search_results,
+    get_recent_competitor_videos,
+    derive_keywords,
+    update_analysis_with_trends,
+)
 
 
 def _get_project_root() -> Path:
@@ -365,6 +375,135 @@ def cmd_topics(args: argparse.Namespace, root: Path) -> None:
     print(f"Prompt file: {prompt_path}")
 
 
+def _extract_section(content: str, header: str) -> str:
+    """Extract text between '## Header' and next '## ' heading or EOF.
+
+    Returns empty string if header not found.
+    """
+    pattern = re.compile(
+        r"^## " + re.escape(header) + r"\s*\n(.*?)(?=^## |\Z)",
+        re.DOTALL | re.MULTILINE,
+    )
+    match = pattern.search(content)
+    if match:
+        return match.group(1).strip()
+    return ""
+
+
+def cmd_trends(args: argparse.Namespace, db: Database, root: Path) -> None:
+    """Handle 'trends' subcommand: scan YouTube trends and detect content gaps.
+
+    Loads channel DNA and topic clusters, derives keywords, scrapes autocomplete
+    and search results for each keyword, queries SQLite for 30-day competitor
+    convergence data, then prints structured context to stdout for Claude
+    to perform heuristic gap scoring and convergence framing.
+
+    Does NOT call any LLM API — context-loader only.
+    """
+    db.init_db()
+
+    # Load channel DNA
+    channel_dna_path = root / "context" / "channel" / "channel.md"
+    if not channel_dna_path.exists():
+        print(f"Error: Channel DNA not found: {channel_dna_path}", file=sys.stderr)
+        sys.exit(1)
+    channel_dna = channel_dna_path.read_text(encoding="utf-8")
+
+    # Load analysis.md and extract topic clusters (text between ## Topic Clusters and next ##)
+    analysis_path = root / "context" / "competitors" / "analysis.md"
+    topic_clusters: list[str] = []
+    if analysis_path.exists():
+        analysis_content = analysis_path.read_text(encoding="utf-8")
+        cluster_section = _extract_section(analysis_content, "Topic Clusters")
+        if cluster_section:
+            # Parse cluster names: lines starting with "**" or numbered "1. **" or "- **"
+            cluster_pattern = re.compile(r"(?:^[-\d.]*\s*)\*\*([^*]+)\*\*", re.MULTILINE)
+            matches = cluster_pattern.findall(cluster_section)
+            topic_clusters = [m.strip() for m in matches if m.strip()]
+
+    # Derive keywords from channel DNA + topic clusters
+    keywords = derive_keywords(channel_dna, topic_clusters)
+    n = len(keywords)
+    print(f"Scanning {n} keywords...", file=sys.stderr)
+
+    # Scrape autocomplete and search results for each keyword
+    all_autocomplete: dict[str, list[str]] = {}
+    all_search_results: dict[str, list[dict]] = {}
+
+    for i, keyword in enumerate(keywords, start=1):
+        # Jittered delay between requests (skip delay before first request)
+        if i > 1:
+            time.sleep(random.uniform(0.5, 1.5))
+
+        suggestions = scrape_autocomplete(keyword)
+        results = scrape_search_results(keyword)
+
+        all_autocomplete[keyword] = suggestions
+        all_search_results[keyword] = results
+
+        print(
+            f"  [{i}/{n}] {keyword}: {len(suggestions)} suggestions, {len(results)} results",
+            file=sys.stderr,
+        )
+
+    # Query 30-day competitor video convergence data
+    competitor_videos = get_recent_competitor_videos(db, days=30)
+
+    # Print structured context to stdout for Claude heuristic reasoning
+    print("## Autocomplete Suggestions")
+    print()
+    for keyword, suggestions in all_autocomplete.items():
+        print(f"### {keyword}")
+        if suggestions:
+            for s in suggestions:
+                print(f"- {s}")
+        else:
+            print("- (no suggestions)")
+        print()
+
+    print("## Search Results")
+    print()
+    for keyword, results in all_search_results.items():
+        print(f"### {keyword}")
+        if results:
+            for r in results:
+                print(
+                    f"- {r['title']} | {r['channel']} | {r.get('published_text', '')} | {r.get('views_text', '')}"
+                )
+        else:
+            print("- (no results)")
+        print()
+
+    print("## Recent Competitor Videos (30-day window)")
+    print()
+    if competitor_videos:
+        for v in competitor_videos:
+            print(f"- {v['title']} | {v['channel_name']} | {v['upload_date']}")
+    else:
+        print("- (no competitor videos in last 30 days)")
+    print()
+
+    # Print prompt path
+    prompt_path = root / ".claude" / "skills" / "channel-assistant" / "prompts" / "trends_analysis.md"
+    print("## Prompt")
+    print()
+    print(f"Prompt file: {prompt_path}")
+    print()
+
+    # Print output target
+    print("## Output Target")
+    print()
+    print("context/competitors/analysis.md (trend sections)")
+    print()
+
+    # Instruction line for Claude
+    print(
+        "Context loaded. Use the trends analysis prompt to score content gaps, "
+        "frame convergence alerts, and synthesize trending topics. "
+        "Write results using update_analysis_with_trends() from channel_assistant.trend_scanner"
+    )
+
+
 def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -408,6 +547,11 @@ def main() -> None:
         "topics", help="Load context for topic generation (10-15 scored briefs)"
     )
 
+    # trends subcommand
+    subparsers.add_parser(
+        "trends", help="Scan YouTube trends and detect content gaps"
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -431,6 +575,8 @@ def main() -> None:
         cmd_analyze(args, db, root)
     elif args.command == "topics":
         cmd_topics(args, root)
+    elif args.command == "trends":
+        cmd_trends(args, db, root)
 
 
 if __name__ == "__main__":

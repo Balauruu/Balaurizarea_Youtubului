@@ -24,9 +24,8 @@ PYTHONPATH=.claude/skills/researcher/scripts python -m researcher <subcommand>
 
 ```bash
 pip install crawl4ai==0.8.0
-crawl4ai-setup   # installs ~300MB Playwright browser binaries — run once
-# Optional fallback for DuckDuckGo search:
-pip install duckduckgo-search
+python -m playwright install chromium   # installs ~300MB Playwright browser binaries — run once
+pip install ddgs   # DuckDuckGo search library (duckduckgo-search renamed to ddgs)
 ```
 
 Environment variable for non-Latin source content:
@@ -45,12 +44,19 @@ export PYTHONUTF8=1
 | `tiers.py` | Source tier constants and domain classification | `TIER_1_DOMAINS`, `TIER_2_DOMAINS`, `TIER_3_DOMAINS`, `TIER_RETRY_MAP`, `classify_domain` |
 | `fetcher.py` | crawl4ai wrapper with domain isolation, retry, content validation | `fetch_url`, `fetch_with_retry` |
 
+### Phase 7 Plan 2 (implemented)
+
+| Module | Purpose | Exports |
+|--------|---------|---------|
+| `url_builder.py` | Project directory resolution and URL construction | `find_project_dir`, `resolve_output_dir`, `make_ddg_url`, `build_survey_urls` |
+| `cli.py` | CLI entry point with `survey` subcommand | `main`, `cmd_survey` |
+
 ### Phase 8-10 (planned)
 
 | Module | Purpose | Status |
 |--------|---------|--------|
-| `url_builder.py` | URL construction + project directory resolution | Phase 8 |
-| `cli.py` | CLI: `survey`, `deepen`, `write` subcommands | Phase 8 |
+| `deepen` command | Pass 2: targeted deep dives | Phase 8 |
+| `write` command | Output research dossier | Phase 9+ |
 
 ---
 
@@ -100,5 +106,10 @@ Unknown domains default to Tier 2.
 - **Fresh AsyncWebCrawler per fetch call** — no session_id reuse across domains (domain isolation)
 - **Minimum content length:** 200 chars — fetches below threshold trigger retry (anti-bot detection)
 - **Tier 3 domains:** Skipped before any fetch attempt, logged as `skipped_tier3`
-- **DuckDuckGo:** Use `html.duckduckgo.com/html/?q=...` (static endpoint); fall back to `duckduckgo-search` library if blocked
+- **DuckDuckGo:** Use `html.duckduckgo.com/html/?q=...` (static endpoint); fall back to `ddgs` library if blocked
 - **Do NOT install** `crawl4ai[torch]` or `crawl4ai[transformer]` — violates Architecture.md Rule 1
+- **crawl4ai 0.8.0 markdown API:** `result.markdown` is `StringCompatibleMarkdown` (str subclass). Access content via `result.markdown.raw_markdown` (str, full markdown) or use directly as string. Both are equivalent.
+- **lxml version:** crawl4ai 0.8.0 requires `lxml~=5.3` but works with `lxml>=6.0` despite pip warning.
+- **duckduckgo-search renamed:** Package renamed to `ddgs`. Use `pip install ddgs` and `from ddgs import DDGS`.
+- **resolve_output_dir:** Returns `projects/N. Title/research/` if project found, else `.claude/scratch/researcher/` (standalone mode). Creates dir automatically.
+- **Integration test isolation:** Run `pytest tests/test_researcher/test_integration.py` separately — test_fetcher.py installs a module-level crawl4ai mock that interferes if tests run together without the `_clear_crawl4ai_mock()` guard.

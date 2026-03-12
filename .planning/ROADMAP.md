@@ -41,7 +41,7 @@
   2. fetcher.py uses a fresh browser context per source domain — a failed fetch on one domain does not corrupt subsequent fetches from other domains
   3. Any fetch returning fewer than 200 characters triggers a retry and is logged as a failed fetch, not silently dropped
   4. Sources are classified into tiers before any request is made — Tier 3 sources are skipped entirely and logged as do-not-attempt
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 07-01: fetcher.py — crawl4ai wrapper with domain-isolated contexts, retry, and minimum-content verification
@@ -56,7 +56,7 @@ Plans:
   2. Every scraped page is written as an individual file under `.claude/scratch/researcher/` — no scraped content appears in conversation context
   3. The command produces a `source_manifest.json` file containing source metadata (URL, file path, word count, access quality) — not prose
   4. The JSON manifest schema is locked and documented so Phase 9 can read it without ambiguity
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 08-01: cmd_survey subcommand + survey_evaluation.md prompt (Pass 1 full flow)
@@ -69,7 +69,7 @@ Plans:
   1. Running `cmd_deepen` reads the JSON source manifest and fetches only the URLs Claude identified as deep-dive targets — not a fresh broad survey
   2. Pass 2 fetched content is written to `.claude/scratch/researcher/` as individual `pass2_src_N.md` files distinct from Pass 1 files
   3. The two passes together produce no more than 15 total fetched source files in scratch
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 09-01: cmd_deepen subcommand — reads manifest, fetches targeted primary sources, writes to scratch
@@ -84,7 +84,7 @@ Plans:
   3. Research.md contains 3-5 explicitly labeled narrative hooks and labeled direct quote callouts for scene anchoring, plus a correcting-the-record section where mainstream coverage contradicts primary sources
   4. All source entries in Research.md use structured credibility signals (source_type, corroborated_by, access_quality) — no scalar scores — and the total curated content is capped at ~2,000 words
   5. Research.md is written to `projects/N. [Title]/research/Research.md` and media_urls.md (URL, description, source type per entry) is written as a separate file in the same directory
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 10-01: synthesis.md prompt — instructs Claude to produce schema-compliant structured JSON dossier from all scraped content

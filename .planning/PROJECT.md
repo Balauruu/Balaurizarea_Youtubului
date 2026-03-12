@@ -1,8 +1,18 @@
-# Channel Assistant (Agent 1.1)
+# Channel Automation Pipeline
 
 ## What This Is
 
-A Claude Code skill that acts as a strategic channel assistant for a dark mysteries YouTube documentary channel. It scrapes competitor data, analyzes content strategy (outliers, topic clusters, title patterns), scans YouTube trends for content gaps, and generates scored topic briefs. After topic selection, it creates a project directory with YouTube-optimized metadata (title variants + description).
+An agentic documentary video generation pipeline for a YouTube channel focused on dark mysteries content. Claude Code itself is the orchestrator — it spawns sub-agents with skills to complete each phase. Agent 1.1 (Channel Assistant) handles strategy and ideation. Agent 1.2 (The Researcher) performs comprehensive web research to build factual foundations for scriptwriting.
+
+## Current Milestone: v1.1 The Researcher
+
+**Goal:** Build a niche-agnostic research agent that takes any documentary topic and produces a structured Research.md dossier optimized for the scriptwriting agent (Agent 1.3).
+
+**Target features:**
+- Two-pass web research (broad survey → deep primary source dive) using crawl4ai
+- Research schema designed for scriptwriter consumption (chronological precision, named sources, contradictions, narrative hooks)
+- Manual topic input with output to existing project directory
+- Media URL cataloging separated from the main Research.md to keep the dossier clean
 
 ## Core Value
 
@@ -22,7 +32,10 @@ Surface obscure, high-impact documentary topics that the channel hasn't covered 
 
 ### Active
 
-(None yet — define with `/gsd:new-milestone`)
+- [ ] Niche-agnostic web research agent (Agent 1.2) that produces Research.md dossiers for any documentary topic
+- [ ] Two-pass research: broad survey → deep primary source dive
+- [ ] Research schema designed for optimal scriptwriter consumption
+- [ ] Manual topic input with output to existing project directory
 
 ### Out of Scope
 
@@ -68,4 +81,4 @@ This is **Agent 1.1** in the channel's documentary video generation pipeline (se
 | check_duplicates via instruction text | Keeps dedup as heuristic evaluation, not hard gate | Acceptable |
 
 ---
-*Last updated: 2026-03-12 after v1.0 milestone*
+*Last updated: 2026-03-12 after v1.1 milestone start*

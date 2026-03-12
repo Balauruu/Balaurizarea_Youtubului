@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Channel Assistant
-status: completed
-stopped_at: Milestone v1.0 archived
+milestone: v1.1
+milestone_name: The Researcher
+status: active
+stopped_at: Defining requirements
 last_updated: "2026-03-12"
-last_activity: 2026-03-12 -- Milestone v1.0 completed and archived
+last_activity: 2026-03-12 -- Milestone v1.1 started
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 12
-  completed_plans: 12
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** Surface obscure, high-impact documentary topics backed by competitor data, not guesswork.
-**Current focus:** v1.0 shipped. Planning next milestone.
+**Current focus:** v1.1 The Researcher — niche-agnostic web research agent
 
 ## Current Position
 
-Milestone: v1.0 Channel Assistant — SHIPPED 2026-03-12
-Status: All 6 phases complete, 18/18 requirements satisfied, 175/175 tests passing
-
-Progress: [##########] 100% — SHIPPED
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-12 — Milestone v1.1 started
 
 ## Accumulated Context
 
@@ -46,6 +46,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Milestone v1.0 archived
+Stopped at: Defining requirements for v1.1
 Resume file: None
-Next: `/gsd:new-milestone` to define v1.1 scope
+Next: Define requirements → create roadmap

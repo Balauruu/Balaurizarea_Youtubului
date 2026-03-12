@@ -1,220 +1,236 @@
-# Feature Landscape
+# Feature Research
 
-**Domain:** YouTube Channel Assistant / Competitor Intelligence for Dark Mysteries Documentary Channel
-**Researched:** 2026-03-11
-**Confidence:** HIGH (well-understood problem space, clear commercial tool precedents)
+**Domain:** Web Research Agent for Documentary Scriptwriting (Agent 1.2: The Researcher)
+**Researched:** 2026-03-12
+**Confidence:** HIGH (downstream consumer is known, schema is specified in Architecture.md, reference script exists)
 
 ## Context
 
-This feature analysis is for Agent 1.1 (Channel Assistant) -- a CLI-only, Python-based, Claude Code-orchestrated tool that discovers competitors, scrapes metadata, analyzes content strategy, and generates scored topic briefs. The channel targets dark history, true crime, cults, and unsolved mysteries with 20-50 minute documentary deep dives.
+Agent 1.2 operates inside a fixed pipeline. It reads a topic (from an existing `projects/N. [Title]/` directory created by Agent 1.1) and produces a `Research.md` dossier consumed directly by Agent 1.3 (The Writer). The Writer converts this dossier into a narrated 20-50 minute documentary script without any human filtering step in between.
 
-Commercial tools (VidIQ, TubeBuddy, Subscribr) serve broad creator audiences. Our tool is narrower and more opinionated: it serves ONE channel in ONE niche with a specific editorial voice. This means we can skip generic features and go deep on what matters for documentary topic selection.
+This shapes every feature decision: the dossier is not for human browsing — it is for an LLM scriptwriter that needs structured, attributed, narrative-ready facts. Anything that wastes tokens or introduces ambiguity in the dossier directly degrades script quality.
+
+The channel niche spans dark history, true crime, cults, institutional corruption, and unsolved disappearances. Sources range from court records and police reports to academic papers, newspaper archives, and wikis. The agent must handle all of these without niche-specific hardcoding.
 
 ---
 
-## Table Stakes
+## Feature Landscape
 
-Features the tool MUST have or it provides no value over manual research.
+### Table Stakes (Users Expect These)
+
+Features the agent must have or it provides no value over asking Claude to research from memory.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Competitor channel registry** | Need a curated watchlist of 10-30 channels in the niche. Without this, there is nothing to analyze. | Low | Simple JSON file mapping channel name to YouTube channel ID/URL. Manual curation is fine -- auto-discovery is a differentiator, not table stakes. |
-| **Video metadata scraping (yt-dlp)** | Titles, view counts, upload dates, descriptions, duration, tags. This is the raw data everything else depends on. | Medium | yt-dlp `--flat-playlist --dump-json` per channel. Rate limiting is real: ~50-100 extractions/hour per IP. Batch and cache. |
-| **Local data cache with staleness tracking** | Cannot re-scrape 20 channels every run. Need a local store with timestamps so you only refresh stale data. | Medium | JSON files per channel in `context/competitors/data/`. Each file has `last_scraped` timestamp. Refresh policy: manual trigger or >7 days stale. |
-| **Past topic deduplication** | Rejecting previously covered topics is explicitly in the Architecture spec. Without this, the tool suggests topics already made into videos. | Low | Check generated topics against `context/channel/past_topics.md`. Simple string/semantic matching via LLM reasoning. |
-| **Topic brief generation (5 per run)** | The core output. Must follow the Topic Brief Schema (title, hook, timeline, complexity/obscurity/shock scores, runtime estimate). | Low | This is a [HEURISTIC] Claude Code prompt task, not code. The LLM reads competitor data + channel DNA + past topics and generates briefs. No code needed beyond data preparation. |
-| **Scoring against channel criteria** | Topics must be scored on obscurity, complexity, shock factor, verifiability (channel DNA requires 3/4). Without scoring, briefs are just random suggestions. | Low | Part of the topic generation prompt. The LLM applies the 4-criteria filter from channel.md. [HEURISTIC] |
-| **Project directory creation** | After user selects a topic, create `projects/N. [Title]/` with metadata file containing title variants and description. | Low | Simple filesystem operation. Sequential numbering based on existing directories. |
-| **Basic channel stats display** | Video count, average views, upload frequency per tracked channel. Without this, the raw data is noise. | Low | Python aggregation over cached JSON. Formatted as tables in Claude Code chat. |
+| **Manual topic input** | User must be able to invoke the agent with a topic name and have it pick up the correct project directory. | LOW | CLI: `topic` argument maps to `projects/N. [Title]/`. Agent reads `metadata.md` for working title and hook from Agent 1.1. |
+| **Broad survey pass (Pass 1)** | Documentary research starts wide — identify the full landscape before diving deep. Without this, you miss key angles and secondary actors. | MEDIUM | crawl4ai scrapes Wikipedia, major news archives, relevant wiki-type sources. Produces a structured understanding of the topic: who, what, when, where, why. [DETERMINISTIC] scraping, [HEURISTIC] synthesis. |
+| **Primary source deep-dive pass (Pass 2)** | Wikipedia and news articles are secondary sources. Scripts that cite only those feel thin. Court records, police reports, government documents, academic papers, and archived primary materials give the script authority and credibility. | HIGH | crawl4ai targets archive.org, loc.gov, archives.gov, court record databases, newspaper archives (Chronicling America, ProQuest-accessible free tiers). [DETERMINISTIC] scraping. |
+| **Chronological timeline with sources** | The Writer needs events in date order with attribution. Without this, the script either invents a timeline or misorders events. Documentary scripts are structurally anchored to chronology. | MEDIUM | Each timeline entry: date, event description, source name, source URL. Gaps in the timeline must be labeled explicitly as gaps rather than silently omitted. |
+| **Key figures section** | Named people are the backbone of documentary narrative. The Writer needs names, roles, relationships, and direct quotes. Anonymous "officials said" is useless for narration. | MEDIUM | Full names, roles/titles, relationship to the central event, at least one attributed quote per figure where available. Flag figures where only partial identification exists. |
+| **Subject overview (500-word summary)** | The Writer needs a dense, factually-grounded overview before diving into the structured sections. This is the "establishing shot" of the dossier. | LOW | [HEURISTIC] Claude synthesizes scraped content into a 500-word summary anchored to documented facts. |
+| **Source list with reliability ratings** | The Writer must know whether a fact came from a court record or a Reddit thread. Reliability shapes how confidently the narration can state something. | MEDIUM | Each source: name, URL, type (primary/secondary/tertiary), reliability rating (HIGH/MEDIUM/LOW), brief note on why. |
+| **Contradictions section** | Conflicting accounts are documentary gold — they create narrative tension. Without surfacing contradictions, the Writer produces a falsely clean narrative. | MEDIUM | Pairs of conflicting claims with their respective sources. Not resolved — left as documented conflict for the Writer to use as narrative tension. |
+| **Unanswered questions section** | Gaps that resist resolution are the best endings for documentaries. The Writer needs to know what can't be answered and why. | LOW | List of specific questions that research could not answer, with notation of what was tried. Ambiguity is a feature, not a bug. |
+| **Output to project directory** | Research.md must land at `projects/N. [Title]/Research.md`. The Writer reads from a fixed path. | LOW | Deterministic file write. No path ambiguity. |
 
 ---
 
-## Differentiators
+### Differentiators (Competitive Advantage)
 
-Features that make this tool meaningfully better than just asking Claude "suggest 5 topics."
+Features that make the dossier meaningfully better than what an LLM produces from training data alone.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Performance signal detection** | Identify which competitor videos significantly outperformed their channel average (views-per-day vs. channel median). These "outlier" videos reveal what the audience actually wants. Subscribr charges $19-79/mo for essentially this feature. | Medium | Calculate per-channel median views, flag videos at 2x+ median. Pure Python math on scraped data. |
-| **Competitor topic clustering** | Group competitor videos by topic/theme to see what categories are oversaturated vs. underserved. Raw video lists are noise; clusters are signal. | Medium | [HEURISTIC] LLM reads all competitor video titles+descriptions and groups them into topic clusters. Output: which themes are overdone, which are fresh territory. |
-| **Content gap detection** | Identify topics that have search demand but low/no coverage from competitors. This is the highest-value analytical feature. VidIQ and GapGens charge premium prices for this. | Medium | Compare competitor topic clusters against YouTube search autocomplete / Google Trends data. Surface topics competitors have NOT covered. Requires crawl4ai for search scraping. |
-| **Title pattern analysis** | Extract winning title formulas from top-performing competitor videos. Documentary channels have specific patterns (question hooks, location anchors, time period framing, "The [Adjective] Case of..." etc.). | Low | [HEURISTIC] LLM analyzes top-performing titles and extracts patterns. Output: title templates/formulas specific to the dark mysteries niche. |
-| **Trend awareness (YouTube search + autocomplete)** | Surface what people are currently searching for in the niche. Catches timely opportunities (new Netflix doc drops, anniversary of a cold case, etc.). | Medium | crawl4ai scrapes YouTube search results for niche keywords. Compare against recent competitor uploads. Flag trending searches with no recent coverage. |
-| **Multiple title variants (3-5) per selected topic** | A/B thinking for titles is critical for CTR. VidIQ and TubeBuddy both emphasize title optimization as a key growth lever. | Low | [HEURISTIC] LLM generates title variants after topic selection. Varies hook type (question, statement, revelation) and keyword placement. |
-| **Competitor selective refresh** | User says "refresh channel X" and only that channel re-scrapes. Avoids full-pipeline runs for targeted updates. | Low | Selective scraping by channel ID. Update only the specified channel's cache file. |
-| **Cross-channel trend detection** | When 3+ competitors cover adjacent topics in the same timeframe, something is trending in the niche. Surface these convergences. | Medium | Cross-reference recent uploads (last 30 days) across all tracked channels. [HEURISTIC] LLM identifies thematic clusters in recent content. |
-| **Upload cadence tracking** | Know when competitors publish and at what frequency. Spot gaps in the calendar. | Low | Date aggregation over cached data. Shows when the niche has less competition. |
+| **Source chain tracing** | The reference script (Mexico's Most Disturbing Cult) traces facts through multiple layers: a news report cites a court document which cites a police report. Flat "source lists" miss this. A chain trace shows the Writer where authority actually originates. | HIGH | For each key claim, trace: assertion → source → that source's basis. Particularly important for contradicted or contested facts. [HEURISTIC] Claude reads scraped content and explicitly traces attribution chains. |
+| **Direct quote extraction** | The reference script uses direct quotes from historical figures to punctuate narration ("in 1961 he said..."). These must come from primary sources, not paraphrase. Unquoted facts are narrated; quoted facts become memorable moments. | MEDIUM | Explicitly extract verbatim quotes with full attribution (speaker, date, context, source). Separate section or inline callout. |
+| **Narrative hooks identification** | The Writer needs to know which facts are most dramatically potent — what the audience does not expect, where the story pivots, what the "reveal" is. The raw research does not surface these; a heuristic pass does. | MEDIUM | [HEURISTIC] After research synthesis, Claude identifies 3-5 narrative hooks: "the detail that changes everything," "the fact most people get wrong," "the unanswered question that haunts the case." These are explicitly labeled for the Writer. |
+| **Media inventory (separate file)** | The Director (Agent 1.4) and Media Acquisition agent (Agent 2.1) need URLs for available images, video, audio. Keeping this in Research.md bloats the dossier for the Writer. Separate file keeps both consumers happy. | LOW | Output as `media_inventory.md` in the project directory, separate from `Research.md`. Contains URLs, media type, subject described, licensing notes. |
+| **Wikipedia "Errors vs. Other Sources" check** | For this channel's niche, the reference script explicitly notes "the internet has been telling the story incorrectly since the turn of the century." Wikipedia is often the corrupted source. Flagging where Wikipedia contradicts primary sources is high-value. | MEDIUM | Compare Wikipedia's account against primary/academic sources. Flag divergences explicitly as "Wikipedia states X; primary source states Y." These become narrative moments: "you may have read..." |
+| **Scope estimation for runtime** | The Writer must produce a 20-50 minute script (3,000-7,000 words, 4-7 acts). If the research is too thin for 20 minutes, the Writer will pad. If too rich for 50, it will miss critical material. Knowing depth upfront shapes script structure. | LOW | [HEURISTIC] After research, Claude estimates: "This topic has sufficient material for approximately X-Y minutes based on timeline depth, source density, and sub-narrative count." |
+| **Cross-reference with past topics** | The agent should flag if any researched material overlaps significantly with a topic the channel has already covered. Prevents the Writer from producing a script that retreads ground. | LOW | Reads `context/channel/past_topics.md` (already exists from v1.0). Flags thematic overlap. Does not block — just informs. |
 
 ---
 
-## Anti-Features
-
-Features that seem useful but add complexity without proportional value for a solo documentary creator. Deliberately do NOT build these.
+### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Real-time monitoring / notifications** | "Alert me when a competitor uploads about my planned topic" | Requires a background service, scheduling, and persistent state. Massive complexity for a tool that runs on-demand in Claude Code. Solo creator does not need real-time alerts. | Run the tool before starting a new video. Check competitor recent uploads as part of that run. |
-| **SEO keyword optimization / tag suggestions** | VidIQ and TubeBuddy make this their core feature. Seems essential. | For documentary content, SEO is secondary to topic selection. A 30-min documentary on an obscure cult does not compete on keywords -- it competes on being the only/best coverage. Over-optimizing tags wastes time that should go into research depth. | Generate 3-5 title variants (covers the SEO angle). Skip tag optimization entirely. |
-| **Thumbnail analysis / A/B testing** | VidIQ tracks competitor thumbnail changes and their impact on views. | Requires image analysis infrastructure, screenshot capture of YouTube pages, and before/after tracking. Way outside scope for a topic selection tool. | Thumbnail decisions happen in post-production (DaVinci Resolve), not during topic selection. |
-| **Social media cross-platform analysis** | "Also check Reddit, Twitter/X for trending topics" | Each platform requires different scraping logic, authentication, rate limiting. Multiplies complexity 3-4x for marginal signal. Reddit true crime communities are useful but can be manually browsed. | Keep YouTube-only for v1. Add Reddit as a separate optional data source later if warranted. |
-| **Subscriber/view count prediction** | "Predict how many views this topic will get" | Prediction models for YouTube performance are notoriously unreliable. Even VidIQ's predictions are rough estimates. Building one from scratch is pointless. | Use competitor outlier detection instead -- "topics like this got 3x average views" is more honest than "this will get 50K views." |
-| **Upload scheduling / calendar** | "Plan my content calendar" | This channel is quality-gated with no fixed schedule. A calendar creates pressure to publish on schedule rather than when the video is ready. Also out of scope per PROJECT.md. | Keep a simple backlog of approved topics in a queue file. |
-| **Historical trend graphs / dashboards** | "Show me competitor growth over time" | Requires persistent time-series data, charting libraries, and regular data collection. Over-engineering for a tool that runs episodically. | Snapshot comparisons are sufficient. "Channel X uploaded 4 videos this month, averaging 200K views" is more actionable than a growth chart. |
-| **YouTube Data API v3 integration** | "Use the official API for better data" | Requires API key management, quota tracking (10,000 units/day default), and OAuth for some endpoints. yt-dlp already extracts the same metadata without API quotas. Adds credential management overhead. | yt-dlp + crawl4ai cover all needed data without API keys. Revisit only if rate limiting becomes a real blocker. |
-| **Full automated competitor discovery** | "Automatically find ALL competitors in my niche" | The niche (dark mysteries documentaries) has maybe 30-50 relevant channels. Manual curation produces a better watchlist than algorithmic discovery, which will include irrelevant channels (true crime podcasts, news channels, etc.). | Semi-automated: search YouTube for niche keywords, present results, user confirms which to track. |
-| **SQLite database** | "Need queryability and visualization" | For 20-30 channels with ~100-500 videos each, JSON files are perfectly adequate. SQLite adds a dependency and migration concerns without enabling queries that JSON + Python cannot handle at this scale. | JSON files per channel. Python scripts for any aggregation/filtering needed. Revisit at 100+ tracked channels (unlikely). |
-| **Comment sentiment analysis** | "Analyze what viewers are saying about competitor videos" | Adds NLP complexity, requires scraping comments (separate yt-dlp call per video), massive data volume. | View count and like ratio are sufficient performance signals for topic selection. |
-| **Web dashboard / GUI** | "Visualize data in a browser" | Architecture says CLI-only, Claude Code orchestrated. A GUI adds a whole second project. | Formatted tables in Claude Code chat. Export to CSV/markdown if the user wants to explore data externally. |
+| **Automated scraping of paywalled sources** | Academic papers, newspaper archives, court records often sit behind paywalls. "Get everything" sounds like it means paywalls too. | CFAA and equivalents. Also: login bypass adds brittle auth logic, account risks, and legal liability. Not worth it. | Scrape freely accessible portions (abstracts, previews, snippets). Flag paywalled sources explicitly so the user can manually retrieve if needed. |
+| **Real-time fact verification against every claim** | "Check every fact" sounds like quality control. | Every claim verification multiplies crawl4ai calls by 5-10x, dramatically increasing runtime and rate-limit risk for marginal gain. The source rating system already conveys confidence. | Rate sources HIGH/MEDIUM/LOW. Flag low-confidence claims in the dossier. Batch verification is the user's job if they choose to do it. |
+| **Automated interview subject identification and contact** | "Find me someone to interview" sounds useful. | Scraping personal contact info is a different legal and ethical domain. The agent cannot conduct interviews. This is fundamentally out of scope. | List named sources and their institutional affiliations in the key figures section. User finds contact info manually if needed. |
+| **Multi-language research by default** | International topics often have better primary sources in local languages (Spanish-language sources for Mexico cases, German for WWII topics, etc.). | Translation-on-scrape multiplies complexity significantly. crawl4ai returns raw HTML; translation requires an LLM call per page. Also: multi-language output creates consistency problems for the dossier. | Scrape English-language sources first. If key sources are only in another language, flag them with the URL and language tag so the user can manually translate and inject. |
+| **Storing research in SQLite database** | "What if we want to retrieve old research?" | Research.md is already a persistent file in the project directory. A parallel database adds complexity without enabling queries that the file system cannot already handle. Re-running research on an existing topic is rare enough that a file is sufficient. | File-based persistence. One Research.md per project directory. If the user wants to update research, they re-run the agent and the file is overwritten (with the previous version accessible via git history). |
+| **Sentiment analysis on sources** | "Know whether sources are biased" | NLP sentiment of scraped text is a weak proxy for source bias. Source type (primary court record vs. tabloid article) and source rating (HIGH/MEDIUM/LOW) provide more honest and actionable signal. | Reliability ratings with brief justification (e.g., "LOW — single tabloid source, no corroboration") replace sentiment analysis. |
+| **Auto-generated chapter outline** | "Give the Writer a chapter structure" | Imposing chapter structure in the Research phase constrains the Writer's narrative choices before they've engaged with the material. The Writer should derive structure from the material, not receive a pre-baked outline. | Narrative hooks section gives the Writer potent turning points without mandating structure. The Writer applies the style guide and reference scripts to determine act structure. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Competitor Channel Registry
+Manual Topic Input (reads project dir from Agent 1.1)
     |
     v
-Video Metadata Scraping (yt-dlp)
+Pass 1: Broad Survey Scrape [DETERMINISTIC]
+    |
+    +---> Subject Overview (500-word synthesis) [HEURISTIC]
+    |
+    +---> Preliminary Timeline
+    |
+    +---> Key Figures (initial pass)
     |
     v
-Local Data Cache (JSON per channel)
+Pass 2: Primary Source Deep-Dive [DETERMINISTIC]
     |
-    +---> Basic Channel Stats Display
+    +---> Timeline refinement (dates, corrections, gaps)
     |
-    +---> Performance Signal Detection (needs view counts + channel medians)
+    +---> Source chain tracing [HEURISTIC]
     |
-    +---> Competitor Topic Clustering (needs titles + descriptions)
-    |         |
-    |         v
-    |     Content Gap Detection (needs clusters + search data from crawl4ai)
+    +---> Direct quote extraction
     |
-    +---> Title Pattern Analysis (needs top-performing video titles)
+    +---> Contradictions identification [HEURISTIC]
     |
-    +---> Upload Cadence Tracking (needs upload dates)
-    |
-    +---> Cross-Channel Trend Detection (needs recent uploads across channels)
+    +---> Wikipedia error check [HEURISTIC]
     |
     v
-Topic Brief Generation (reads all analysis outputs + channel DNA + past topics)
+Synthesis Pass [HEURISTIC]
+    |
+    +---> Narrative hooks identification
+    |
+    +---> Scope estimation
+    |
+    +---> Unanswered questions section
+    |
+    +---> Source list with reliability ratings
     |
     v
-Past Topic Deduplication (filters briefs against past_topics.md)
+Output
     |
-    v
-User Selection (interactive in Claude Code chat)
+    +---> Research.md → projects/N. [Title]/Research.md
     |
-    v
-Project Directory Creation + Title Variants + Description
+    +---> media_inventory.md → projects/N. [Title]/media_inventory.md
 ```
 
-**Trend Awareness** is independent of the competitor pipeline -- it scrapes YouTube search directly and can run in parallel with competitor analysis.
+**Cross-reference with past topics** can run in parallel with synthesis — it reads a local file, not a remote source.
 
-**Competitor Discovery** is a setup-time feature, not a per-run feature. It feeds the channel registry.
+**Media inventory** is separated from Research.md to serve two consumers without bloating either output.
+
+### Dependency Notes
+
+- **Pass 2 requires Pass 1:** The broad survey identifies which primary sources exist and are worth targeting. Targeting primary sources without a subject understanding wastes crawl4ai calls on irrelevant archives.
+- **Source chain tracing requires both passes:** Chains can only be traced once both secondary and primary sources have been scraped and compared.
+- **Narrative hooks require synthesis:** Cannot identify what is surprising or pivotal without a full picture of the facts.
+- **Scope estimation requires synthesis:** Cannot assess depth until all sections are assembled.
 
 ---
 
 ## MVP Definition
 
-Build in this order. Each layer adds value independently.
+### Launch With (v1)
 
-### Layer 1: Data Foundation (must ship first)
-1. **Competitor channel registry** -- JSON config file with 10-15 seed channels
-2. **Video metadata scraping** -- yt-dlp batch scrape with JSON output
-3. **Local data cache** -- per-channel JSON files with staleness tracking
-4. **Basic channel stats** -- video count, avg views, upload frequency
+Minimum viable dossier that a scriptwriter can actually use.
 
-### Layer 2: Analysis (makes the data useful)
-5. **Performance signal detection** -- flag outlier videos per channel
-6. **Competitor topic clustering** -- group videos by theme
-7. **Title pattern analysis** -- extract winning title formulas
+- [x] Manual topic input — without this, the agent cannot run
+- [x] Pass 1: Broad survey (Wikipedia, news archives, general web) — without this, no baseline knowledge
+- [x] Pass 2: Primary source dive (archive.org, loc.gov, government sources) — without this, the dossier is thin and purely secondary
+- [x] Chronological timeline with source attribution per entry — critical for script structure
+- [x] Key figures section with roles, relationships, quotes — backbone of narration
+- [x] Subject overview (500-word synthesis) — establishing context for the Writer
+- [x] Contradictions section — narrative tension material
+- [x] Unanswered questions section — potential endings and hooks
+- [x] Source list with reliability ratings — lets the Writer calibrate confidence in each claim
+- [x] Output to `projects/N. [Title]/Research.md` — required for pipeline continuity
 
-### Layer 3: Output (the actual product)
-8. **Topic brief generation** -- 5 scored briefs per run, using channel DNA criteria
-9. **Past topic deduplication** -- filter against covered topics
-10. **Project directory creation** -- `projects/N. Title/` with metadata
-11. **Multiple title variants** -- 3-5 per selected topic
+### Add After Validation (v1.x)
 
-### Layer 4: Advanced (defer until core is validated)
-12. **Content gap detection** -- search demand vs. coverage analysis
-13. **Trend awareness** -- YouTube search/autocomplete scraping
-14. **Cross-channel trend detection** -- convergence analysis
-15. **Upload cadence tracking** -- timing intelligence
-16. **Competitor selective refresh** -- per-channel re-scrape
+Features to add once the base dossier proves useful to the Writer.
 
-**Rationale:** Layers 1-3 can ship together as the initial version. Without Layer 1, nothing works. Without Layer 2, the topic generation is just "Claude guessing" without data backing. Layer 3 is the user-facing output. Layer 4 adds sophistication but is not required for the tool to be useful on day one.
+- [ ] Source chain tracing — add when Writer feedback indicates sourcing is too flat
+- [ ] Direct quote extraction as separate labeled section — add when Writer asks for quote callouts
+- [ ] Narrative hooks identification — add when Writer feedback shows difficulty identifying dramatic turning points
+- [ ] Media inventory as separate file — add when Agent 1.4 (Director) is built and needs the data
+- [ ] Wikipedia error check — add when a video is produced and the "correcting the record" angle proves valuable
+
+### Future Consideration (v2+)
+
+- [ ] Scope estimation — defer until enough Research.md outputs exist to calibrate the heuristic
+- [ ] Cross-reference with past topics — low risk without it; add when the backlog grows large enough that overlap becomes a real concern
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature | Impact | Effort | Priority | Category |
-|---------|--------|--------|----------|----------|
-| Competitor registry | HIGH | LOW | P0 | Table Stakes |
-| Metadata scraping | HIGH | MEDIUM | P0 | Table Stakes |
-| Data cache + staleness | HIGH | MEDIUM | P0 | Table Stakes |
-| Basic channel stats | MEDIUM | LOW | P0 | Table Stakes |
-| Topic brief generation | HIGH | LOW | P0 | Table Stakes |
-| Scoring against criteria | HIGH | LOW | P0 | Table Stakes |
-| Past topic dedup | MEDIUM | LOW | P0 | Table Stakes |
-| Project dir creation | MEDIUM | LOW | P0 | Table Stakes |
-| Performance signal detection | HIGH | MEDIUM | P1 | Differentiator |
-| Topic clustering | HIGH | MEDIUM | P1 | Differentiator |
-| Title pattern analysis | MEDIUM | LOW | P1 | Differentiator |
-| Title variants | MEDIUM | LOW | P1 | Differentiator |
-| Content gap detection | HIGH | MEDIUM | P2 | Differentiator |
-| Trend awareness | MEDIUM | MEDIUM | P2 | Differentiator |
-| Cross-channel trends | MEDIUM | MEDIUM | P2 | Differentiator |
-| Upload cadence | LOW | LOW | P2 | Differentiator |
-| Competitor selective refresh | LOW | LOW | P3 | Differentiator |
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Manual topic input | HIGH | LOW | P1 |
+| Pass 1: Broad survey scrape | HIGH | MEDIUM | P1 |
+| Pass 2: Primary source dive | HIGH | HIGH | P1 |
+| Chronological timeline + sources | HIGH | MEDIUM | P1 |
+| Key figures + quotes | HIGH | MEDIUM | P1 |
+| Subject overview | HIGH | LOW | P1 |
+| Contradictions section | HIGH | LOW | P1 |
+| Unanswered questions | MEDIUM | LOW | P1 |
+| Source list + reliability ratings | HIGH | MEDIUM | P1 |
+| Output to project dir | HIGH | LOW | P1 |
+| Source chain tracing | HIGH | HIGH | P2 |
+| Direct quote extraction | MEDIUM | LOW | P2 |
+| Narrative hooks identification | HIGH | MEDIUM | P2 |
+| Media inventory (separate file) | MEDIUM | LOW | P2 |
+| Wikipedia error check | MEDIUM | MEDIUM | P2 |
+| Scope estimation | LOW | LOW | P3 |
+| Cross-reference with past topics | LOW | LOW | P3 |
+
+**Priority key:**
+- P1: Must have for launch
+- P2: Should have, add when possible
+- P3: Nice to have, future consideration
 
 ---
 
-## Competitor Feature Analysis
+## What the Scriptwriter Actually Needs
 
-What commercial tools offer vs. what this channel actually needs:
+Analysis of the reference script ("Mexico's Most Disturbing Cult") reveals what the downstream Writer requires. These are not aspirational — they are structural requirements derived from how the channel's scripts are actually written.
 
-| Feature Area | VidIQ ($7.50-49/mo) | TubeBuddy ($3.49-28/mo) | Subscribr ($19-79/mo) | Our Tool Needs? |
-|-------------|-------|-----------|-----------|-------------------|
-| Keyword research | Full suite, search volume, competition scores, rising keywords | Full suite, tag explorer, keyword rankings | AI keyword generator | NO -- documentary topics are not keyword-driven |
-| Competitor tracking | Channel comparison, growth graphs, video velocity (views/hour) | Competitor scorecard, tag comparison | Outlier video detection across thousands of channels | YES -- simplified. Channel stats + outlier videos only |
-| Thumbnail analysis | Track thumbnail changes + impact on performance | Thumbnail A/B testing | No | NO -- out of scope for topic selection |
-| Title optimization | AI title suggestions, title change tracking | Title scoring | Title generator | PARTIAL -- title variants generation only |
-| SEO scoring | Video SEO score overlay on every YouTube page | Search rankings per tag | No | NO -- over-engineering for documentary content |
-| Content gap analysis | Limited, paid tier only | No | Research assistant for finding underserved angles | YES -- highest unique value feature |
-| Topic ideation | AI-powered suggestions based on channel niche | Keyword-based suggestions | 10 ideas with angles, hooks, and thumbnail concepts | YES -- our core output, tuned to channel DNA and 4-criteria scoring |
-| Script writing | No | No | Full AI scriptwriting workflow | NO -- separate agent (Agent 1.3) handles this |
-| Data ownership | Cloud-only, SaaS dependency | Cloud-only, SaaS dependency | Cloud-only | YES -- all data local in JSON files, no vendor lock-in |
-
-**Key insight:** Commercial tools optimize for breadth (serve all creators). Our tool optimizes for depth in ONE niche. We skip 70% of what VidIQ offers and go deeper on the 30% that matters: competitor intelligence, content gaps, and scored topic generation aligned to a specific editorial voice.
+| Script Pattern | Research Dossier Requirement |
+|----------------|-------------------------------|
+| Events narrated in strict chronological order with precise dates | Timeline with dated entries and sources per entry |
+| Named actors with full names, not "the suspect" or "a local official" | Key figures: full names, roles, relationships |
+| Transition via factual pivots, not opinion ("this would prove to be the beginning of...") | Contradictions and unanswered questions sections to generate clean factual pivots |
+| Correcting mainstream misconceptions ("the internet has been telling the story incorrectly") | Wikipedia error check; primary source prioritization |
+| Quotes from historical figures to anchor scenes | Direct quote extraction with full attribution |
+| Pacing shift from exposition to tension requires knowing where the inflection point is | Narrative hooks identification |
+| Script word count 3,000-7,000 words across 4-7 acts | Scope estimation |
+| Source credibility communicated implicitly ("court records show...") | Source reliability ratings inform how Writer frames each assertion |
 
 ---
 
-## Niche-Specific Features (Dark Mysteries Documentary)
+## Niche-Specific Considerations
 
-Features unique to this channel's niche that generic tools would never offer:
+This agent must handle multiple documentary sub-niches without hardcoding. Each has distinct primary source types:
 
-| Feature | Why It Matters | Implementation |
-|---------|---------------|----------------|
-| **Obscurity scoring** | The channel's edge is covering topics nobody else has. Generic tools optimize for popular topics -- we need the opposite. | Cross-reference topic against competitor coverage count. Fewer competitors covering it = higher obscurity score. |
-| **Source verifiability assessment** | Channel DNA requires verifiable sources. Topics based only on Reddit threads or urban legends fail the quality bar. | Part of the topic brief prompt: require the LLM to assess source availability (court records, news archives, books, official documents). |
-| **Runtime estimation (20-50 min target)** | A topic too thin for 20 minutes or too sprawling for 50 needs flagging before research begins. | LLM estimates based on timeline complexity and available source material depth. |
-| **Content pillar alignment** | Topics must map to one of 5 pillars (historical crimes, cults, disappearances, corruption, dark web). Random true crime does not fit the channel identity. | Classify each brief against the 5 pillars. Ensure balanced coverage over time by checking past_topics.md pillar distribution. |
-| **Shock factor calibration** | The channel needs genuine shock, not sensationalism. "This is disturbing because of the facts" not "this is disturbing because we made it sound scary." | Part of scoring prompt. LLM evaluates whether shock comes from documented facts or from presentation framing. Reject sensationalism-dependent topics. |
+| Sub-Niche | Primary Source Types | Key Free Archives |
+|-----------|---------------------|-------------------|
+| Dark history / historical crimes | Court records, police reports, newspaper archives, inquest records | archive.org, Chronicling America (loc.gov), national archives |
+| Cults / psychological control | FBI files (FOIA releases), survivor testimonies, court transcripts | vault.fbi.gov, archive.org, PACER (limited free access) |
+| Unsolved disappearances | Missing persons reports, coroner reports, local news archives | NamUs (national missing persons), local newspaper archives |
+| Institutional corruption | Government reports, whistleblower documents, congressional records | archives.gov, govinfo.gov, ProPublica Documented |
+| Dark web / digital crimes | Court indictments, DOJ press releases, cybersecurity research papers | justice.gov, pacer.gov (indictments), academic preprints |
+
+The agent must generate appropriate Pass 2 source targets based on the topic's sub-niche, not use a fixed source list. Sub-niche is [HEURISTIC] — Claude infers it from the topic title and Pass 1 findings.
 
 ---
 
 ## Sources
 
-- [VidIQ Features - Competitors Tool](https://vidiq.com/features/competitors/)
-- [VidIQ Features - Keyword Tools](https://vidiq.com/features/keyword-tools/)
-- [TubeBuddy - YouTube Competitor Analysis Tool](https://www.tubebuddy.com/tools/youtube-competitor-analysis-tool)
-- [VidIQ vs TubeBuddy Comparison (2026)](https://linodash.com/vidiq-vs-tubebuddy/)
-- [VidIQ vs TubeBuddy (thumbnailtest.com, 2026)](https://thumbnailtest.com/guides/vidiq-vs-tubebuddy/)
-- [Subscribr - AI Script Writer & Video Idea Generator](https://subscribr.ai/)
-- [Content Gap Analysis for YouTube (Subscribr)](https://subscribr.ai/p/youtube-content-gap-analysis)
-- [GapGens - YouTube Content Gap Analysis](https://www.gapgens.com/)
-- [How to Analyze YouTube Competitors at Scale (ScraperAPI)](https://www.scraperapi.com/blog/analyze-youtube-competitors/)
-- [yt-dlp YouTube Data Adventure (nv1t)](https://nv1t.github.io/blog/scraping-by-my-youtube-data-adventure/)
-- [AI YouTube Trend Finder (n8n workflow)](https://n8n.io/workflows/2606-ai-youtube-trend-finder-based-on-niche/)
-- [Best YouTube Competitor Analysis Tools 2025 (OutlierKit)](https://outlierkit.com/blog/best-youtube-competitor-analysis-tools-free-and-paid)
-- [YouTube Niche Analyzer (TubeLab)](https://tubelab.net/niche-analyzer)
+- Architecture.md — Research Dossier Schema (ground truth for output fields)
+- `context/script references/Mexico's Most Disturbing Cult.md` — Reference script analysis for scriptwriter requirements
+- [Research Methodologies for Documentaries (Fiveable)](https://fiveable.me/documentary-production/unit-4/research-methodologies-documentaries/study-guide/P6YntwxZNeRvOXor)
+- [Ken Burns on Documentary Research (MasterClass)](https://www.masterclass.com/articles/learn-about-documentary-filmmaking-with-tips-and-advice-from-ken-burns)
+- [How to Write a Documentary Script (Celtx)](https://blog.celtx.com/how-to-write-a-documentary-script/)
+- [Crawl4AI Documentation (v0.8.x)](https://docs.crawl4ai.com/)
+- [Web scraping for research: Legal considerations (SAGE Journals, 2025)](https://journals.sagepub.com/doi/10.1177/20539517251381686)
+- [Web Scraping for Investigative Journalism (ICIJ)](https://www.icij.org/inside-icij/2018/09/web-scraping-how-to-harvest-data-for-untold-stories/)
+
+---
+*Feature research for: Agent 1.2 — The Researcher (documentary web research agent)*
+*Researched: 2026-03-12*

@@ -1,264 +1,171 @@
 # Stack Research
 
-**Domain:** YouTube Channel Assistant / Competitor Intelligence
-**Researched:** 2026-03-11
+**Domain:** Web Research Agent (Agent 1.2 — The Researcher)
+**Researched:** 2026-03-12
 **Confidence:** HIGH
 
-## Recommended Stack
+> **Scope:** This document covers stack additions and changes for Agent 1.2 only. The v1.0 stack (Python 3.14, SQLite stdlib, yt-dlp 2026.2.4, sqlite-utils, tabulate, python-dateutil) is validated and unchanged. Do not re-evaluate those decisions.
 
-### Core Technologies
+---
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Python | 3.14.2 | Runtime | Already installed on system. All project scripting is Python-only per constraints. |
-| SQLite (stdlib `sqlite3`) | 3.52.0 (bundled) | Competitor data storage | Zero dependencies (built into Python). Queryable, supports JSON columns, ACID-safe. Beats JSON files for anything beyond trivial datasets. See detailed rationale below. |
-| yt-dlp | 2026.2.4 | YouTube metadata extraction | Already installed. Industry standard for YouTube data. Extracts channel/video metadata without downloading via `extract_info(download=False)`. |
-| crawl4ai | 0.8.x | Web scraping (search results, trend pages) | Specified in Architecture.md. Async Playwright-based. Handles JS-rendered pages. Install on-demand for scraping tasks. |
+## What Agent 1.2 Needs That v1.0 Does Not Have
 
-### Supporting Libraries
+The Researcher must do three new things:
+
+1. **Multi-source web scraping** — news archives, Wikipedia, government records, court documents, academic papers, archive.org items — across 10-30 URLs per research run
+2. **Text extraction** — strip boilerplate from scraped HTML and produce clean prose for Claude to reason over
+3. **Source deduplication** — detect when two scraped pages say the same thing and collapse them before passing to Claude
+
+None of these are covered by the existing yt-dlp + crawl4ai-scraper stub (which does single-URL markdown output only).
+
+---
+
+## Recommended Stack Additions
+
+### Core: Web Scraping
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| crawl4ai | 0.8.x | Multi-URL async scraping with JS rendering | Already specified in Architecture.md. Handles JS-heavy pages (news sites, paywalled article previews). `arun_many()` crawls 10-30 URLs concurrently with `MemoryAdaptiveDispatcher`. Produces clean markdown per URL — exactly what Claude needs as research input. Install: `pip install crawl4ai && crawl4ai-setup`. |
+| internetarchive | 5.8.0 | archive.org item search and metadata retrieval | **Already installed** (5.8.0 confirmed in environment). Lets the agent search archive.org's catalog for historical documents, newspapers, and government records by keyword. Faster and more reliable than scraping archive.org HTML with crawl4ai because it uses the official API. |
+
+**Installation note for crawl4ai:** `crawl4ai-setup` runs `playwright install` under the hood. This installs Chromium, Firefox, and WebKit browser binaries (~300MB). Run once, not per-project. The `crawl4ai[all]` extra (PyTorch, Transformers) is explicitly NOT needed — those are for LLM-based extraction, which the project forbids (Claude Code handles reasoning natively).
+
+### Supporting: Text Extraction Fallback
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| sqlite-utils | 3.39 | SQLite convenience layer | Pipe JSON directly into SQLite tables. Auto-schema creation. Upsert support. Dramatically reduces boilerplate vs raw `sqlite3`. |
-| tabulate | 0.9.0 | Markdown/terminal table formatting | When Claude Code needs to display competitor data as formatted tables in chat. Lightweight, no dependencies. |
-| python-dateutil | 2.9.x | Date parsing and relative dates | Parse YouTube upload dates (varied formats). Calculate "days since upload", "uploads per month" metrics. |
-| pathlib | stdlib | File path handling | Always use `pathlib.Path` over string concatenation per project conventions (Windows compatibility). |
+| trafilatura | 2.0.0 | Boilerplate-stripping text extraction from raw HTML | Use when crawl4ai's markdown output is noisy (navigation chrome, cookie banners, ads). Trafilatura achieves F1=0.958 on the ScrapingHub benchmark — highest of any open-source extractor. Accepts raw HTML strings, returns clean prose. Also extracts structured metadata: title, author, publication date, language. Install: `pip install trafilatura`. |
+| beautifulsoup4 | 4.14.3 | Targeted HTML parsing for structured sources | **Already installed**. Use for Wikipedia infoboxes, government record tables, and any page where you need specific elements (e.g., extract a table of dates from a court docket). Not for general boilerplate stripping — use trafilatura for that. |
 
-### Development Tools
+**Why trafilatura over newspaper3k:** newspaper3k has not been updated since 2018. It fails on malformed HTML and modern encoding. Trafilatura is actively maintained (v2.0.0, December 2024), outperforms newspaper3k on every benchmark metric, and handles multilingual content. The choice is clear.
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| sqlite3 CLI | Direct DB inspection | Ships with Python. Run `python -m sqlite3 competitors.db` to inspect data interactively. |
-| sqlite-utils CLI | Quick DB operations | `sqlite-utils tables competitors.db`, `sqlite-utils query competitors.db "SELECT ..."` from shell. |
-| yt-dlp CLI | Test metadata extraction | `yt-dlp --dump-json --flat-playlist "channel_url"` to verify data before coding. |
+### Supporting: Source Deduplication
 
-## The JSON vs SQLite Decision
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| difflib | stdlib | Near-duplicate detection via sequence ratio | Use `difflib.SequenceMatcher.ratio()` to compare extracted text blocks across sources. Ratio > 0.85 = near-duplicate, collapse to one entry with all source URLs noted. No install needed — already in Python stdlib. |
 
-**Recommendation: SQLite. Strongly.**
+**Why not text-dedup or semhash:** Those are corpus-scale tools (billions of documents). The research agent scrapes 10-30 pages per run. `difflib.SequenceMatcher` is in stdlib, requires zero install, and handles this scale trivially. The project pattern of preferring stdlib (established in v1.0 Key Decisions) applies directly here.
 
-This is the pivotal stack decision for this project. Here is the full analysis for this specific use case.
+### Supporting: Wikipedia Access
 
-### Why SQLite Wins for Competitor Intelligence
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| requests | 2.32.5 | MediaWiki Action API calls | **Already installed**. Use the Wikipedia REST API (`https://en.wikipedia.org/w/api.php`) directly with `requests.get()`. Fetches article text, revision history, linked pages, and categories without a third-party wrapper. No rate-limit issues at research scale (1-5 Wikipedia lookups per run). |
 
-| Criterion | JSON Files | SQLite |
-|-----------|-----------|--------|
-| **Querying** | Load entire file into memory, filter with Python loops | SQL queries: `SELECT title, view_count FROM videos WHERE channel='X' ORDER BY view_count DESC LIMIT 10` |
-| **Partial reads** | Must load entire file even for one record | Reads only needed rows/pages via indexes |
-| **Concurrent safety** | Risk of corruption on failed writes | ACID transactions, atomic writes |
-| **Schema evolution** | Manual migration, easy to break | `ALTER TABLE ADD COLUMN` or just add new columns via sqlite-utils |
-| **Aggregation** | Write custom Python code every time | `SELECT channel, AVG(view_count), COUNT(*) FROM videos GROUP BY channel` |
-| **Claude Code integration** | Claude must write Python to parse/filter | Claude can write SQL directly -- faster, more expressive, fewer bugs |
-| **Data size** | Gets slow past ~1MB, ~5000 records | Handles millions of records without breaking a sweat |
-| **Cross-session state** | File locking issues on Windows | Built-in locking, WAL mode for concurrent reads |
-| **Visualization prep** | Export to CSV/JSON manually | `sqlite-utils query db.sqlite "..." --csv` one-liner |
+**Why not the `wikipedia` PyPI package:** The `wikipedia` library wraps the MediaWiki API but has known disambiguation bugs and hasn't been updated recently. Direct `requests` calls to the MediaWiki API give full control (extract sections, follow disambiguation links, get citation lists) with zero extra dependency.
 
-### Why NOT JSON Files
+### Supporting: PDF Handling
 
-- **The "queryability" requirement kills JSON.** The user explicitly wants querying, visualization, and analysis. JSON forces you to write Python code for every query. SQLite gives you SQL for free.
-- **Claude Code writes better SQL than ad-hoc Python filtering.** When the user asks "show me competitor X's top videos by views", Claude can write a SQL query directly instead of writing a Python script that loads JSON, parses it, filters, sorts, and formats.
-- **Windows file locking.** JSON files on Windows with Git Bash have known issues with concurrent reads/writes. SQLite handles this natively.
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| pymupdf | 1.25.x | PDF text extraction for government records, court docs | Use when archive.org or government sites return PDF URLs. PyMuPDF is 60x faster than pdfminer.six and preserves formatting better than PyPDF2. It handles both text-based and mixed PDFs. Install: `pip install pymupdf`. Skip if no PDF sources are found in practice — add reactively. |
 
-### Where JSON Still Makes Sense
+**Confidence: MEDIUM.** PyMuPDF's speed advantage (42ms vs 2.5s for pdfminer) is verified across multiple 2025 benchmarks. The `pymupdf` package installs cleanly on Windows. However, if government record PDFs turn out to be scanned images rather than text-based, PyMuPDF cannot extract text without an OCR step — crawl4ai's built-in PDF strategy has the same limitation. Flag for validation when first PDFs are encountered.
 
-- **Config files** (channel.md, past_topics.md) -- human-readable, rarely queried programmatically
-- **One-off exports** -- `sqlite-utils query ... --json` when you need to pipe data somewhere
-- **Schema-free scratch data** -- temporary files in `.claude/scratch/`
-
-### Database Schema (Recommended Starting Point)
-
-```sql
--- Channels we track
-CREATE TABLE channels (
-    id TEXT PRIMARY KEY,          -- YouTube channel ID
-    name TEXT NOT NULL,
-    url TEXT NOT NULL,
-    subscriber_count INTEGER,
-    video_count INTEGER,
-    description TEXT,
-    niche_tags TEXT,              -- JSON array: ["dark history", "true crime"]
-    last_scraped TEXT,            -- ISO 8601 timestamp
-    added_at TEXT DEFAULT (datetime('now'))
-);
-
--- Individual videos from tracked channels
-CREATE TABLE videos (
-    id TEXT PRIMARY KEY,          -- YouTube video ID
-    channel_id TEXT REFERENCES channels(id),
-    title TEXT NOT NULL,
-    description TEXT,
-    upload_date TEXT,             -- YYYY-MM-DD
-    duration INTEGER,            -- seconds
-    view_count INTEGER,
-    like_count INTEGER,
-    comment_count INTEGER,
-    tags TEXT,                    -- JSON array
-    thumbnail_url TEXT,
-    scraped_at TEXT DEFAULT (datetime('now'))
-);
-
--- Topics we've generated or covered
-CREATE TABLE topics (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    hook TEXT,
-    complexity_score INTEGER,
-    obscurity_score INTEGER,
-    shock_factor INTEGER,
-    estimated_runtime INTEGER,   -- minutes
-    status TEXT DEFAULT 'proposed',  -- proposed | selected | rejected | produced
-    source_brief TEXT,           -- full JSON of topic brief
-    created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE INDEX idx_videos_channel ON videos(channel_id);
-CREATE INDEX idx_videos_upload ON videos(upload_date);
-CREATE INDEX idx_videos_views ON videos(view_count DESC);
-```
-
-### sqlite-utils Usage Patterns
-
-```python
-import sqlite_utils
-
-db = sqlite_utils.Database("context/competitors/competitors.db")
-
-# Upsert channel data (idempotent -- safe to re-scrape)
-db["channels"].upsert(channel_data, pk="id")
-
-# Bulk insert videos from yt-dlp JSON output
-db["videos"].upsert_all(video_list, pk="id")
-
-# Query from Python
-top_videos = list(db["videos"].rows_where(
-    "channel_id = ? ORDER BY view_count DESC LIMIT 10",
-    [channel_id]
-))
-
-# Or just use raw SQL for complex analysis
-results = db.execute("""
-    SELECT c.name, COUNT(v.id) as video_count, AVG(v.view_count) as avg_views
-    FROM channels c JOIN videos v ON c.id = v.channel_id
-    WHERE v.upload_date > date('now', '-90 days')
-    GROUP BY c.id ORDER BY avg_views DESC
-""").fetchall()
-```
+---
 
 ## Installation
 
 ```bash
-# Core data layer
-pip install sqlite-utils tabulate python-dateutil
+# New dependencies for Agent 1.2
 
-# Scraping (yt-dlp already installed)
+# Primary scraping engine (one-time setup, installs Playwright browsers ~300MB)
 pip install crawl4ai
+crawl4ai-setup
 
-# That's it. yt-dlp, sqlite3, pathlib, json are already available.
+# Text extraction fallback
+pip install trafilatura
+
+# PDF extraction (install reactively when PDF sources appear)
+pip install pymupdf
+
+# Already installed — no action needed:
+# internetarchive==5.8.0 (confirmed)
+# beautifulsoup4==4.14.3 (confirmed)
+# requests==2.32.5 (confirmed)
+# difflib (stdlib)
 ```
 
-**Total new dependencies: 3 packages** (sqlite-utils, tabulate, python-dateutil). crawl4ai is installed separately when scraping tasks begin because it pulls in Playwright and browser binaries.
+**Total new hard dependencies: 2** (crawl4ai, trafilatura). pymupdf is reactive — install when PDFs appear. Everything else is already in the environment.
+
+---
+
+## How These Tools Compose in the Two-Pass Research Pattern
+
+**Pass 1 — Broad Survey:**
+1. Build 8-12 search queries from the topic (Claude heuristic)
+2. Scrape search results pages and Wikipedia with crawl4ai `arun_many()` — 10-15 URLs concurrently
+3. For archive.org: use `internetarchive` to search catalog, get item metadata and download URLs
+4. Strip boilerplate from each result with trafilatura (accept crawl4ai markdown as primary, trafilatura as fallback for noisy pages)
+5. Dedup with `difflib.SequenceMatcher` — collapse sources that say the same thing
+6. Output: cleaned text blocks with source URLs, ready for Claude to synthesize into a topic map
+
+**Pass 2 — Deep Primary Source Dive:**
+1. Claude identifies 5-8 high-value URLs from Pass 1 output (heuristic)
+2. crawl4ai fetches full content of those URLs, including JS-rendered content
+3. MediaWiki API fetches Wikipedia article text and citation list for cross-referencing
+4. PyMuPDF extracts text from any PDF documents in the source list
+5. Output: primary source text blocks, structured into the Research.md schema
+
+---
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|------------------------|
-| SQLite + sqlite-utils | TinyDB | Never for this project. TinyDB is a document store for tiny apps. No SQL, no joins, no aggregation. |
-| SQLite + sqlite-utils | Raw JSON files | Only for human-readable config (channel.md, past_topics.md). Never for queryable data. |
-| SQLite + sqlite-utils | DuckDB | If you need analytical queries over millions of rows or Parquet files. Overkill here -- competitor data is thousands of rows at most. |
-| SQLite + sqlite-utils | PostgreSQL | If you needed multi-user access or a server. This is a single-user CLI tool. SQLite is the right tool. |
-| sqlite-utils | Raw sqlite3 | If sqlite-utils has compatibility issues with Python 3.14. Raw sqlite3 is stdlib and always works. sqlite-utils is a convenience layer, not a hard dependency. |
-| tabulate | Rich | If you want colored/styled terminal output. Rich is heavier (12MB+). tabulate is 50KB and outputs clean markdown that Claude Code renders well. |
-| python-dateutil | Pendulum | If you need timezone-heavy operations. Overkill for "parse upload date, compute days ago". dateutil is lighter and sufficient. |
+|-------------|-------------|-------------------------|
+| crawl4ai 0.8.x | Scrapy | If the agent needed to crawl entire site hierarchies (e.g., scrape every page of a news archive). Scrapy has a steeper setup curve and is overkill for targeted 10-30 URL research runs. |
+| crawl4ai 0.8.x | httpx + playwright directly | If crawl4ai proves too heavyweight or has Windows compatibility issues. httpx handles async HTTP; playwright handles JS rendering. More code, same result. |
+| trafilatura | newspaper4k (newspaper3k fork) | newspaper4k is an active fork of newspaper3k, updated in 2024. If trafilatura misses content on a specific site type, newspaper4k is the fallback. Do not use newspaper3k (2018, unmaintained). |
+| difflib (stdlib) | datasketch MinHash | If the research agent scales to 100+ sources per run. datasketch MinHash handles corpus-scale dedup efficiently. At 10-30 sources, it's complete overkill. |
+| internetarchive (already installed) | crawl4ai on archive.org HTML | Crawling archive.org HTML is brittle — the site's structure changes. The official Python client uses the stable S3-like API. Always prefer the official client when it exists. |
+| PyMuPDF | pdfminer.six | pdfminer.six is 60x slower and produces equivalent accuracy. Only choose it if PyMuPDF has a Windows install failure (its C extension sometimes has issues). |
+| requests + MediaWiki API | `wikipedia` PyPI package | The `wikipedia` package is easier but has disambiguation bugs and is unmaintained. Direct MediaWiki API calls with `requests` give the same result with full control. |
 
-## What NOT to Use
+---
+
+## What NOT to Add
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| pandas | 30MB+ dependency. Pulls in numpy. Massive for what amounts to SQL queries on small datasets. | sqlite-utils + SQL queries |
-| MongoDB / any server DB | Requires running a server process. This is a CLI tool. | SQLite (serverless, zero-config) |
-| TinyDB | No SQL, no joins, poor query performance at scale. Looks simple but limits you fast. | SQLite via sqlite-utils |
-| YouTube Data API v3 | Requires API key, has quota limits (10,000 units/day), rate limiting. yt-dlp has no such limits. | yt-dlp with `extract_info(download=False)` |
-| Scrapy | Enterprise web crawler framework. Massive overhead for targeted YouTube scraping. | crawl4ai for web pages, yt-dlp for YouTube |
-| Any LLM API wrapper | Architecture.md explicitly forbids this. Claude Code IS the reasoning engine. | Claude Code native reasoning |
-| Node.js / JavaScript | Project constraint: Python only. | Python for all scripting |
+| LangChain / LlamaIndex | Architecture.md Rule 1: zero LLM API wrappers. These frameworks exist to orchestrate LLMs — Claude Code is already doing that natively. They add 50+ transitive dependencies for zero benefit. | Claude Code native orchestration |
+| SerpAPI / Serper / Google Search API | Paid services with quotas. Search results are obtainable by scraping DuckDuckGo or using site-specific search endpoints. | crawl4ai on DuckDuckGo HTML or site-specific search APIs |
+| crawl4ai[torch] / crawl4ai[transformer] | These extras enable LLM-based extraction (embedding models, cosine similarity). Claude Code handles semantic reasoning — these just add PyTorch to the dependency graph. | Core crawl4ai only (no extras beyond base install) |
+| Scrapy | Enterprise crawl framework. Async, middleware-based, spider-based design. Massive setup overhead for targeted research runs. | crawl4ai `arun_many()` |
+| newspaper3k | Unmaintained since 2018. Fails on malformed HTML. Superseded by trafilatura and newspaper4k. | trafilatura |
+| spaCy / NLTK | NLP pipelines for entity recognition, tokenization. The research agent does not need NLP — it produces raw text for Claude to reason over. | Claude Code native reasoning |
+| Any async task queue (Celery, RQ) | Research runs are single-session, synchronous from Claude's perspective. crawl4ai's internal `MemoryAdaptiveDispatcher` handles concurrency inside a single async session. | crawl4ai built-in concurrency |
 
-## yt-dlp Usage Patterns for This Project
-
-### Extract Channel Video List (Flat, No Download)
-
-```python
-import yt_dlp
-
-def get_channel_videos(channel_url: str) -> list[dict]:
-    """Extract metadata for all videos from a YouTube channel."""
-    opts = {
-        'extract_flat': 'in_playlist',
-        'quiet': True,
-        'no_warnings': True,
-        'ignoreerrors': True,
-    }
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(channel_url, download=False)
-        return info.get('entries', [])
-```
-
-### Extract Full Video Metadata (Per Video)
-
-```python
-def get_video_details(video_id: str) -> dict:
-    """Extract full metadata for a single video."""
-    opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-    }
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        return ydl.extract_info(
-            f"https://www.youtube.com/watch?v={video_id}",
-            download=False
-        )
-```
-
-### Key Metadata Fields Available
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | str | YouTube video ID |
-| `title` | str | Video title |
-| `description` | str | Full description text |
-| `upload_date` | str | YYYYMMDD format |
-| `duration` | int | Seconds |
-| `view_count` | int | Total views |
-| `like_count` | int | Likes (may be hidden) |
-| `comment_count` | int | Comments |
-| `tags` | list | Video tags |
-| `categories` | list | YouTube categories |
-| `channel_id` | str | Channel ID |
-| `channel` | str | Channel name |
-| `thumbnail` | str | Thumbnail URL |
-| `channel_follower_count` | int | Subscriber count |
+---
 
 ## Version Compatibility
 
-| Component | Required Python | Status |
-|-----------|----------------|--------|
-| Python | 3.14.2 | Installed |
-| yt-dlp 2026.2.4 | >= 3.10 | Compatible |
-| sqlite-utils 3.39 | >= 3.10 | Compatible (verify on install -- Python 3.14 is new) |
-| crawl4ai 0.8.x | >= 3.10 | Compatible |
-| tabulate 0.9.0 | >= 3.7 | Compatible |
-| python-dateutil 2.9.x | >= 3.6 | Compatible |
-| sqlite3 (stdlib) | any | Always available |
+| Package | Version | Python 3.14 Status | Notes |
+|---------|---------|-------------------|-------|
+| crawl4ai | 0.8.x | Requires >=3.10 | Test `crawl4ai-doctor` on first install to verify Playwright setup on Windows |
+| trafilatura | 2.0.0 | Requires >=3.8 | No known Python 3.14 issues |
+| internetarchive | 5.8.0 | Already installed, confirmed working | Uses `requests` which is also installed |
+| pymupdf | 1.25.x | Requires >=3.8 | C extension — verify Windows build on install. `pip install pymupdf` installs pre-built wheel on Windows. |
+| beautifulsoup4 | 4.14.3 | Already installed | No compatibility concerns |
+| requests | 2.32.5 | Already installed | No compatibility concerns |
+| difflib | stdlib | Always available | No install needed |
 
-**Risk note:** sqlite-utils 3.39 lists Python 3.10-3.14 support. If it fails on 3.14, fall back to raw `sqlite3` module (stdlib, zero risk). The convenience is nice but not a hard dependency.
+**Windows-specific risk:** crawl4ai runs Playwright (Chromium) as a subprocess. On Windows, this requires the `PYTHONUTF8=1` environment variable or `chcp 65001` to handle UTF-8 output correctly, particularly for non-Latin source content (which historical research frequently encounters). Set `PYTHONUTF8=1` in the skill's run environment.
+
+---
 
 ## Sources
 
-- [yt-dlp PyPI](https://pypi.org/project/yt-dlp) - Version and compatibility info
-- [yt-dlp GitHub](https://github.com/yt-dlp/yt-dlp) - Documentation and metadata fields
-- [sqlite-utils GitHub](https://github.com/simonw/sqlite-utils) - Library capabilities and API
-- [sqlite-utils PyPI](https://pypi.org/project/sqlite-utils/) - Version 3.39
-- [Crawl4AI Documentation](https://docs.crawl4ai.com/) - v0.8.x features
-- [SQLite JSON Functions](https://sqlite.org/json1.html) - JSON column support in SQLite
-- [Rich Tables Documentation](https://rich.readthedocs.io/en/stable/tables.html) - Alternative to tabulate
-- [tabulate PyPI](https://pypi.org/project/tabulate/) - Lightweight table formatting
-- [When JSON Sucks or The Road To SQLite Enlightenment](https://pl-rants.net/posts/when-not-json/) - JSON vs SQLite analysis
+- [Crawl4AI Documentation v0.8.x](https://docs.crawl4ai.com/) — Features, installation, `arun_many()`, MemoryAdaptiveDispatcher — HIGH confidence
+- [Crawl4AI PyPI](https://pypi.org/project/Crawl4AI/) — Version 0.8.0 (January 16, 2026) confirmed — HIGH confidence
+- [Trafilatura PyPI](https://pypi.org/project/trafilatura/) — Version 2.0.0 (December 3, 2024) confirmed — HIGH confidence
+- [Trafilatura Evaluation](https://trafilatura.readthedocs.io/en/latest/evaluation.html) — F1=0.958, benchmark methodology — HIGH confidence
+- [ScrapingHub Article Extraction Benchmark](https://github.com/scrapinghub/article-extraction-benchmark) — Newspaper3k vs Trafilatura F1 scores — HIGH confidence
+- [PyMuPDF Features Comparison](https://pymupdf.readthedocs.io/en/latest/about.html) — Speed benchmarks vs pdfminer — MEDIUM confidence (benchmarks from official docs, cross-verified with independent 2025 test)
+- [internetarchive PyPI](https://pypi.org/project/internetarchive/) — Version 5.8.0 (February 18, 2026) confirmed — HIGH confidence
+- [MediaWiki API:Query](https://www.mediawiki.org/wiki/API:Query) — Wikipedia API endpoint reference — HIGH confidence
+
+---
+*Stack research for: Agent 1.2 Web Research (documentary video pipeline)*
+*Researched: 2026-03-12*

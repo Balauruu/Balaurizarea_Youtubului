@@ -1,248 +1,264 @@
 # Pitfalls Research
 
-**Domain:** YouTube Channel Assistant / Competitor Intelligence
-**Researched:** 2026-03-11
-**Confidence:** HIGH (core scraping/storage pitfalls well-documented; LLM orchestration pitfalls verified across multiple sources)
+**Domain:** Web Research Agent for Documentary Content Production (Agent 1.2 — The Researcher)
+**Researched:** 2026-03-12
+**Confidence:** HIGH (crawl4ai limitations verified via GitHub issues and official docs; hallucination risks documented by recent NeurIPS/GPTZero studies; source access challenges confirmed by major news publishers' 2025-2026 AI blocking actions)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: yt-dlp Breaks Every Few Weeks
+### Pitfall 1: LLM Fabricates Sources That Look Authoritative
 
-**What goes wrong:** YouTube continuously changes its backend — client deprecations (android_sdkless removed), SABR streaming enforcement, 403 errors, format availability changes. As of March 2026, yt-dlp 2026.03.03 broke DASH format extraction. YouTube now requires external JS runtimes (Deno) for some operations. Your scraper works on Monday, returns nothing on Wednesday.
+**What goes wrong:**
+The research agent synthesizes findings and produces plausible-sounding citations — court case numbers that don't exist, news articles with real outlets but fake titles, academic papers with believable authors. A GPT-4o study found 56% of AI-generated citations were fake or contained errors. A January 2026 GPTZero audit of NeurIPS 2025 papers found 100+ hallucinated references that passed human review. For documentary content, a single fabricated "primary source" that makes it into the script destroys credibility.
 
-**Why it happens:** YouTube actively fights third-party tools. They deprecate internal APIs, rotate client tokens, and deploy anti-bot ML detection. yt-dlp maintainers patch reactively, so there is always a window where things are broken.
+**Why it happens:**
+LLMs generate text that satisfies the grammatical and semantic pattern of citations. They have training exposure to real sources, so they blend real outlet names, real author styles, and real topic domains into fabricated references that look valid. The synthesis step — where crawl4ai-fetched content is summarized — is the highest-risk moment because the LLM may confuse what it scraped vs. what it was trained on.
 
 **How to avoid:**
-- Pin yt-dlp version but have an automated update-and-test script. Do not auto-update blindly.
-- Use `--flat-playlist --dump-single-json` for metadata extraction (lighter footprint, less likely to trigger anti-bot).
-- Never download actual video files for competitor analysis — metadata-only extraction reduces detection risk.
-- Build a retry/fallback layer: if yt-dlp fails, log it and use cached data instead of crashing the pipeline.
-- Store the yt-dlp version in your config so you know which version produced each data snapshot.
+- Enforce a strict separation between "scraped content" (URL + raw extract) and "synthesized claims" (LLM summary). Every claim in Research.md must trace back to a specific URL that was actually fetched.
+- Never ask the LLM to generate citations. Instead, have it cite only URLs returned by crawl4ai fetch operations that succeeded (HTTP 200).
+- The Research.md schema should include a `sources` section where each entry has: `url` (the actual URL fetched), `title` (from page metadata, not LLM-generated), `fetched_at` (timestamp), and `relevant_excerpt` (direct quote, not paraphrase).
+- Build a verification step: after research completes, the user (or a verification subagent) can spot-check 3-5 URLs from the sources list. If links are dead or content does not match, the run is flagged.
 
-**Warning signs:** Increasing 403/429 errors in logs. yt-dlp GitHub issues page shows new YouTube-related bugs. Metadata fields returning `None` that previously had values.
+**Warning signs:**
+- Research.md contains citations with no URLs, only author/title/date.
+- Sources section lists academic papers or court documents that the scraper would have had no way to access.
+- Source URLs in Research.md return 404 or redirect to unrelated content.
 
-**Phase to address:** Phase 1 (Competitor Scraping Infrastructure). Build the resilience layer from day one, not as an afterthought.
+**Phase to address:** Phase 1 (Research Schema Design). The schema must enforce URL provenance from day one. Adding it later requires rewriting the output format and re-testing all downstream consumers.
 
 ---
 
-### Pitfall 2: Scraping Without Rate Limiting Leads to IP Bans
+### Pitfall 2: crawl4ai Browser Context Contamination After Failures
 
-**What goes wrong:** Scraping 10+ competitor channels sequentially in a tight loop triggers YouTube's rate limiting. You get 429 errors, then temporary IP blocks, then potentially permanent blocks on your home IP.
+**What goes wrong:**
+After crawl4ai fails to scrape a page (timeout, bot detection, redirect loop), the internal browser context becomes contaminated — subsequent requests in the same session return empty results, "no results" pages, or stale cache. A documented GitHub issue (#501) shows this causing silent failures where the crawler returns a result object with no error but empty content. For a research agent running 20-40 URL fetches per topic, one mid-session failure can silently corrupt all subsequent fetches.
 
-**Why it happens:** YouTube uses ML-based bot detection that analyzes request patterns. Bot traffic is predictable — same intervals, same patterns. Human browsing is chaotic. Batch scraping looks nothing like a human.
+**Why it happens:**
+Playwright's browser context preserves state (cookies, session storage, history) across requests in the same context. When a failed page leaves the context in an unexpected state (partial load, error page cached, security challenge unresolved), subsequent requests inherit that broken state.
 
 **How to avoid:**
-- Add randomized delays between channel scrapes (5-15 seconds minimum, jittered).
-- Never scrape all competitors in one run. Stagger: scrape 3-4 channels per session, rotate across runs.
-- Implement per-session request counting with hard caps (e.g., max 50 metadata extractions per run).
-- Use `--flat-playlist` mode exclusively — it makes fewer requests than full extraction.
-- Consider scraping at off-peak hours (less scrutiny from anti-bot systems).
+- Use a fresh browser context for each distinct source domain. Do not share a single context across archive.org, Wikipedia, and news sites in sequence.
+- Implement explicit success verification: check that `result.markdown_v2.raw_markdown` (or equivalent field) has a minimum length before treating the fetch as successful. Empty or near-empty results are failures, not successes.
+- After any fetch that returns less than 200 characters of content, reset the browser context before the next fetch.
+- Use `async with AsyncWebCrawler() as crawler` context manager pattern — it guarantees cleanup on exit, even after exceptions.
 
-**Warning signs:** First 429 error is your canary. If you see one, stop immediately and increase delays. Do not retry aggressively — that compounds the problem.
+**Warning signs:**
+- Fetches returning empty content after a known-difficult site is scraped.
+- Research.md sections covering late-in-the-run sources are conspicuously thin compared to early sources.
+- crawl4ai returns `success: True` with `markdown: ""`.
 
-**Phase to address:** Phase 1 (Scraper Implementation). Rate limiting must be built into the scraper module, not bolted on later.
+**Phase to address:** Phase 1 (crawl4ai Integration Layer). Build the resilience wrapper before writing research logic. A fragile fetcher produces a fragile research agent regardless of how good the prompts are.
 
 ---
 
-### Pitfall 3: Stale Data Treated as Fresh
+### Pitfall 3: Anti-Bot Detection Kills Primary Source Access
 
-**What goes wrong:** You cache competitor data (good), but then make strategic decisions based on 3-week-old data without realizing it. A competitor's recent upload shift goes unnoticed. View counts are snapshots, not current. Your "gap analysis" identifies a gap that was filled last week.
+**What goes wrong:**
+The most valuable sources for documentary research — news archive paywalls (NYT, Washington Post, Guardian), court record databases (PACER), government document repositories — are also the most aggressively protected. crawl4ai's success rate drops to 72% on anti-bot protected sites without proxy infrastructure. As of 2026, major publishers including the New York Times and Gannett are actively blocking AI crawlers and have added `archive.org_bot` to robots.txt, meaning even archive.org bypass strategies are now blocked. The agent confidently attempts 20 URLs, 8 fail silently, and the research dossier has structural gaps the scriptwriter cannot detect.
 
-**Why it happens:** Caching is necessary (see Pitfall 2), but without explicit freshness metadata, the LLM and the user both treat cached data as current truth. JSON files have no built-in "last fetched" concept.
+**Why it happens:**
+Cloudflare, Akamai, PerimeterX, and DataDome detect headless browsers via TLS fingerprinting, canvas rendering signatures, timing analysis, and behavioral heuristics. AI crawlers are now a large enough problem that publishers are actively hardening defenses. The crawl4ai "undetected browser" mode reduces but does not eliminate detection, and adds resource overhead.
 
 **How to avoid:**
-- Every cached record MUST have a `scraped_at` ISO timestamp. Non-negotiable.
-- The analysis prompt/skill must receive the data age and factor it into confidence: "Based on data from 14 days ago, this gap MAY still exist."
-- Define freshness tiers: <3 days = fresh, 3-14 days = stale (usable with caveat), >14 days = expired (must re-scrape before analysis).
-- Surface data age to the user in topic briefs: "Competitor data freshness: 8 days average."
+- Tier sources by access reliability in the agent's source strategy. Tier 1 (reliably accessible without proxies): Wikipedia, archive.org for pre-2025 content, government `.gov` domains, HathiTrust, Internet Archive document collections, Wikisource. Tier 2 (try but expect failures): regional news sites, older news archives. Tier 3 (do not attempt, waste of time): NYT, Washington Post, Guardian, any Gannett property, PACER.
+- Do not treat failed fetches as empty data — log them explicitly as `access_blocked` in the sources manifest and flag them for manual retrieval.
+- For paywalled content: scrape the URL structure (headline, date, author, teaser) even if body is blocked. The metadata itself is useful context for the scriptwriter.
+- robots.txt compliance: crawl4ai supports `check_robots_txt=True` — enable it. Scraping disallowed paths creates legal exposure, not just technical risk.
 
-**Warning signs:** You stop thinking about when data was collected. Topic briefs cite competitor patterns without mentioning data age. User makes decisions on old data without knowing it.
+**Warning signs:**
+- All high-quality sources (major newspapers, court records) show as failed fetches.
+- Research dossier relies exclusively on Wikipedia and free blogs with no archival sources.
+- crawl4ai returns HTTP 403 or CAPTCHA pages repeatedly on the same domain.
 
-**Phase to address:** Phase 1 (Data Model Design). The `scraped_at` field and freshness logic must be in the schema from the start.
+**Phase to address:** Phase 1 (Source Strategy and Tiering). Define the accessible source list before the first research run. Do not discover access limits mid-production.
 
 ---
 
-### Pitfall 4: JSON File Storage Hits a Wall at ~50 Videos per Competitor
+### Pitfall 4: Two-Pass Design Collapses Into One Expensive Pass
 
-**What goes wrong:** You start with JSON files per competitor (simple, readable). At 10 competitors x 100 videos each = 1,000 records. Querying "which topics got >500K views across all competitors in the last 6 months" requires loading and parsing every file. It works at 100 records, gets slow at 1,000, becomes painful at 5,000+.
+**What goes wrong:**
+The two-pass design (broad survey → deep dive) requires discipline. In practice, the broad survey pass tends to expand: "while we're here, let's go deep on this promising URL." The deep dive pass then restarts with unstructured scope. The result is one expensive, unfocused pass that scrapes 60 URLs randomly without the prioritization a true two-pass structure provides. Research quality degrades because depth and breadth are pursued simultaneously.
 
-**Why it happens:** JSON requires full-file parse for any query. No indexing, no partial reads, no concurrent writes. Every analysis run loads everything into memory.
+**Why it happens:**
+The temptation is natural — if Pass 1 finds a promising primary source, why not extract everything from it now? But Pass 1's job is mapping the territory, not inhabiting it. Mixing the passes loses the strategic advantage: the ability to make informed decisions about where to invest deep-dive effort after seeing the full landscape.
 
 **How to avoid:**
-- Use SQLite from the start. It handles this scale trivially, supports SQL queries, and is a single file — still simple to manage.
-- Use JSON only for the schema definition and human-readable exports, not as the primary data store.
-- SQLite's JSON1 extension lets you store semi-structured data in columns while still getting indexed queries.
-- Keep the DB at `context/competitors/competitors.db` — one file, no server, works on Windows without setup.
+- Define hard constraints per pass enforced in code, not just in prompts. Pass 1: maximum 2 URLs per source type, no full-document downloads, output is a structured source manifest with relevance scores and not a draft Research.md. Pass 2: operates exclusively on the source manifest from Pass 1, maximum 15 deep-fetch operations, each fetch justified by a specific schema field it fills.
+- Pass 1 output must be a machine-readable intermediate artifact (JSON source manifest), not a prose summary. Prose output from Pass 1 means Pass 2 context is wasted re-processing language instead of fetching new data.
+- The user should be able to review and edit the Pass 1 source manifest before Pass 2 begins. This catches scope issues early and adds a human-in-the-loop quality gate.
 
-**Warning signs:** Analysis scripts taking >2 seconds. Growing number of "load all files, filter in Python" patterns. Desire to add "indexes" to JSON (you are reinventing a database).
+**Warning signs:**
+- Pass 1 takes longer than 10 minutes (it is doing Pass 2's work).
+- The source manifest from Pass 1 already contains full article content rather than URLs and relevance scores.
+- Pass 2 cannot execute because context is already full from Pass 1's output.
 
-**Phase to address:** Phase 1 (Data Model Design). Choose SQLite before writing any storage code. Migrating from JSON to SQLite mid-project is tedious and error-prone.
+**Phase to address:** Phase 1 (Research Architecture Design). The two-pass boundary must be a hard architectural constraint, not a soft guideline in a prompt. Define the intermediate artifact schema before writing any research logic.
 
 ---
 
-### Pitfall 5: LLM Instruction Drift in Topic Scoring
+### Pitfall 5: Automated Credibility Scoring Produces False Confidence
 
-**What goes wrong:** Claude Code is asked to score topics on obscurity (1-10), complexity (1-10), and shock factor (1-10). Over multiple runs, scores drift: what was a 7 last month is a 5 this month. Scores are not calibrated against anything concrete. The LLM hallucinates confidence in numbers that are essentially arbitrary.
+**What goes wrong:**
+The research agent assigns credibility scores to sources (1-10, or low/medium/high). Scores give the scriptwriter false confidence — a source rated 8/10 gets used without independent verification. But credibility scoring by domain name alone is broken: a credible outlet like Reuters can publish one bad article; a low-rated fringe site can publish a documented fact that mainstream outlets missed (which is often the case for the channel's obscure topics). Research shows that labeling every article from a low-rated domain as false is "as reliable as flipping a coin."
 
-**Why it happens:** LLMs produce probabilistic output. Without anchoring criteria, a "complexity score of 7" is meaningless across sessions. The model has no memory of previous scoring unless explicitly given calibration context. Research shows LLMs degrade in instruction adherence beyond ~8 directives.
+**Why it happens:**
+Automated credibility scoring typically reduces to domain reputation heuristics (`.gov` is reliable, personal blogs are not). This ignores article-level quality, recency, corroboration, and most importantly, the topic domain — where "credibility" of mainstream outlets for obscure historical events is often low because they simply did not cover the event.
 
 **How to avoid:**
-- Define concrete anchors for each score level in the prompt. Example: "Obscurity 8-10: Zero English Wikipedia article OR fewer than 3 YouTube videos on the topic. Obscurity 5-7: Wikipedia stub or single-paragraph section."
-- Store previously scored topics with their scores as calibration examples in the prompt context.
-- Limit the scoring prompt to ONLY scoring — do not combine with topic generation, research, and formatting in one massive prompt.
-- Accept that scores are ordinal rankings within a single run, not absolute values. Compare within a batch, not across batches.
+- Do not use binary or scalar credibility scores. Use a structured credibility signal instead:
+  - `corroborated_by`: list of other sources that report the same claim
+  - `source_type`: primary (document, court record, direct account) / secondary (journalism, analysis) / tertiary (wiki, aggregator)
+  - `recency`: date of publication
+  - `access_quality`: full_text / excerpt_only / blocked (so the scriptwriter knows how much was actually read)
+- Flag claims that appear in only one source as `single_source` — the scriptwriter should treat these as unverified.
+- Never assign a single credibility number. Numbers create unwarranted precision in what is fundamentally a qualitative judgment.
 
-**Warning signs:** User notices the same type of topic getting wildly different scores across runs. All topics cluster around 6-8 (the LLM's comfort zone). Scores feel arbitrary rather than informative.
+**Warning signs:**
+- Research.md has a `credibility: 8` field next to every source with no explanation.
+- Scriptwriter treats all highly-scored sources as verified facts without questioning.
+- The scoring rubric rewards domain prestige (NYT = 9) rather than content quality.
 
-**Phase to address:** Phase 1 (Topic Brief Schema & Scoring Skill). Define the rubric before the first scoring run.
+**Phase to address:** Phase 1 (Research Schema Design). Define the credibility signal structure in the schema before writing the research prompts.
+
+---
+
+### Pitfall 6: Research.md Overloads the Scriptwriter's Context Window
+
+**What goes wrong:**
+The research agent produces a thorough 8,000-word Research.md with every source, every quote, every contradicting account, and every piece of discovered media. The scriptwriter agent then receives this as context — but 8,000 words of research consumes the bulk of a useful context window before any script-writing work begins. The scriptwriter either truncates the research (losing critical details), or produces a script that reads like a Wikipedia article (because it is trying to incorporate everything).
+
+**Why it happens:**
+Research agents optimize for completeness. The researcher's job is to not miss things. But downstream consumers need curation, not completeness. These are opposite optimization targets that are rarely reconciled in the schema design.
+
+**How to avoid:**
+- Split Research.md into two files: `Research.md` (scriptwriter-facing, curated) and `ResearchArchive.md` (complete, for reference).
+- Research.md scriptwriter version: maximum 2,000 words covering the narrative spine (timeline, key figures, best quotes, contradictions, unanswered questions). Everything that does not directly serve the narrative goes to archive.
+- ResearchArchive.md: full source list, all fetched content excerpts, media URLs, credibility signals. Used by scriptwriter only when drafting specific sections that need source verification.
+- Alternatively: structure Research.md with a mandatory 500-word executive summary at the top, and full detail in collapsible sub-sections. The scriptwriter reads the summary first and expands only what they need.
+
+**Warning signs:**
+- Research.md exceeds 5,000 words.
+- The scriptwriter's output is a listicle of facts rather than a narrative.
+- Script lacks the "hook" quality of the channel's reference scripts despite rich research.
+
+**Phase to address:** Phase 1 (Output Schema Design). Define the Research.md word budget and structure before the first research run. Retrofitting a schema after the agent is producing output is painful.
 
 ---
 
 ## Technical Debt Patterns
 
-### Debt 1: Hardcoded Competitor List
-
-**What goes wrong:** Competitor channels are hardcoded in a Python list or config file. Adding/removing competitors requires editing code. No metadata about WHY a channel is tracked (direct competitor? adjacent niche? inspiration?).
-
-**How to avoid:** Store competitors in the SQLite DB with fields: `channel_id`, `channel_name`, `channel_url`, `niche_relevance` (direct/adjacent/inspiration), `added_date`, `active` (boolean). The skill reads from DB, not from code.
-
-### Debt 2: No Scrape History / Audit Trail
-
-**What goes wrong:** You overwrite competitor data on each scrape. You cannot answer: "When did this competitor start covering cult topics?" or "How has their upload frequency changed?" Trend analysis becomes impossible.
-
-**How to avoid:** Append-only data model. Each scrape creates new rows with timestamps, not updates. Keep historical snapshots. SQLite makes this trivial — just never UPDATE, always INSERT.
-
-### Debt 3: Monolithic Skill File
-
-**What goes wrong:** The Channel Assistant skill grows to 500+ lines combining scraping, caching, analysis, scoring, and output formatting. Debugging any part requires understanding everything. Claude Code context window fills with irrelevant code.
-
-**How to avoid:** Separate into discrete Python modules from day one:
-- `scraper.py` — yt-dlp wrapper with rate limiting
-- `storage.py` — SQLite read/write operations
-- `analyzer.py` — data aggregation and pattern detection
-- The SKILL.md prompt handles orchestration (which module to call when)
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Single crawl4ai browser context for all fetches | Simpler code, fewer setup calls | Silent failures contaminate subsequent fetches (Pitfall 2) | Never |
+| Source credibility as a 1-10 scalar | Simple to generate and read | False precision, drives bad decisions (Pitfall 5) | Never |
+| Research.md as one monolithic file | Simple output | Overloads scriptwriter context (Pitfall 6) | MVP only, split before v1 ships |
+| Skip robots.txt check for speed | Fewer HTTP calls per run | Legal exposure, IP bans on high-value research domains | Never |
+| Hardcoding "reliable" domains list | Avoids credibility logic complexity | Domain reputation != article quality | MVP only, replace with structured credibility signals |
+| Fetching entire pages vs. targeted CSS selectors | Works for all page structures | 11% noise ratio wastes context tokens, hurts extraction quality | Only for pages with no identifiable content structure |
+| Storing all research in a single pass | Simpler orchestration | Loses the strategic advantage of the two-pass design (Pitfall 4) | Never — two passes is the architectural rationale |
 
 ---
 
 ## Integration Gotchas
 
-### Gotcha 1: yt-dlp's JSON Output is Unstable
-
-**What goes wrong:** yt-dlp's `--dump-json` output schema is not versioned or guaranteed. Fields appear, disappear, or change type between versions. Your Python code expects `view_count` as an int, but a yt-dlp update returns it as a string, or `None`, or omits it entirely.
-
-**How to avoid:**
-- Write a normalization layer (`normalize_video_metadata(raw_json) -> VideoRecord`) that handles missing fields, type coercion, and defaults.
-- Never pass raw yt-dlp JSON directly to storage or analysis. Always normalize first.
-- Test the normalizer against saved sample outputs from different yt-dlp versions.
-
-### Gotcha 2: crawl4ai Noise in YouTube Page Scraping
-
-**What goes wrong:** crawl4ai's markdown output from YouTube pages has an 11% noise ratio (navigation elements, ads, recommended videos mixed with actual content). When fed to Claude for analysis, irrelevant tokens waste context and can mislead analysis.
-
-**How to avoid:**
-- Use yt-dlp for all structured YouTube data (metadata, video lists, descriptions). It is purpose-built.
-- Reserve crawl4ai for non-YouTube sources only (news articles, Wikipedia, blogs for research enrichment).
-- If you must use crawl4ai on YouTube, use CSS selectors to extract specific elements, not full-page markdown.
-
-### Gotcha 3: Windows Path Issues with yt-dlp Output
-
-**What goes wrong:** yt-dlp output templates use Unix path conventions. On Windows, paths with special characters in video titles (colons, question marks, quotes — common in dark mystery content) cause file write failures or silent truncation.
-
-**How to avoid:**
-- Always use `--output` with sanitized filenames: `%(id)s.%(ext)s` not `%(title)s.%(ext)s`.
-- Use `pathlib.Path` for all path operations in Python.
-- When storing titles, store them in the database, not in filenames.
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| crawl4ai on Windows 11 | Skipping `crawl4ai-setup` after pip install; Playwright browsers not found | Always run `crawl4ai-setup` post-install, run `crawl4ai-doctor` to verify; set `PLAYWRIGHT_BROWSERS_PATH` if custom install dir |
+| crawl4ai async context | Using `await crawler.arun()` without async context manager | Always use `async with AsyncWebCrawler() as crawler:` — guarantees browser cleanup on exceptions |
+| crawl4ai + Git Bash on Windows | Paths with spaces in the project directory cause subprocess failures | Quote all paths; use `pathlib.Path` for path construction; avoid spaces in crawl4ai temp file paths |
+| Research.md → Scriptwriter handoff | Passing the full Research.md file path with no structure signal | Pass a structured context block: `## Research Summary\n[summary]\n\n## Key Sources\n[top 5 sources]\n\n## Full Research\n[path to file]` |
+| Source URL provenance | LLM paraphrases a URL rather than returning the crawled URL | Fetch URLs must be passed into the research prompt, never generated by the LLM |
+| crawl4ai markdown extraction | `result.markdown` vs `result.markdown_v2.raw_markdown` — API changed between versions | Pin crawl4ai version, test output field names explicitly, do not assume field stability |
+| Two-pass intermediate artifact | Storing Pass 1 output as prose in the conversation context | Write Pass 1 output to a JSON file in the project directory; Pass 2 reads the file — keeps context clean |
 
 ---
 
 ## Performance Traps
 
-### Trap 1: Scraping All Videos for Every Competitor
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Scraping 40+ URLs sequentially with no rate limiting | 429 errors, IP blocks mid-research run | Enforce minimum 5-10 second jittered delay between fetches; hard cap of 30 fetches per run | First run on a new topic with many sources |
+| Loading all fetched content into a single LLM call | Context window exceeded; LLM truncates silently | Process sources in batches; write extracted facts to scratch files between batches | At ~15 full-page fetches worth of markdown |
+| No caching of successful fetches | Same URLs refetched on every research run iteration | Cache fetched content keyed by URL + date; skip re-fetch if cached within 24 hours | On any topic that requires iteration or correction |
+| Browser instances not closed between topics | Memory grows monotonically; system slows after 2-3 topics | Use `async with` pattern; explicitly close crawler between topic runs | After 3+ consecutive research runs without restart |
+| Parsing raw crawl4ai markdown output directly | Brittle code breaks when crawl4ai updates markdown format | Write a content extractor abstraction that normalizes crawl4ai output; update one place when API changes | Every crawl4ai minor version update |
 
-**What goes wrong:** Competitor channels have 200-500+ videos. Scraping full history on every run takes 10+ minutes and risks rate limiting. Most of that data has not changed since last scrape.
+---
 
-**How to avoid:**
-- On first scrape: get full history (`--flat-playlist --dump-single-json`).
-- On subsequent scrapes: only fetch videos newer than the most recent `upload_date` in your DB. yt-dlp supports `--dateafter` for this.
-- Store the "last full scrape" timestamp per competitor. Do incremental updates by default, full refreshes on demand.
+## Security Mistakes
 
-### Trap 2: Loading Entire Competitor DB into LLM Context
-
-**What goes wrong:** You dump all competitor data into the Claude Code prompt for analysis. At 10 competitors x 100 videos, that is 50,000+ tokens of raw data. The LLM loses focus, misses patterns, and the response quality degrades.
-
-**How to avoid:**
-- Pre-aggregate in Python before passing to Claude. The LLM should receive summary statistics and curated examples, not raw data.
-- Example: "Competitor X: 45 videos in last 6 months. Top 5 by views: [list]. Topic distribution: cults 30%, disappearances 25%, crime 45%."
-- Write aggregation queries in SQL, output summaries to `.claude/scratch/`, feed summaries to the analysis prompt.
-
-### Trap 3: Re-analyzing Unchanged Data
-
-**What goes wrong:** Every time the user asks for topic ideas, the system re-scrapes and re-analyzes everything from scratch. This is slow and produces near-identical results if nothing has changed.
-
-**How to avoid:**
-- Cache analysis results alongside data, with a `valid_until` timestamp.
-- Only re-run analysis when underlying data has been refreshed.
-- Separate "scrape" and "analyze" as distinct user-triggerable actions, not a single monolithic flow.
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Logging full scraped content to files | Scraped pages may contain PII (victim names, personal details in court records) | Log only URLs and fetch status, not content; content stays in memory and scratch files only |
+| No robots.txt compliance | Legal exposure from scraping disallowed paths; ethical violation | Enable `check_robots_txt=True` in crawl4ai config; never override for "important" sources |
+| Passing raw scraped content directly to prompts without sanitization | Prompt injection: a malicious web page could contain instructions that hijack the research agent's behavior | Sanitize scraped content before adding to prompts: strip content between `<script>` tags, limit extraction to visible text content only |
+| Storing API keys or credentials in research scripts | Credential exposure in version control | No credentials needed for this agent's scope — all sources are public. If credentials are ever added, use environment variables only |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-| Feature | Looks done when... | Actually done when... |
-|---------|--------------------|-----------------------|
-| Competitor scraping | You can pull metadata for one channel | Handles rate limits, retries, version changes, and partial failures gracefully |
-| Data caching | Data saves to disk | Has `scraped_at` timestamps, freshness tiers, incremental updates, and history preservation |
-| Topic scoring | Claude returns numbers 1-10 | Scores are anchored to concrete rubrics, calibrated across runs, and the user understands their meaning |
-| Duplicate rejection | Exact title match against past_topics.md | Semantic similarity check (LLM-based) catches "The Jonestown Massacre" vs "Jim Jones and the Peoples Temple" |
-| Competitor analysis | Raw data is displayed | Aggregated insights are generated: gaps, trends, title patterns, performance signals |
-| Error handling | Happy path works | yt-dlp failures, network timeouts, malformed data, and empty results all have graceful fallbacks |
+- [ ] **Source provenance:** Research.md contains citations — verify each has a real crawled URL, not an LLM-generated reference. Spot-check 3 URLs manually.
+- [ ] **Pass 1 / Pass 2 boundary:** Both passes complete — verify Pass 1 produced a machine-readable source manifest, not prose. Verify Pass 2 operated exclusively on that manifest.
+- [ ] **Failed fetch handling:** Research completes successfully — check the fetch log for silently-failed URLs. If >30% of attempted fetches failed, research has structural gaps.
+- [ ] **Content extraction quality:** crawl4ai returned results — verify extracted markdown has meaningful content (>500 chars per source) and not boilerplate navigation/footer text.
+- [ ] **Schema completeness:** Research.md looks complete — verify it contains all required schema fields: `timeline`, `key_figures`, `contradictions`, `unanswered_questions`, `source_reliability`. Missing sections mean the scriptwriter gets an incomplete dossier.
+- [ ] **Windows path handling:** Research runs on dev machine — verify the output path `projects/N. [Video Title]/Research.md` handles the space in the title correctly on Windows without path truncation.
+- [ ] **Context hygiene:** Research agent completes — verify fetch content was written to `.claude/scratch/`, not held in conversation context. Re-running should not OOM.
 
 ---
 
 ## Recovery Strategies
 
-### When yt-dlp Breaks Completely
-1. Check yt-dlp GitHub issues for known YouTube breakage.
-2. Try updating: `pip install --upgrade yt-dlp` (fixes land within days usually).
-3. If update does not fix it: fall back to cached data for analysis. Log that data is stale.
-4. Do NOT switch to YouTube Data API as a "quick fix" — it has quotas and requires OAuth setup. It is a different architecture decision.
-
-### When Competitor Data is Corrupted
-1. SQLite with WAL mode provides crash-safe writes. Enable it.
-2. Keep the previous DB file as a backup before each full scrape (`competitors.db.bak`).
-3. Normalization layer (Gotcha 1) should reject records with missing critical fields rather than inserting garbage.
-
-### When Topic Scores Feel Random
-1. Print the scoring prompt with all its context — is it overloaded?
-2. Run the same topics through scoring 3 times. If variance is >2 points on any axis, the rubric is too vague.
-3. Add 3-5 calibration examples to the prompt: "Topic X was scored Obscurity 9 because [reason]."
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Hallucinated citations discovered post-research | MEDIUM | Delete Research.md; re-run with stricter URL-provenance enforcement; add spot-check step to workflow |
+| Browser context contamination mid-run | LOW | Restart crawl4ai with fresh context; re-run from the failed URL onward using the source manifest checkpoint |
+| 60%+ of sources blocked by anti-bot | HIGH | Switch to Tier 1 sources only; add manual research step to the workflow for Tier 2-3 sources; document which sources require human access |
+| Research.md too long for scriptwriter | LOW | Split into Research.md (curated) + ResearchArchive.md (full); update scriptwriter context to load only curated version |
+| Two passes collapsed, research unfocused | MEDIUM | Define strict Pass 1 URL cap in code; add intermediate review step between passes; re-run with hard constraints |
+| crawl4ai version update breaks field names | LOW | Pin version in requirements.txt; run extraction tests after any update before using in production |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
-| Phase/Milestone | Relevant Pitfalls | Priority |
-|-----------------|-------------------|----------|
-| Competitor Scraping Infrastructure | Pitfall 1 (yt-dlp breaks), Pitfall 2 (IP bans), Gotcha 1 (unstable JSON), Gotcha 3 (Windows paths), Trap 1 (scrape scope) | CRITICAL — must be resilient from day one |
-| Data Model & Storage | Pitfall 3 (stale data), Pitfall 4 (JSON scaling), Debt 1 (hardcoded list), Debt 2 (no history) | CRITICAL — wrong storage choice cascades everywhere |
-| Competitor Analysis Skill | Trap 2 (context overload), Trap 3 (re-analysis), Gotcha 2 (crawl4ai noise) | HIGH — determines output quality |
-| Topic Generation & Scoring | Pitfall 5 (score drift), "Looks Done" items (duplicate rejection, rubric calibration) | HIGH — this is the user-facing output |
-| Skill Architecture | Debt 3 (monolithic skill) | MEDIUM — modularity prevents later pain |
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Hallucinated citations (Pitfall 1) | Phase 1: Schema Design | Each source in Research.md has a verified crawled URL |
+| Browser context contamination (Pitfall 2) | Phase 1: crawl4ai Integration | Run 20+ sequential fetches, verify no silent failures after any error |
+| Anti-bot access failures (Pitfall 3) | Phase 1: Source Strategy | Source tier list defined; failed fetches logged explicitly as `access_blocked` |
+| Two-pass collapse (Pitfall 4) | Phase 1: Architecture Design | Pass 1 produces JSON source manifest; Pass 2 reads it; neither pass can be skipped |
+| False credibility scoring (Pitfall 5) | Phase 1: Schema Design | No scalar credibility scores exist in Research.md; structured signals used instead |
+| Context window overload (Pitfall 6) | Phase 1: Output Schema | Research.md has defined word budget; scriptwriter-facing version is separate from archive |
+| Windows path issues | Phase 1: Integration Testing | Research run completes successfully with a project title containing spaces |
+| Prompt injection via scraped content | Phase 1: crawl4ai Integration | Sanitization layer verified; test with a page containing adversarial instructions |
 
 ---
 
 ## Sources
 
-- [yt-dlp GitHub Issues: DASH formats missing in 2026.03.03](https://github.com/yt-dlp/yt-dlp/issues/16128)
-- [yt-dlp GitHub Issues: YouTube 403 errors](https://github.com/yt-dlp/yt-dlp/issues/15735)
-- [yt-dlp GitHub Issues: Fragment retries trigger IP bans](https://github.com/yt-dlp/yt-dlp/issues/15899)
-- [Bypassing YouTube SABR blocks with yt-dlp (2026)](https://dev.to/ali_ibrahim/bypassing-the-2026-youtube-great-wall-a-guide-to-yt-dlp-v2rayng-and-sabr-blocks-1dk8)
-- [yt-dlp AI-scale scraping challenges](https://medium.com/@DataBeacon/how-to-tackle-yt-dlp-challenges-in-ai-scale-scraping-8b78242fedf0)
-- [Crawl4AI reliability: 72% success rate on anti-bot sites, 11.3% noise ratio](https://scrapegraphai.com/blog/crawl4ai-alternatives)
-- [When JSON Sucks — The Road to SQLite](https://pl-rants.net/posts/when-not-json/)
-- [LLM instruction adherence degrades beyond 8 directives (Salesforce)](https://thoughtcred.com/dailybrief/salesforce-just-admitted-what-enterprise-buyers-already-suspected-about-llms)
-- [2026 Playbook for Reliable Agentic Workflows](https://promptengineering.org/agents-at-work-the-2026-playbook-for-building-reliable-agentic-workflows/)
-- [YouTube scraping: rate limiting and anti-bot detection](https://capmonster.cloud/en/blog/how-to-scrape-youtube)
-- [yt-dlp channel metadata extraction](https://github.com/yt-dlp/yt-dlp/issues/13155)
+- [Crawl4AI GitHub Issue #501: Browser context contamination after failed scrapes](https://github.com/unclecode/crawl4ai/issues/501)
+- [Crawl4AI GitHub Issue #1256: Memory leak on repeated requests](https://github.com/unclecode/crawl4ai/issues/1256)
+- [Crawl4AI GitHub Issue #1379: Browser closed during pagination with managed browser](https://github.com/unclecode/crawl4ai/issues/1379)
+- [Crawl4AI Documentation: Anti-Bot and Fallback](https://docs.crawl4ai.com/advanced/anti-bot-and-fallback/)
+- [Crawl4AI Documentation: Undetected Browser](https://docs.crawl4ai.com/advanced/undetected-browser/)
+- [Morphllm: AI Web Scraping 2026 — 89.7% success rate, 72% on anti-bot sites](https://www.morphllm.com/ai-web-scraping)
+- [Nieman Journalism Lab: News publishers limit Internet Archive access due to AI scraping (2026)](https://www.niemanlab.org/2026/01/news-publishers-limit-internet-archive-access-due-to-ai-scraping-concerns/)
+- [Techdirt: News Publishers Are Now Blocking The Internet Archive (2026)](https://www.techdirt.com/2026/02/13/news-publishers-are-now-blocking-the-internet-archive-and-we-may-all-regret-it/)
+- [GPTZero: 100 hallucinated citations found in NeurIPS 2025 accepted papers](https://gptzero.me/news/neurips/)
+- [StudyFinds: GPT-4o fabricated 56% of citations in mental health literature review](https://studyfinds.org/chatgpts-hallucination-problem-fabricated-references/)
+- [Historica: AI Hallucinations and the Risks to Historical Research Integrity](https://www.historica.org/blog/ai-fictions-historiography-misinformation)
+- [PMC: Source credibility assessment — domain-level scoring as unreliable as coin flip](https://revistas.unir.net/index.php/ijimai/article/download/856/915)
+- [arxiv: Deep Research Agents — Systematic Examination (2025)](https://arxiv.org/html/2506.18096v1)
+- [Medium: Can LLMs really do web research? Failure modes in search, page selection, extraction](https://medium.com/@prxshetty/can-llms-really-do-web-research-and-why-your-agent-still-gets-stuck-d74598b44e45)
+- [EFF: Keeping the Web Up Under the Weight of AI Crawlers (2025)](https://www.eff.org/deeplinks/2025/06/keeping-web-under-weight-ai-crawlers)
+- [ScrapingBee: Crawl4AI Hands-on Guide](https://www.scrapingbee.com/blog/crawl4ai/)
+
+---
+
+*Pitfalls research for: Web Research Agent (Agent 1.2) — documentary video production pipeline*
+*Researched: 2026-03-12*

@@ -1,367 +1,455 @@
 # Architecture Research
 
-**Domain:** YouTube Channel Assistant / Competitor Intelligence
-**Researched:** 2026-03-11
-**Confidence:** HIGH
+**Domain:** Agent 1.2 — Web Research Agent integrated into Claude Code skill pipeline
+**Researched:** 2026-03-12
+**Confidence:** HIGH (codebase direct inspection + established pattern reuse)
 
-This architecture follows the proven skill pattern established by `visual-style-extractor` in this repo: SKILL.md orchestration instructions, Python scripts for deterministic work, prompt files for heuristic work. Data storage uses SQLite (not JSON files) based on the queryability, analysis, and visualization requirements in PROJECT.md.
+---
 
-## System Overview
+## Standard Architecture
+
+### System Overview
 
 ```
-                          CLAUDE CODE (Orchestrator)
-                                    |
-                    reads SKILL.md for instructions
-                                    |
-           +------------------------+------------------------+
-           |                        |                        |
-    [Competitor Intel]      [Topic Ideation]         [Project Setup]
-     Subagent(s)             Main Agent               Main Agent
-           |                        |                        |
-    +------+------+          +------+------+          +------+------+
-    | yt-dlp      |          | Channel DNA |          | Create dir  |
-    | crawl4ai    |          | Past topics |          | Write meta  |
-    | Parse/store |          | Comp. data  |          | Update past |
-    +------+------+          | Trend data  |          +-------------+
-           |                 +------+------+
-           v                        |
-    context/competitors/            v
-    competitors.db           .claude/scratch/
-    (SQLite database)        (topic briefs)
-                                    |
-                                    v
-                             User picks topic
-                                    |
-                                    v
-                             projects/N. Title/
-                             (metadata.md)
+                      CLAUDE CODE (Orchestrator)
+                                |
+                reads researcher/SKILL.md for instructions
+                                |
+         +----------------------+----------------------+
+         |                                             |
+   [Pass 1: Survey]                          [Pass 2: Deep Dive]
+   DETERMINISTIC phase                       HEURISTIC + DETERMINISTIC
+         |                                             |
+   +-----+-----+                             +---------+---------+
+   | scraper.py|                             | scraper.py (reuse)|
+   | batch URLs|                             | targeted URLs     |
+   | -> files  |                             | -> files          |
+   +-----+-----+                             +---------+---------+
+         |                                             |
+         v                                             v
+   .claude/scratch/                          .claude/scratch/
+   pass1_raw_*.md                            pass2_raw_*.md
+         |                                             |
+         v                                             v
+   [HEURISTIC: Claude evaluates]             [HEURISTIC: Claude synthesizes]
+   source quality, coverage gaps,            chronology, contradictions,
+   selects deep dive targets                 narrative hooks, unanswered Qs
+         |                                             |
+         +------------------+--------------------------+
+                            |
+                            v
+              projects/N. Title/research/
+              Research.md  (scriptwriter input)
+              media_urls.md (separated URL catalog)
 ```
 
-## Component Responsibilities
+### Component Responsibilities
 
-### Component 1: Competitor Scraper (`scrape.py`)
-**Type:** DETERMINISTIC
-**Responsibility:** Fetch raw channel and video data from YouTube using yt-dlp. No analysis, no filtering -- just structured data acquisition.
-**Inputs:** Channel URL or handle
-**Outputs:** Upserted records in SQLite `channels` and `videos` tables
-**Tools:** yt-dlp (channel metadata, video list, individual video metadata)
+| Component | Type | Responsibility | Lives In |
+|-----------|------|---------------|----------|
+| `cli.py` (new skill) | DETERMINISTIC | CLI entry point, argument parsing, path resolution | `researcher/scripts/researcher/cli.py` |
+| `fetcher.py` | DETERMINISTIC | crawl4ai wrapper with error handling, retry, output to file | `researcher/scripts/researcher/fetcher.py` |
+| `url_builder.py` | DETERMINISTIC | Generate search URLs and source URLs from topic + config | `researcher/scripts/researcher/url_builder.py` |
+| `pass1 context loader` | DETERMINISTIC | Print topic context + source list to stdout for Claude | `cli.py cmd_survey` |
+| `pass2 context loader` | DETERMINISTIC | Print scraped content summary + gap list to stdout | `cli.py cmd_deepen` |
+| `writer.py` | DETERMINISTIC | Write Research.md and media_urls.md with correct schema | `researcher/scripts/researcher/writer.py` |
+| Survey prompt | HEURISTIC | Claude evaluates sources, identifies gaps, picks deep targets | `researcher/prompts/survey_evaluation.md` |
+| Synthesis prompt | HEURISTIC | Claude synthesizes full research dossier from scraped content | `researcher/prompts/synthesis.md` |
 
-Key operations:
-- `scrape_channel_metadata(handle)` -- subscriber count, description, upload frequency
-- `scrape_video_list(handle, limit=50)` -- titles, views, dates, durations, tags
-- `scrape_video_details(video_id)` -- description, tags, engagement metrics
+---
 
-### Component 2: Data Store (`store.py`)
-**Type:** DETERMINISTIC
-**Responsibility:** Normalize raw yt-dlp output and upsert into SQLite. Handle deduplication, timestamping, and cache freshness checks.
-**Inputs:** Raw dict from yt-dlp `extract_info()`
-**Outputs:** Records in `context/competitors/competitors.db`
+## How Heuristic/Deterministic Split Applies
 
-Uses sqlite-utils for convenience:
-```python
-import sqlite_utils
+This is the critical architectural decision. The existing pattern from Agent 1.1 is the authoritative template:
 
-db = sqlite_utils.Database("context/competitors/competitors.db")
-db["channels"].upsert(channel_record, pk="id", alter=True)
-db["videos"].upsert_all(video_records, pk="id", alter=True)
-```
+### Deterministic (Python code):
+- Fetching URLs via crawl4ai (I/O, no judgment)
+- Generating search query URLs from a topic string (string manipulation)
+- Writing Research.md to the project directory (file I/O)
+- Printing structured context to stdout for Claude to read (context-loader pattern)
+- Extracting and cataloging raw media URLs found in scraped pages
 
-Freshness check:
-```python
-def is_stale(handle: str, max_age_days: int = 7) -> bool:
-    row = db.execute(
-        "SELECT last_scraped FROM channels WHERE id = ?", [handle]
-    ).fetchone()
-    if not row:
-        return True
-    last = datetime.fromisoformat(row[0])
-    return (datetime.now(timezone.utc) - last).days > max_age_days
-```
+### Heuristic (Claude reasoning):
+- Deciding which scraped sources are high quality vs. unreliable
+- Identifying what's still missing after Pass 1 and which gaps matter
+- Selecting the 5-10 best URLs for deep dive in Pass 2
+- Synthesizing contradictions across multiple sources
+- Extracting narrative hooks and unanswered questions
+- Writing the final Research.md content (Claude writes, `writer.py` saves)
 
-### Component 3: Query & Format (`query.py`)
-**Type:** DETERMINISTIC
-**Responsibility:** Run SQL queries against the DB and format results for Claude Code consumption. Outputs markdown tables or writes to `.claude/scratch/` for large results.
-**Inputs:** Query type (top videos, channel stats, recent uploads, etc.)
-**Outputs:** Formatted text to stdout or `.claude/scratch/`
+**Key rule inherited from Architecture.md:** Python never calls an LLM API. Claude reads outputs from Python scripts and reasons over them natively.
 
-Example queries the skill will need:
-```sql
--- Channel overview
-SELECT name, subscriber_count, video_count, last_scraped FROM channels;
-
--- Top performing videos across all competitors
-SELECT c.name, v.title, v.view_count, v.upload_date
-FROM videos v JOIN channels c ON v.channel_id = c.id
-ORDER BY v.view_count DESC LIMIT 20;
-
--- Upload frequency per channel (last 6 months)
-SELECT c.name, COUNT(*) as uploads, AVG(v.view_count) as avg_views
-FROM videos v JOIN channels c ON v.channel_id = c.id
-WHERE v.upload_date > date('now', '-180 days')
-GROUP BY c.id ORDER BY uploads DESC;
-
--- Content gap: topics with high views that our channel hasn't covered
--- (Claude Code interprets results, not the SQL)
-SELECT v.title, v.view_count, v.tags
-FROM videos v
-WHERE v.view_count > (SELECT AVG(view_count) * 2 FROM videos)
-ORDER BY v.view_count DESC;
-```
-
-### Component 4: Competitor Analyzer (Prompt-driven)
-**Type:** HEURISTIC
-**Responsibility:** Claude Code reads formatted competitor data (from query.py output) and channel DNA, then generates strategic insights.
-**Inputs:** Pre-aggregated stats from query.py, `context/channel/channel.md`
-**Outputs:** Analysis written to `.claude/scratch/competitor_analysis.md`
-
-The analysis prompt should ask for:
-- Topic selection patterns per competitor (what niches do they cluster in?)
-- Title strategies (length, keywords, emotional triggers)
-- Content gaps (topics none of the competitors have covered)
-- Performance signals (what types of videos get disproportionate views?)
-- Upload cadence and trends
-
-### Component 5: Trend Scanner (`trends.py`)
-**Type:** DETERMINISTIC
-**Responsibility:** Scrape YouTube search results and recent uploads in the niche to surface trending topics. Uses crawl4ai for YouTube search pages.
-**Inputs:** Search queries derived from channel pillars (from channel.md)
-**Outputs:** Trend data inserted into a `trends` table in the same SQLite DB
-
-### Component 6: Topic Generator (Prompt-driven)
-**Type:** HEURISTIC
-**Responsibility:** The core ideation engine. Claude Code synthesizes all available context (channel DNA, competitor analysis, trend data, past topics) to generate 5 scored topic briefs.
-**Inputs:** All context files + pre-aggregated DB data
-**Outputs:** Topic briefs presented in chat, then saved to `.claude/scratch/topic_briefs.json`
-
-### Component 7: Project Initializer (`init_project.py`)
-**Type:** DETERMINISTIC
-**Responsibility:** After user selects a topic, create the project directory with metadata.
-**Inputs:** Selected topic brief + user confirmation
-**Outputs:** `projects/N. {Title}/metadata.md` with title variants and description
+---
 
 ## Recommended Project Structure
 
 ```
-.claude/skills/channel-assistant/
-+-- SKILL.md                          # Orchestration instructions (Claude reads this)
-+-- scripts/
-|   +-- requirements.txt              # Python deps: sqlite-utils, tabulate, python-dateutil
-|   +-- channel_assistant/
-|       +-- __init__.py
-|       +-- scrape.py                 # Component 1: yt-dlp wrapper for channel/video data
-|       +-- store.py                  # Component 2: Normalize + upsert into SQLite
-|       +-- query.py                  # Component 3: SQL queries + formatting
-|       +-- trends.py                 # Component 5: YouTube search scraping via crawl4ai
-|       +-- init_project.py           # Component 7: Create project dirs + metadata files
-|       +-- tests/
-|           +-- __init__.py
-|           +-- test_scrape.py
-+-- prompts/
-|   +-- competitor_analysis.txt       # Component 4: Strategic analysis prompt
-|   +-- topic_generation.txt          # Component 6: Topic ideation prompt
-|   +-- metadata_generation.txt       # Title variants + description prompt
-+-- docs/
-    +-- plans/                        # Design docs
+.claude/skills/researcher/
+├── SKILL.md                          # Claude's operating instructions
+├── scripts/
+│   └── researcher/
+│       ├── __init__.py
+│       ├── cli.py                    # Entry point: survey / deepen / write subcommands
+│       ├── fetcher.py                # crawl4ai wrapper (async, error handling, file output)
+│       ├── url_builder.py            # Generate search + source URLs from topic
+│       └── writer.py                 # Write Research.md and media_urls.md
+├── prompts/
+│   ├── survey_evaluation.md          # Pass 1 HEURISTIC: evaluate sources, pick deep targets
+│   └── synthesis.md                  # Pass 2 HEURISTIC: synthesize dossier from content
+└── tests/
+    ├── test_fetcher.py
+    ├── test_url_builder.py
+    └── test_writer.py
+
+projects/N. Title/                    # Created by Agent 1.1 — researcher writes into it
+├── metadata.md                       # Input: topic brief, hook, scoring (Agent 1.1 output)
+└── research/                         # Created by Agent 1.1 scaffold — researcher fills
+    ├── Research.md                   # PRIMARY OUTPUT: full dossier for scriptwriter
+    └── media_urls.md                 # SECONDARY OUTPUT: separated URL catalog
 ```
 
-### Data Storage Layout
+### What Agent 1.1 Already Creates
 
-```
-context/competitors/
-+-- competitors.db                    # THE data store (SQLite, single file)
+`project_init.py` calls `_create_scaffold()` which makes `research/`, `assets/`, and `script/` subdirectories. The researcher writes directly into the pre-existing `research/` folder — no directory creation logic needed in the new skill.
 
-context/channel/
-+-- channel.md                        # Channel DNA (read-only)
-+-- past_topics.md                    # Previously covered topics (append)
-
-context/trends/                       # Optional: trend scan history
-+-- (managed via trends table in competitors.db)
-
-projects/
-+-- 1. Video Title/
-|   +-- metadata.md
-+-- 2. Another Video/
-    +-- metadata.md
-```
-
-### Why SQLite Over JSON Files
-
-The previous draft recommended JSON files. This is revised based on STACK.md research and Pitfalls analysis (Pitfall 4). The deciding factors:
-
-1. **Claude Code writes SQL faster than ad-hoc Python.** When the user asks "show me top videos", Claude writes a SQL query. With JSON, Claude must write a Python script that loads files, parses, filters, and sorts.
-2. **Aggregation is built-in.** `AVG(view_count)`, `COUNT(*)`, `GROUP BY channel` -- all free with SQL. With JSON, every aggregation is custom Python code.
-3. **The data IS relational.** Channels have videos. Videos have metrics over time. This is a textbook relational structure.
-4. **Single file, zero server.** `competitors.db` is one file, works on Windows, no config needed.
-5. **sqlite-utils makes it as easy as JSON.** `db["videos"].upsert_all(data, pk="id")` is simpler than managing JSON files, index files, and dedup logic.
-
-JSON remains appropriate for: human-readable config (channel.md), scratch files, export formats.
-
-## Data Flow
-
-### Flow 1: Competitor Data Refresh
-
-```
-User: "refresh competitor data" or "add competitor @ChannelHandle"
-  |
-  v
-SKILL.md instructs Claude Code:
-  |
-  +---> scrape.py: fetch raw data via yt-dlp
-  |       |
-  |       v
-  +---> store.py: normalize + upsert into competitors.db
-  |       |
-  |       v
-  +---> query.py: generate summary stats
-  |       |
-  |       v
-  +---> .claude/scratch/competitor_summary.txt (if large)
-  |
-  +---> Spawn subagent with competitor_analysis.txt prompt
-          |
-          v
-        .claude/scratch/competitor_analysis.md
-```
-
-### Flow 2: Topic Ideation
-
-```
-User: "suggest topics"
-  |
-  v
-SKILL.md instructs Claude Code:
-  |
-  +---> query.py: check data freshness (warn if > 7 days old)
-  |
-  +---> [Optional] trends.py: scrape current YouTube trends
-  |
-  +---> query.py: pre-aggregate competitor data for context
-  |       |
-  |       v
-  |     .claude/scratch/competitor_summary.txt
-  |
-  +---> Claude reads all context:
-  |       - context/channel/channel.md
-  |       - context/channel/past_topics.md
-  |       - .claude/scratch/competitor_analysis.md
-  |       - .claude/scratch/competitor_summary.txt
-  |
-  +---> topic_generation.txt prompt drives ideation
-  |       |
-  |       v
-  |     5 topic briefs presented in chat
-  |
-  +---> User picks a topic (from chat)
-  |
-  +---> init_project.py: create project dir
-  |       |
-  |       v
-  |     projects/N. {Title}/metadata.md
-  |
-  +---> Update context/channel/past_topics.md
-```
-
-### Flow 3: Downstream Handoff (to Agent 1.2)
-
-```
-projects/N. {Title}/
-+-- metadata.md          # Title variants, description, topic brief
-+-- (Agent 1.2 will add research.md here later)
-```
-
-The project directory is the handoff point. Agent 1.2 (Deep Research) reads `metadata.md` to know what to research. Agents communicate through the filesystem.
+---
 
 ## Architectural Patterns
 
-### Pattern 1: Cache-First with Staleness Check
-**What:** Always check local data before scraping. Only re-scrape when data is stale or user explicitly requests refresh.
-**Why:** yt-dlp scraping is slow (5-15 seconds per channel). Competitor data doesn't change hourly.
-**Implementation:** `last_scraped` column in `channels` table. SKILL.md instructs Claude to check freshness before triggering scrape.
+### Pattern 1: Context-Loader CLI (inherited from Agent 1.1)
 
-### Pattern 2: Normalization Layer Between yt-dlp and Storage
-**What:** Never pass raw yt-dlp JSON directly to the database. Always normalize through a function that handles missing fields, type coercion, and defaults.
-**Why:** yt-dlp output schema is unstable between versions. Fields appear, disappear, or change type.
+**What:** CLI subcommand runs Python deterministic logic, then prints structured markdown to stdout. Claude reads stdout and performs HEURISTIC reasoning.
 
-### Pattern 3: Subagent for Analysis, Script for Data
-**What:** Python scripts handle all data fetching and structuring. LLM subagents handle all strategic analysis and content generation.
-**Why:** This is the HEURISTIC vs DETERMINISTIC split mandated by Architecture.md.
+**When to use:** Every handoff point between deterministic and heuristic phases. This is the established project convention.
 
-### Pattern 4: Pre-Aggregation Before LLM Context
-**What:** SQL queries summarize data before passing to Claude. The LLM receives "Competitor X: 45 videos, avg 500K views, top tags: [cult, mystery]" not 1000 raw video records.
-**Why:** Raw data floods context window. Summaries are more actionable.
+**Agent 1.1 reference implementation:** `cmd_topics()` in `cli.py` — loads files, prints structured context, ends with an instruction line for Claude.
 
-### Pattern 5: Idempotent Upserts
-**What:** All data writes use upsert (INSERT or UPDATE). Re-scraping a channel updates existing records, never creates duplicates.
-**Why:** Users will re-scrape frequently. Duplicates corrupt all aggregation queries.
+**Researcher adaptation:**
+```
+cmd_survey(topic):
+    1. [DETERMINISTIC] Build search query URLs from topic
+    2. [DETERMINISTIC] Fetch URLs via crawl4ai, write to .claude/scratch/pass1_raw_*.md
+    3. [DETERMINISTIC] Print: topic, scraped file paths, source count
+    4. Claude reads survey_evaluation.md prompt, evaluates sources, picks deep targets
+    5. Claude calls cmd_deepen with selected URL list
 
-## Anti-Patterns to Avoid
+cmd_deepen(urls_file):
+    1. [DETERMINISTIC] Read URL list from file
+    2. [DETERMINISTIC] Fetch each URL via crawl4ai, write to .claude/scratch/pass2_raw_*.md
+    3. [DETERMINISTIC] Print: file list, byte counts, any fetch failures
+    4. Claude reads synthesis.md prompt, synthesizes full dossier
+    5. Claude calls cmd_write with structured dossier data
 
-### Anti-Pattern 1: Monolithic Scraper
-**What:** One script that scrapes, normalizes, analyzes, and generates topics.
-**Why bad:** Violates HEURISTIC/DETERMINISTIC separation. Makes partial re-runs impossible.
-**Instead:** Separate scrape, store, query, and analysis into independent components.
+cmd_write(project_dir, dossier_json):
+    1. [DETERMINISTIC] Parse structured dossier
+    2. [DETERMINISTIC] Write Research.md using schema template
+    3. [DETERMINISTIC] Write media_urls.md
+    4. Print: file paths, section counts, word count
+```
 
-### Anti-Pattern 2: LLM-Driven Scraping
-**What:** Asking Claude Code to "go find competitors" by browsing the web in an unstructured way.
-**Why bad:** Unreliable, non-reproducible, slow.
-**Instead:** Use deterministic scripts (yt-dlp, crawl4ai) with structured output.
+### Pattern 2: Scratch Pad for Large Raw Content
 
-### Anti-Pattern 3: Embedding Raw Data in Prompts
-**What:** Copying all competitor video titles into the topic generation prompt.
-**Why bad:** 15 competitors x 50 videos = context window bloat. LLM loses focus.
-**Instead:** Pre-aggregate with SQL, feed summaries to prompts.
+**What:** Scraped page content goes to `.claude/scratch/` as individual files, never into Claude's context directly. Claude receives file paths and reads targeted sections.
 
-### Anti-Pattern 4: Over-Engineering the Data Layer
-**What:** SQLAlchemy ORM, Alembic migrations, connection pooling, data classes for every table.
-**Why bad:** This is a single-user CLI tool with 3 tables. sqlite-utils IS the right abstraction level.
-**Instead:** sqlite-utils for convenience, raw SQL for complex queries.
+**When to use:** Whenever individual scraped pages exceed ~1,500 tokens (almost always — web pages are large).
+
+**Why:** Matches the project's established context hygiene convention from CLAUDE.md. Raw Wikipedia article bodies, news articles, and archive pages are too large to embed in conversation.
+
+**Implementation:** Each crawl4ai fetch writes to `.claude/scratch/researcher/pass1_src_{N}.md`. Pass 1 produces N files. Claude receives a summary table (source, URL, file path, word count) and reads specific files on demand.
+
+### Pattern 3: Two-Pass Research with Gap Analysis
+
+**What:** Pass 1 is deliberately broad — search results and overview pages. After Claude evaluates coverage, Pass 2 targets specific primary sources that fill identified gaps.
+
+**When to use:** Any research task where quality differs by source and the researcher cannot know upfront which sources will be authoritative.
+
+**Trade-offs:**
+- Adds one Claude interaction between passes (costs one turn but dramatically improves output quality)
+- Prevents wasting crawl4ai calls on low-value sources
+- Maps cleanly to HEURISTIC (gap analysis) / DETERMINISTIC (fetching) separation
+
+**Pass 1 default sources (built by `url_builder.py`):**
+- Wikipedia search results
+- Archive.org search
+- Google News search (via DuckDuckGo — avoids bot detection)
+- 2-3 targeted academic/primary source domains from source_config.json
+
+**Pass 2 targets (selected by Claude after Pass 1 evaluation):**
+- Primary sources identified in Pass 1 (court records, official reports, named archives)
+- Individual Wikipedia article (full text, not search results)
+- Specific news investigations identified in Pass 1
+- Academic papers or documented sources cited in overview pages
+
+### Pattern 4: Structured Dossier Input to writer.py
+
+**What:** Claude synthesizes findings into a structured Python dict (or JSON), then calls `cmd_write` with that data. `writer.py` formats it into Research.md.
+
+**Why:** This maintains the HEURISTIC/DETERMINISTIC boundary. Claude reasons; Python formats and saves. Claude does not write file I/O directly (fragile in agent workflows). Python does not make content decisions.
+
+**Schema passed by Claude to writer.py:**
+```python
+{
+    "subject_overview": str,       # 500-word summary
+    "timeline": [                  # chronological events
+        {"date": str, "event": str, "source": str}
+    ],
+    "key_figures": [               # people involved
+        {"name": str, "role": str, "quotes": [str]}
+    ],
+    "primary_sources": [
+        {"title": str, "type": str, "url": str, "reliability": int}
+    ],
+    "secondary_sources": [
+        {"title": str, "outlet": str, "url": str, "reliability": int}
+    ],
+    "contradictions": [str],       # conflicting accounts
+    "unanswered_questions": [str], # narrative tension gaps
+    "narrative_hooks": [str],      # high-impact story beats for scriptwriter
+    "media_urls": [                # separated, goes to media_urls.md
+        {"description": str, "url": str, "type": str}
+    ]
+}
+```
+
+---
+
+## Data Flow
+
+### Full Research Flow
+
+```
+User provides topic name (e.g., "The Matamoros Cult Murders")
+    |
+    v
+SKILL.md instructs Claude to locate project dir
+    |
+    +---> Read projects/N. Title/metadata.md (Agent 1.1 output)
+    |     Extract: topic title, hook, complexity score, estimated runtime
+    |
+    v
+cmd_survey "[topic title]"
+    |
+    +---> [DETERMINISTIC] url_builder.py generates 8-12 initial URLs
+    |
+    +---> [DETERMINISTIC] fetcher.py crawls each URL
+    |     Writes: .claude/scratch/researcher/pass1_src_0.md
+    |             .claude/scratch/researcher/pass1_src_1.md
+    |             ... (one file per source)
+    |
+    +---> Prints summary table to stdout:
+    |     source | url | file_path | word_count | status
+    |
+    v
+[HEURISTIC] Claude reads survey_evaluation.md prompt
+    Evaluates: source quality, coverage gaps, primary source leads
+    Outputs: ranked list of 5-10 deep dive target URLs
+    |
+    v
+cmd_deepen --urls-file .claude/scratch/researcher/deep_targets.txt
+    |
+    +---> [DETERMINISTIC] fetcher.py crawls each deep target URL
+    |     Writes: .claude/scratch/researcher/pass2_src_0.md
+    |             .claude/scratch/researcher/pass2_src_1.md
+    |
+    +---> Prints summary table to stdout
+    |
+    v
+[HEURISTIC] Claude reads synthesis.md prompt
+    Synthesizes: all pass1 + pass2 content into structured dossier
+    Produces: structured JSON matching Research.md schema
+    |
+    v
+cmd_write --project-dir "projects/N. Title" --dossier dossier.json
+    |
+    +---> [DETERMINISTIC] writer.py formats and writes:
+    |     projects/N. Title/research/Research.md
+    |     projects/N. Title/research/media_urls.md
+    |
+    +---> Prints: confirmation + word count + section count
+    |
+    v
+Downstream: Agent 1.3 (Writer) reads Research.md
+```
+
+### Key Data Flows
+
+1. **Agent 1.1 → Agent 1.2:** Via filesystem. `projects/N. Title/metadata.md` is the handoff document. Researcher reads it to get topic brief, hook, and estimated complexity.
+
+2. **Pass 1 → Pass 2 (within Agent 1.2):** Via `.claude/scratch/researcher/deep_targets.txt`. Claude writes target URLs after survey evaluation; `cmd_deepen` reads the file. File-based, not in-memory — matches project conventions.
+
+3. **Agent 1.2 → Agent 1.3:** Via filesystem. `projects/N. Title/research/Research.md` is the output artifact. Writer agent reads this directly.
+
+4. **Media URL separation:** `media_urls.md` is written separately from `Research.md` to keep the dossier clean for scriptwriting. Agent 1.4 (Visual Director) will consume media URLs when building the shot list.
+
+---
+
+## New vs. Modified Components
+
+### New (does not exist yet)
+
+| Component | Location | What It Is |
+|-----------|----------|------------|
+| `researcher/SKILL.md` | `.claude/skills/researcher/` | Operating instructions for Claude |
+| `researcher/cli.py` | `scripts/researcher/` | Entry point with `survey`, `deepen`, `write` subcommands |
+| `researcher/fetcher.py` | `scripts/researcher/` | crawl4ai wrapper with file output, retry, error handling |
+| `researcher/url_builder.py` | `scripts/researcher/` | Generate search + source URLs from topic string |
+| `researcher/writer.py` | `scripts/researcher/` | Write Research.md and media_urls.md from dossier dict |
+| `prompts/survey_evaluation.md` | `researcher/prompts/` | HEURISTIC prompt: source evaluation + gap analysis |
+| `prompts/synthesis.md` | `researcher/prompts/` | HEURISTIC prompt: dossier synthesis from scraped content |
+| `tests/test_fetcher.py` | `researcher/tests/` | Unit tests for fetcher (mock crawl4ai calls) |
+| `tests/test_url_builder.py` | `researcher/tests/` | Unit tests for URL generation |
+| `tests/test_writer.py` | `researcher/tests/` | Unit tests for file output formatting |
+
+### Modified (exists, no changes needed)
+
+| Component | Reason No Change Needed |
+|-----------|------------------------|
+| `crawl4ai-scraper/scripts/scraper.py` | Researcher uses this for ad-hoc single-URL scraping; `fetcher.py` handles batch with file output separately |
+| `channel-assistant/project_init.py` | Already creates `research/` subdirectory in scaffold — no modification needed |
+| `projects/N. Title/metadata.md` | Already contains topic brief — researcher reads it as input |
+
+### Reused Without Modification
+
+| Component | How Researcher Uses It |
+|-----------|----------------------|
+| `crawl4ai-scraper/SKILL.md` | Not invoked directly — `fetcher.py` imports crawl4ai directly following the same async pattern |
+| `_get_project_root()` pattern from cli.py | Copy into researcher's cli.py (walk up to CLAUDE.md) |
+| `.claude/scratch/` convention | Researcher writes pass1/pass2 raw files here, same as Agent 1.1 |
+
+---
 
 ## Integration Points
 
-### With Existing Repo
+### Upstream: Agent 1.1 Output
 
-| Integration | How |
-|---|---|
-| `context/channel/channel.md` | Read-only. Topic generation uses this as constraints. |
-| `context/channel/past_topics.md` | Read + append. Checked during ideation, updated after topic selection. |
-| `context/competitors/` | Owned by this skill. Contains `competitors.db`. |
-| `projects/` | Write-only. Creates new project dirs on topic selection. |
-| `.claude/scratch/` | Transient storage for large intermediate data. |
+| Artifact | Location | What Researcher Reads |
+|----------|----------|----------------------|
+| `metadata.md` | `projects/N. Title/metadata.md` | Topic title, hook sentence, complexity/shock scores, estimated runtime |
+| Directory scaffold | `projects/N. Title/research/` | Pre-created by `project_init.py` — researcher writes output here |
 
-### With Downstream Pipeline
+The researcher SKILL.md should instruct Claude to locate the project directory by listing `projects/` and finding the most recently created one (or by taking the project number as an argument).
 
-| Consumer | What They Need | Where They Get It |
-|---|---|---|
-| Agent 1.2 (Research) | Topic brief, key questions | `projects/N. Title/metadata.md` |
-| Agent 1.3 (Writer) | Topic context | Same project dir (after research fills it) |
-| Future: Channel analytics | Competitor tracking over time | `competitors.db` historical data |
+### Downstream: Agent 1.3 Writer Input
 
-## Build Order (Dependencies)
+| Artifact | Location | What Writer Reads |
+|----------|----------|------------------|
+| `Research.md` | `projects/N. Title/research/Research.md` | Full structured dossier |
+| `media_urls.md` | `projects/N. Title/research/media_urls.md` | Optional reference |
+
+The Writer agent does not need any changes — it will read Research.md as context, same filesystem handoff pattern.
+
+### External Services
+
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| crawl4ai | Python import in `fetcher.py`, async `AsyncWebCrawler` | Already in environment |
+| Web search | DuckDuckGo HTML search (no API key) via crawl4ai | Avoids bot detection better than Google direct |
+| Wikipedia | Direct article URL scraping via crawl4ai | Full article text available, no API needed |
+| Archive.org | Direct search URL via crawl4ai | Public domain, crawler-friendly |
+
+---
+
+## Build Order
+
+Dependencies determine build order. Tests unlock confidence for each stage.
 
 ```
-Phase 1: scrape.py + store.py + DB schema
-    (foundation -- everything else needs data)
+Phase 1: fetcher.py + url_builder.py + tests
+    Why first: All subsequent phases depend on working scraping and URL generation.
+    Deliverable: Can scrape a URL list and write files to .claude/scratch/
+    Test: Mock crawl4ai responses, verify file output and error handling.
     |
-Phase 2: query.py + Competitor analysis prompt + SKILL.md (basic flow)
-    (can now do: add competitor, refresh data, view stats, get analysis)
+    v
+Phase 2: cli.py (cmd_survey subcommand) + SKILL.md skeleton
+    Why: Establishes the CLI pattern and enables the first end-to-end test of Pass 1.
+    Deliverable: `python -m researcher.cli survey "Topic"` fetches and files sources.
+    Note: SKILL.md can be written before prompts — instructions can reference prompts as TBD.
     |
-Phase 3: Topic generation prompt + init_project.py
-    (can now do: full ideation flow, project creation)
+    v
+Phase 3: survey_evaluation.md prompt
+    Why: Pass 1 is only useful if Claude can evaluate and select deep dive targets.
+    Deliverable: Full Pass 1 flow works end-to-end (survey → gap analysis → target list).
+    Note: This is a HEURISTIC component — no Python code, just a well-structured prompt file.
     |
-Phase 4: trends.py
-    (enhances ideation with real-time data, not blocking)
+    v
+Phase 4: cli.py (cmd_deepen subcommand)
+    Why: Needs Phase 1 infrastructure (fetcher) and Phase 3 (knows what to fetch).
+    Deliverable: `python -m researcher.cli deepen --urls-file targets.txt` works.
     |
-Phase 5: Metadata generation prompt (title variants + description)
-    (polish step)
+    v
+Phase 5: synthesis.md prompt
+    Why: Pass 2 content is only useful once a synthesis prompt exists.
+    Deliverable: Full two-pass flow works — raw content → structured dossier in conversation.
+    |
+    v
+Phase 6: writer.py + cli.py (cmd_write subcommand) + tests
+    Why: Final step — persists Claude's synthesis to Research.md on disk.
+    Deliverable: `python -m researcher.cli write --project-dir "..." --dossier dossier.json` writes both files.
+    Test: Verify schema compliance, section completeness, media URL separation.
+    |
+    v
+Phase 7: SKILL.md finalization + integration test
+    Why: After all components work individually, SKILL.md needs complete instructions.
+    Deliverable: Full pipeline from "topic name" → Research.md in one Claude Code session.
 ```
 
-Phase 1-2 are the minimum viable skill. Phase 3 completes the core flow. Phases 4-5 are enhancements.
+**Minimum viable:** Phases 1-3 deliver a working Pass 1 survey. Phases 4-5 complete the two-pass design. Phase 6 persists the output. Phase 7 is polish.
+
+---
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Reading All Scraped Content into Context
+
+**What people do:** Fetch 10 web pages, concatenate them all, pass the full text to Claude in one prompt.
+
+**Why it's wrong:** 10 web pages = 50,000-200,000 tokens. Blows context window. Claude loses coherence on earlier sources by the time it reads later ones.
+
+**Do this instead:** Write each page to `.claude/scratch/researcher/pass1_src_N.md`. Give Claude a summary table (URL, file path, word count). Let Claude read specific files on demand using the Read tool.
+
+### Anti-Pattern 2: Single-Pass Research
+
+**What people do:** Fetch the first 10 search results and synthesize immediately.
+
+**Why it's wrong:** Search results for obscure documentary topics are dominated by secondary sources (Wikipedia, listicle sites). Primary sources (court documents, archived news investigations, academic papers) appear buried or not at all in search results.
+
+**Do this instead:** Two passes. Pass 1 identifies what primary sources exist and where. Pass 2 fetches those primary sources directly.
+
+### Anti-Pattern 3: Hardcoding Source Domains
+
+**What people do:** Build a fixed list of domains to scrape for every topic (e.g., always scrape archive.org, always scrape Wikipedia).
+
+**Why it's wrong:** Some topics have rich Wikipedia coverage; others have almost none. Some topics are in government archives; others are in newspaper morgues. Hardcoded domains miss topic-specific primary sources.
+
+**Do this instead:** `url_builder.py` generates a starting list of search queries and 2-3 default domains. Pass 1 evaluation (HEURISTIC) identifies the topic-specific sources worth deep diving. Pass 2 targets those dynamically.
+
+### Anti-Pattern 4: Writing Research.md Directly from Claude Without a Writer Module
+
+**What people do:** Have Claude write the Research.md content directly using a Write tool call with a huge markdown string.
+
+**Why it's wrong:** Fragile — any Claude error or interruption loses all unsaved synthesis. Schema enforcement is impossible. Media URL separation cannot be verified.
+
+**Do this instead:** Claude produces a structured JSON dossier (validates schema), then calls `cmd_write` which formats and saves. Python handles all I/O; Claude handles all reasoning.
+
+### Anti-Pattern 5: Mixing Research.md and Media URLs
+
+**What people do:** Include image URLs, video links, and archive media links inline in Research.md.
+
+**Why it's wrong:** Pollutes the scriptwriting context with 50+ media URLs. The Writer agent doesn't need URLs — it needs narrative content. The Visual Director (Agent 1.4) needs URLs but reads a separate file anyway.
+
+**Do this instead:** `writer.py` always writes two files: `Research.md` (clean narrative dossier) and `media_urls.md` (URL catalog with descriptions and types). Downstream agents consume whichever file they need.
+
+---
 
 ## Sources
 
-- Existing skill pattern: `.claude/skills/visual-style-extractor/SKILL.md` (HIGH confidence -- direct codebase reference)
-- Architecture rules: `Architecture.md` in repo root (HIGH confidence -- project constraints)
-- Project requirements: `.planning/PROJECT.md` (HIGH confidence -- validated requirements)
-- [sqlite-utils documentation](https://sqlite-utils.datasette.io/en/stable/) -- Upsert and query patterns
-- [yt-dlp extraction pipeline](https://deepwiki.com/yt-dlp/yt-dlp/2.2-information-extraction-pipeline) -- Metadata extraction
-- [SQLite JSON Functions](https://sqlite.org/json1.html) -- JSON column support
+- Existing codebase: `.claude/skills/channel-assistant/scripts/channel_assistant/cli.py` (HIGH confidence — direct inspection)
+- Existing codebase: `.claude/skills/channel-assistant/SKILL.md` (HIGH confidence — pattern reference)
+- Existing codebase: `.claude/skills/crawl4ai-scraper/scripts/scraper.py` (HIGH confidence — tool reference)
+- Architecture rules: `Architecture.md` (HIGH confidence — binding project constraints)
+- Project requirements: `.planning/PROJECT.md` v1.1 milestone spec (HIGH confidence)
+- Project conventions: `CLAUDE.md` scratch pad rules (HIGH confidence)
+
+---
+*Architecture research for: Agent 1.2 Web Research integration into Claude Code skill pipeline*
+*Researched: 2026-03-12*

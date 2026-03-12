@@ -9,9 +9,9 @@ Requirements for Agent 1.2 — The Researcher. Each maps to roadmap phases.
 
 ### Scraping Infrastructure
 
-- [ ] **SCRP-01**: Agent can scrape web pages using crawl4ai with domain-isolated browser contexts
-- [ ] **SCRP-02**: Agent retries failed fetches and validates minimum content length (>200 chars) per response
-- [ ] **SCRP-03**: Agent categorizes sources into access tiers (reliable / attempt / do-not-attempt) before scraping
+- [x] **SCRP-01**: Agent can scrape web pages using crawl4ai with domain-isolated browser contexts
+- [x] **SCRP-02**: Agent retries failed fetches and validates minimum content length (>200 chars) per response
+- [x] **SCRP-03**: Agent categorizes sources into access tiers (reliable / attempt / do-not-attempt) before scraping
 
 ### Research Pipeline
 
@@ -66,9 +66,9 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCRP-01 | Phase 7 | Pending |
-| SCRP-02 | Phase 7 | Pending |
-| SCRP-03 | Phase 7 | Pending |
+| SCRP-01 | Phase 7 | Complete |
+| SCRP-02 | Phase 7 | Complete |
+| SCRP-03 | Phase 7 | Complete |
 | RSRCH-01 | Phase 7 | Pending |
 | RSRCH-02 | Phase 8 | Pending |
 | RSRCH-04 | Phase 8 | Pending |

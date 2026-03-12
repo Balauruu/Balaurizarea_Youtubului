@@ -103,7 +103,7 @@ Plans:
 | 4. Project Initialization + Metadata | v1.0 | 2/2 | Complete | 2026-03-11 |
 | 5. Trend Scanning + Content Gaps | v1.0 | 2/2 | Complete | 2026-03-11 |
 | 6. Tech Debt Cleanup + OUTP-02 Wiring | v1.0 | 1/1 | Complete | 2026-03-11 |
-| 7. Scraping Foundation | v1.1 | 0/2 | Not started | - |
+| 7. Scraping Foundation | 1/2 | In Progress|  | - |
 | 8. Survey Pass (Pass 1) | v1.1 | 0/1 | Not started | - |
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 0/1 | Not started | - |
 | 10. Dossier Output | v1.1 | 0/3 | Not started | - |

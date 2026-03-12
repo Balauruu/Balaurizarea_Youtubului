@@ -66,30 +66,30 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCRP-01 | — | Pending |
-| SCRP-02 | — | Pending |
-| SCRP-03 | — | Pending |
-| RSRCH-01 | — | Pending |
-| RSRCH-02 | — | Pending |
-| RSRCH-03 | — | Pending |
-| RSRCH-04 | — | Pending |
-| DOSS-01 | — | Pending |
-| DOSS-02 | — | Pending |
-| DOSS-03 | — | Pending |
-| DOSS-04 | — | Pending |
-| DOSS-05 | — | Pending |
-| DOSS-06 | — | Pending |
-| DOSS-07 | — | Pending |
-| DOSS-08 | — | Pending |
-| DOSS-09 | — | Pending |
-| MEDIA-01 | — | Pending |
-| MEDIA-02 | — | Pending |
+| SCRP-01 | Phase 7 | Pending |
+| SCRP-02 | Phase 7 | Pending |
+| SCRP-03 | Phase 7 | Pending |
+| RSRCH-01 | Phase 7 | Pending |
+| RSRCH-02 | Phase 8 | Pending |
+| RSRCH-04 | Phase 8 | Pending |
+| RSRCH-03 | Phase 9 | Pending |
+| DOSS-01 | Phase 10 | Pending |
+| DOSS-02 | Phase 10 | Pending |
+| DOSS-03 | Phase 10 | Pending |
+| DOSS-04 | Phase 10 | Pending |
+| DOSS-05 | Phase 10 | Pending |
+| DOSS-06 | Phase 10 | Pending |
+| DOSS-07 | Phase 10 | Pending |
+| DOSS-08 | Phase 10 | Pending |
+| DOSS-09 | Phase 10 | Pending |
+| MEDIA-01 | Phase 10 | Pending |
+| MEDIA-02 | Phase 10 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-12*
-*Last updated: 2026-03-12 after initial definition*
+*Last updated: 2026-03-12 — traceability mapped to Phases 7-10*

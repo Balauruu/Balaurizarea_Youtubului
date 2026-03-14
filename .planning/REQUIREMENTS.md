@@ -1,0 +1,72 @@
+# Requirements: Channel Automation Pipeline
+
+**Defined:** 2026-03-14
+**Core Value:** Surface obscure, high-impact documentary topics backed by competitor data and deep web research — not guesswork.
+
+## v1.2 Requirements
+
+Requirements for milestone v1.2 "The Writer". Each maps to roadmap phases.
+
+### Style Extraction
+
+- [ ] **STYLE-01**: Skill extracts voice and tone rules from reference scripts in `context/script-references/`
+- [ ] **STYLE-02**: Skill extracts chapter structure patterns (count, pacing, act progression)
+- [ ] **STYLE-03**: Skill extracts sentence rhythm and length patterns with verbatim examples
+- [ ] **STYLE-04**: Skill separates universal voice rules from topic-specific arc templates
+- [ ] **STYLE-05**: Skill outputs `context/channel/STYLE_PROFILE.md` as a reusable channel-level artifact
+
+### Script Generation
+
+- [ ] **SCRIPT-01**: Writer generates numbered chapter-based narration from a project's Research.md
+- [ ] **SCRIPT-02**: Writer anchors all claims to Research.md sources — no hallucinated facts
+- [ ] **SCRIPT-03**: Writer maintains channel voice consistency using STYLE_PROFILE.md + channel.md
+- [ ] **SCRIPT-04**: Writer consumes HOOK and QUOTE callouts from Research.md for narrative impact
+- [ ] **SCRIPT-05**: Writer supports open endings for unsolved mystery topics
+- [ ] **SCRIPT-06**: Writer outputs pure narration text (no visual cues, no production notes, no host commentary)
+- [ ] **SCRIPT-07**: Writer outputs Script.md into the project directory (`projects/N. [Title]/`)
+
+## Future Requirements
+
+### Script Refinement
+
+- **REFINE-01**: User can iterate on specific chapters without regenerating the full script
+- **REFINE-02**: Writer can adjust script length to hit target runtime (word count → minutes estimate)
+- **REFINE-03**: Multi-reference blending when multiple scripts exist in `context/script-references/`
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| NLP/spaCy style metrics | Heuristic task — LLM reasoning is more effective than statistical analysis |
+| LLM API wrappers | Architecture.md Rule 1 — Claude Code runtime handles all reasoning |
+| Inline visual/production notes in script | Breaks pure narration contract; Agent 1.4 (Visual Orchestrator) owns visual cues |
+| Automated fact-checking against external sources | Research.md is the source of truth; verification is human review |
+| Word count gates or automated quality scoring | Defer to human review for script quality |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| STYLE-01 | — | Pending |
+| STYLE-02 | — | Pending |
+| STYLE-03 | — | Pending |
+| STYLE-04 | — | Pending |
+| STYLE-05 | — | Pending |
+| SCRIPT-01 | — | Pending |
+| SCRIPT-02 | — | Pending |
+| SCRIPT-03 | — | Pending |
+| SCRIPT-04 | — | Pending |
+| SCRIPT-05 | — | Pending |
+| SCRIPT-06 | — | Pending |
+| SCRIPT-07 | — | Pending |
+
+**Coverage:**
+- v1.2 requirements: 12 total
+- Mapped to phases: 0
+- Unmapped: 12 ⚠️
+
+---
+*Requirements defined: 2026-03-14*
+*Last updated: 2026-03-14 after initial definition*

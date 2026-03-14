@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: The Writer
 status: roadmap_ready
-stopped_at: Phase 11 context gathered
-last_updated: "2026-03-14T21:12:19.707Z"
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-03-14T21:33:06.023Z"
 last_activity: 2026-03-14 — Roadmap created
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 ---
@@ -54,6 +54,7 @@ Last activity: 2026-03-14 — Roadmap created
 | Tests | 175 | 175 | - |
 | Phases | 6 | 4 | 2 |
 | Timeline | 2 days | 3 days | - |
+| Phase 11 P01 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,9 @@ All v1.1 decisions archived to `milestones/v1.1-ROADMAP.md`. Key decisions persi
 - Writer prompt written before CLI — prompt structure determines what context the CLI must load
 - End-to-end validation target: Duplessis Orphans Research.md (completed dossier, no new research needed)
 - STYLE_PROFILE.md must distinguish "Universal Voice Rules" from "Narrative Arc Templates" to prevent cult-arc overfitting
+- [Phase 11]: [HEURISTIC] classification enforced — zero Python files in style-extraction skill directory
+- [Phase 11]: Two-pass structure: reconstruction pass preserves narrator phrasing before extraction pass
+- [Phase 11]: 4 mandatory STYLE_PROFILE.md sections guard against cult-arc overfitting
 
 ### Pending Todos
 
@@ -81,6 +85,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:12:19.705Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-style-extraction-skill/11-CONTEXT.md
+Last session: 2026-03-14T21:33:06.021Z
+Stopped at: Completed 11-01-PLAN.md
+Resume file: None

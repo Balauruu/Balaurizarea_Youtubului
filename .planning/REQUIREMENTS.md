@@ -9,10 +9,10 @@ Requirements for milestone v1.2 "The Writer". Each maps to roadmap phases.
 
 ### Style Extraction
 
-- [ ] **STYLE-01**: Skill extracts voice and tone rules from reference scripts in `context/script-references/`
-- [ ] **STYLE-02**: Skill extracts chapter structure patterns (count, pacing, act progression)
-- [ ] **STYLE-03**: Skill extracts sentence rhythm and length patterns with verbatim examples
-- [ ] **STYLE-04**: Skill separates universal voice rules from topic-specific arc templates
+- [x] **STYLE-01**: Skill extracts voice and tone rules from reference scripts in `context/script-references/`
+- [x] **STYLE-02**: Skill extracts chapter structure patterns (count, pacing, act progression)
+- [x] **STYLE-03**: Skill extracts sentence rhythm and length patterns with verbatim examples
+- [x] **STYLE-04**: Skill separates universal voice rules from topic-specific arc templates
 - [ ] **STYLE-05**: Skill outputs `context/channel/STYLE_PROFILE.md` as a reusable channel-level artifact
 
 ### Script Generation
@@ -49,10 +49,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STYLE-01 | Phase 11 | Pending |
-| STYLE-02 | Phase 11 | Pending |
-| STYLE-03 | Phase 11 | Pending |
-| STYLE-04 | Phase 11 | Pending |
+| STYLE-01 | Phase 11 | Complete |
+| STYLE-02 | Phase 11 | Complete |
+| STYLE-03 | Phase 11 | Complete |
+| STYLE-04 | Phase 11 | Complete |
 | STYLE-05 | Phase 11 | Pending |
 | SCRIPT-01 | Phase 12 | Pending |
 | SCRIPT-02 | Phase 12 | Pending |

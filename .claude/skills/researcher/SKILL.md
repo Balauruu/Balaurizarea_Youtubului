@@ -2,7 +2,7 @@
 
 **Purpose:** Agent 1.2 — The Researcher. Executes web scraping to build factual foundations for documentary videos.
 
-**Status:** Phase 7 modules implemented. Phase 8-10 modules planned.
+**Status:** Phase 7-8 modules implemented. Phase 9-10 modules planned.
 
 ---
 
@@ -51,12 +51,12 @@ export PYTHONUTF8=1
 | `url_builder.py` | Project directory resolution and URL construction | `find_project_dir`, `resolve_output_dir`, `make_ddg_url`, `build_survey_urls` |
 | `cli.py` | CLI entry point with `survey` subcommand | `main`, `cmd_survey` |
 
-### Phase 8-10 (planned)
+### Phase 9-10 (planned)
 
 | Module | Purpose | Status |
 |--------|---------|--------|
-| `deepen` command | Pass 2: targeted deep dives | Phase 8 |
-| `write` command | Output research dossier | Phase 9+ |
+| `deepen` command | Pass 2: targeted deep dives on recommended sources | Phase 9 |
+| `write` command | Output research dossier (Research.md) | Phase 10 |
 
 ---
 
@@ -65,10 +65,41 @@ export PYTHONUTF8=1
 | Tier | Behavior | Retries | Examples |
 |------|----------|---------|---------|
 | 1 | Authoritative — fetch with full retry | 3 | archive.org, loc.gov, en.wikipedia.org |
-| 2 | General / unknown — attempt once | 1 | bbc.com, reuters.com, unknown domains |
-| 3 | Social / do-not-fetch — skip entirely | 0 | facebook.com, x.com, reddit.com |
+| 2 | General / unknown — attempt once | 1 | bbc.com, reuters.com, reddit.com, old.reddit.com, unknown domains |
+| 3 | Social / do-not-fetch — skip entirely | 0 | facebook.com, x.com, instagram.com, tiktok.com, pinterest.com |
 
 Unknown domains default to Tier 2.
+
+---
+
+## Workflow (Pass 1 — Survey)
+
+### Step 1 — Run survey command
+
+PYTHONPATH=.claude/skills/researcher/scripts python -m researcher survey "Your Topic Here"
+
+The command fetches Wikipedia and up to 12 DDG result pages. Each page is saved as
+src_NNN.json in the output directory. A source_manifest.json index is written.
+A summary table (#, Domain, Tier, Words, Status) is printed to stdout.
+
+### Step 2 — Auto-evaluate sources [HEURISTIC]
+
+After cmd_survey prints its summary table, Claude reads the survey_evaluation.md prompt:
+
+@.claude/skills/researcher/prompts/survey_evaluation.md
+
+Claude then reads every src_NNN.json file listed in source_manifest.json and evaluates
+each source per the rubric. The manifest is annotated in-place with:
+- evaluation_notes (what was found, why useful or not)
+- deep_dive_urls (primary source URLs extracted from source content)
+- verdict ("recommended" or "skip")
+
+Claude then prints a verdict summary table and asks: "Proceed to Pass 2 (cmd_deepen)?"
+
+### Step 3 — Confirm
+
+Review the verdict summary. Confirm to proceed to Phase 9 (cmd_deepen), or adjust
+deep_dive_urls manually before continuing.
 
 ---
 
@@ -88,16 +119,30 @@ Unknown domains default to Tier 2.
 }
 ```
 
-**Source manifest (lightweight index):** `source_manifest.json`
+**Source manifest (lightweight index, annotated after evaluation):** `source_manifest.json`
 ```json
 {
     "topic": "Jonestown Massacre",
     "run_timestamp": "2026-03-12T10:00:00Z",
     "sources": [
-        {"index": 1, "filename": "src_001.json", "url": "...", "tier": 1, "word_count": 4523, "fetch_status": "ok"}
+        {
+            "index": 1,
+            "filename": "src_001.json",
+            "url": "https://en.wikipedia.org/wiki/Jonestown",
+            "domain": "en.wikipedia.org",
+            "tier": 1,
+            "word_count": 4523,
+            "fetch_status": "ok",
+            "evaluation_notes": "Strong overview — FBI vault and archive.org docs referenced.",
+            "deep_dive_urls": ["https://vault.fbi.gov/jonestown"],
+            "verdict": "recommended"
+        }
     ]
 }
 ```
+
+Note: `evaluation_notes`, `deep_dive_urls`, and `verdict` are added by the [HEURISTIC] evaluation
+step (Step 2 of the Workflow). They are not written by cmd_survey itself.
 
 ---
 

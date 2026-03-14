@@ -1,5 +1,23 @@
 # Milestones
 
+## v1.1 The Researcher (Shipped: 2026-03-14)
+
+**Phases completed:** 4 phases, 8 plans, 4 tasks
+
+**LOC:** 1,737 (Python + prompts) | **Tests:** 175 (full suite passing)
+**Timeline:** 3 days (2026-03-12 → 2026-03-14) | **Commits:** 43
+
+**Key accomplishments:**
+1. crawl4ai scraping layer with domain-isolated browser contexts, tier-based retry, and minimum content validation
+2. Two-pass research pipeline — broad survey (10-15 sources via Wikipedia + DuckDuckGo) followed by targeted primary source deep-dive
+3. Structured dossier output — Research.md with 9 narrative-first sections including timeline, key figures, contradictions, narrative hooks, and correcting-the-record
+4. Media URL cataloging — separate media_urls.md grouped by Architecture.md asset categories for direct Agent 2.1 consumption
+5. End-to-end pipeline validated on "The Duplessis Orphans" with human-verified output quality
+
+**Tech debt:** 3 non-blocking items (SKILL.md doc drift, bare except in writer.py, Windows backslashes in paths). See `milestones/v1.1-MILESTONE-AUDIT.md`.
+
+---
+
 ## v1.0 Channel Assistant (Shipped: 2026-03-11)
 
 **Phases:** 6 | **Plans:** 12 | **Tasks:** ~21

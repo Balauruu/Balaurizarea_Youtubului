@@ -78,5 +78,5 @@ Plans:
 | 8. Survey Pass (Pass 1) | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
 | 10. Dossier Output | v1.1 | 3/3 | Complete | 2026-03-14 |
-| 11. Style Extraction Skill | 2/2 | Complete   | 2026-03-14 | - |
+| 11. Style Extraction Skill | 2/2 | Complete    | 2026-03-14 | - |
 | 12. Writer Agent | v1.2 | 0/? | Not started | - |

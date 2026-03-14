@@ -28,7 +28,7 @@
 - [x] **Phase 7: Scraping Foundation** - crawl4ai integration layer with domain isolation, retry, source tiering, and topic input (completed 2026-03-12)
 - [x] **Phase 8: Survey Pass (Pass 1)** - CLI survey subcommand that fetches broad sources and produces a JSON source manifest (completed 2026-03-14)
 - [x] **Phase 9: Deep-Dive Pass (Pass 2)** - CLI deepen subcommand that reads the source manifest and fetches targeted primary sources (completed 2026-03-14)
-- [ ] **Phase 10: Dossier Output** - Synthesis prompt, writer.py, and cmd_write that produce Research.md and media_urls.md
+- [x] **Phase 10: Dossier Output** - Synthesis prompt, writer.py, and cmd_write that produce Research.md and media_urls.md (completed 2026-03-14)
 
 ## Phase Details
 
@@ -107,4 +107,4 @@ Plans:
 | 7. Scraping Foundation | v1.1 | 2/2 | Complete | 2026-03-12 |
 | 8. Survey Pass (Pass 1) | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
-| 10. Dossier Output | 2/3 | In Progress|  | - |
+| 10. Dossier Output | 3/3 | Complete   | 2026-03-14 | - |

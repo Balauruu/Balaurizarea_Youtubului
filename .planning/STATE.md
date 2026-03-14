@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: The Researcher
 status: active
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-12T14:59:35.942Z"
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-14T17:22:56.239Z"
 last_activity: 2026-03-12 — url_builder.py + cli.py cmd_survey implemented, crawl4ai validated, DDG confirmed, 33 tests passing
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 ---
@@ -66,6 +66,7 @@ Progress: [██░░░░░░░░] 14%
 | Phase 07 P02 | 7 min | 2 tasks | 8 files |
 
 *Updated after each plan completion*
+| Phase 08-survey-pass P01 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting v1.1:
 - [Phase 07]: crawl4ai 0.8.0 result.markdown is StringCompatibleMarkdown (str subclass) — access via result.markdown.raw_markdown
 - [Phase 07]: DDG HTML endpoint confirmed working — html.duckduckgo.com primary path; ddgs library (renamed from duckduckgo-search) as fallback
 - [Phase 07]: Integration test isolation: _clear_crawl4ai_mock() removes test_fetcher mock before real crawl4ai calls when running full suite
+- [Phase 08-survey-pass]: reddit.com moved from TIER_3 to TIER_2 — useful research source, lower anti-bot risk than pure social media
+- [Phase 08-survey-pass]: build_survey_urls returns [wikipedia_url] only — DDG expansion handled separately in cmd_survey
 
 ### Pending Todos
 
@@ -98,7 +101,7 @@ None. Both Phase 7 blockers resolved:
 
 ## Session Continuity
 
-Last session: 2026-03-12T14:59:35.940Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-survey-pass/08-CONTEXT.md
+Last session: 2026-03-14T17:22:56.237Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
 Next: Execute Phase 8 (Researcher Pass 1 Expansion)

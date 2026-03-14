@@ -27,7 +27,7 @@
 
 - [x] **Phase 7: Scraping Foundation** - crawl4ai integration layer with domain isolation, retry, source tiering, and topic input (completed 2026-03-12)
 - [x] **Phase 8: Survey Pass (Pass 1)** - CLI survey subcommand that fetches broad sources and produces a JSON source manifest (completed 2026-03-14)
-- [x] **Phase 9: Deep-Dive Pass (Pass 2)** - CLI deepen subcommand that reads the source manifest and fetches targeted primary sources (completed 2026-03-14)
+- [x] **Phase 9: Deep-Dive Pass (Pass 2)** - CLI deepen subcommand that reads the source manifest and fetches targeted primary sources (completed 2026-03-14)
 - [ ] **Phase 10: Dossier Output** - Synthesis prompt, writer.py, and cmd_write that produce Research.md and media_urls.md
 
 ## Phase Details
@@ -85,16 +85,16 @@ Plans:
   3. Research.md contains 3-5 explicitly labeled narrative hooks and labeled direct quote callouts for scene anchoring, plus a correcting-the-record section where mainstream coverage contradicts primary sources
   4. All source entries in Research.md use structured credibility signals (source_type, corroborated_by, access_quality) — no scalar scores — and the total curated content is capped at ~2,000 words
   5. Research.md is written to `projects/N. [Title]/research/Research.md` and media_urls.md (URL, description, source type per entry) is written as a separate file in the same directory
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 10-01: synthesis.md prompt — instructs Claude to produce schema-compliant structured JSON dossier from all scraped content
-- [ ] 10-02: writer.py + cmd_write — formats JSON dossier to Research.md and media_urls.md with schema validation
-- [ ] 10-03: SKILL.md finalization + integration test with a real topic end-to-end
+- [ ] 10-01-PLAN.md — writer.py TDD + cmd_write subcommand with tests (source file aggregation into synthesis_input.md)
+- [ ] 10-02-PLAN.md — synthesis.md prompt + SKILL.md finalization (defines Research.md schema, media_urls.md format, writer handoff)
+- [ ] 10-03-PLAN.md — End-to-end integration test with real topic + human verification of output quality
 
 ## Progress
 
-**Execution Order:** Phases execute in numeric order: 7 → 8 → 9 → 10
+**Execution Order:** Phases execute in numeric order: 7 -> 8 -> 9 -> 10
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -105,6 +105,6 @@ Plans:
 | 5. Trend Scanning + Content Gaps | v1.0 | 2/2 | Complete | 2026-03-11 |
 | 6. Tech Debt Cleanup + OUTP-02 Wiring | v1.0 | 1/1 | Complete | 2026-03-11 |
 | 7. Scraping Foundation | v1.1 | 2/2 | Complete | 2026-03-12 |
-| 8. Survey Pass (Pass 1) | 2/2 | Complete   | 2026-03-14 | - |
-| 9. Deep-Dive Pass (Pass 2) | 1/1 | Complete   | 2026-03-14 | - |
+| 8. Survey Pass (Pass 1) | v1.1 | 2/2 | Complete | 2026-03-14 |
+| 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
 | 10. Dossier Output | v1.1 | 0/3 | Not started | - |

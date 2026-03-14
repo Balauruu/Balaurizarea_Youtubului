@@ -24,6 +24,7 @@ from researcher.url_builder import (
     make_ddg_url,
     resolve_output_dir,
 )
+from researcher.writer import build_synthesis_input, load_source_files, write_synthesis_input
 
 logger = logging.getLogger(__name__)
 
@@ -530,6 +531,48 @@ def cmd_deepen(topic: str) -> None:
     print(f"Manifest: {manifest_path}")
 
 
+def cmd_write(topic: str) -> None:
+    """Aggregate all scraped source files into synthesis_input.md.
+
+    Steps:
+      a. Resolve project root and output directory.
+      b. Load all src_*.json and pass2_*.json from output directory.
+      c. If no files found, print message and raise ValueError.
+      d. Build synthesis_input.md markdown string from all sources.
+      e. Write synthesis_input.md to output directory.
+      f. Print summary: source counts, file path, prompt path.
+      g. Print synthesis instruction for Claude.
+
+    Args:
+        topic: Topic string (same as used for survey/deepen).
+
+    Raises:
+        ValueError: When no source files are found in the output directory.
+    """
+    root = _get_project_root()
+    output_dir = resolve_output_dir(root, topic)
+
+    pass1, pass2 = load_source_files(output_dir)
+
+    if not pass1 and not pass2:
+        print(f"No source files found in {output_dir}. Run survey first.")
+        raise ValueError(f"No source files found in {output_dir}. Run survey first.")
+
+    content = build_synthesis_input(topic, pass1, pass2, output_dir)
+    synthesis_path = write_synthesis_input(output_dir, content)
+
+    prompt_path = root / ".claude" / "skills" / "researcher" / "prompts" / "synthesis.md"
+
+    print(f"Synthesis input ready: {synthesis_path}")
+    print(f"Pass 1 sources: {len(pass1)}  |  Pass 2 sources: {len(pass2)}")
+    print(f"Synthesis prompt: {prompt_path}")
+    print()
+    print(
+        "Aggregation complete. Read synthesis_input.md and the synthesis prompt, "
+        "then produce Research.md and media_urls.md in the research/ directory."
+    )
+
+
 def main() -> None:
     """Parse CLI arguments and dispatch to subcommands."""
     parser = argparse.ArgumentParser(
@@ -558,6 +601,16 @@ def main() -> None:
         help="Topic string (same as used for survey)",
     )
 
+    # write subcommand
+    write_parser = subparsers.add_parser(
+        "write",
+        help="Aggregate scraped sources into synthesis_input.md for Claude synthesis",
+    )
+    write_parser.add_argument(
+        "topic",
+        help="Topic string (same as used for survey/deepen)",
+    )
+
     args = parser.parse_args()
 
     if args.command == "survey":
@@ -569,6 +622,12 @@ def main() -> None:
     elif args.command == "deepen":
         try:
             cmd_deepen(args.topic)
+        except ValueError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
+    elif args.command == "write":
+        try:
+            cmd_write(args.topic)
         except ValueError as exc:
             print(f"Error: {exc}", file=sys.stderr)
             sys.exit(1)

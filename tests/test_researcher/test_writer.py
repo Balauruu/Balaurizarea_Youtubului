@@ -5,6 +5,7 @@ No network access, no crawl4ai required.
 """
 import json
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -155,3 +156,66 @@ def test_write_synthesis_input_creates_file(tmp_path: Path) -> None:
     assert result_path == tmp_path / "synthesis_input.md"
     assert result_path.exists()
     assert result_path.read_text(encoding="utf-8") == content
+
+
+# ---------------------------------------------------------------------------
+# cmd_write tests
+# ---------------------------------------------------------------------------
+
+def test_cmd_write_smoke(tmp_path: Path, capsys) -> None:
+    """cmd_write calls load/build/write functions and prints 'Synthesis input ready'."""
+    from researcher.cli import cmd_write
+
+    good_src = _make_src(1, url="https://en.wikipedia.org/wiki/Topic", content="Content.")
+    mock_pass1 = [good_src]
+    mock_pass2: list[dict] = []
+    mock_synthesis_path = tmp_path / "synthesis_input.md"
+
+    with patch("researcher.cli._get_project_root", return_value=tmp_path), \
+         patch("researcher.cli.resolve_output_dir", return_value=tmp_path), \
+         patch("researcher.cli.load_source_files", return_value=(mock_pass1, mock_pass2)) as mock_load, \
+         patch("researcher.cli.build_synthesis_input", return_value="# Synthesis Input\n") as mock_build, \
+         patch("researcher.cli.write_synthesis_input", return_value=mock_synthesis_path) as mock_write:
+
+        cmd_write("test topic")
+
+    mock_load.assert_called_once_with(tmp_path)
+    mock_build.assert_called_once()
+    mock_write.assert_called_once()
+
+    captured = capsys.readouterr()
+    assert "Synthesis input ready" in captured.out
+
+
+def test_cmd_write_prints_prompt_path(tmp_path: Path, capsys) -> None:
+    """Output includes path to the synthesis.md prompt file."""
+    from researcher.cli import cmd_write
+
+    good_src = _make_src(1, content="Content.")
+    mock_synthesis_path = tmp_path / "synthesis_input.md"
+
+    with patch("researcher.cli._get_project_root", return_value=tmp_path), \
+         patch("researcher.cli.resolve_output_dir", return_value=tmp_path), \
+         patch("researcher.cli.load_source_files", return_value=([good_src], [])), \
+         patch("researcher.cli.build_synthesis_input", return_value="# Synthesis\n"), \
+         patch("researcher.cli.write_synthesis_input", return_value=mock_synthesis_path):
+
+        cmd_write("test topic")
+
+    captured = capsys.readouterr()
+    assert "synthesis.md" in captured.out
+
+
+def test_cmd_write_no_sources_exits(tmp_path: Path, capsys) -> None:
+    """When load_source_files returns ([], []), cmd_write raises ValueError."""
+    from researcher.cli import cmd_write
+
+    with patch("researcher.cli._get_project_root", return_value=tmp_path), \
+         patch("researcher.cli.resolve_output_dir", return_value=tmp_path), \
+         patch("researcher.cli.load_source_files", return_value=([], [])):
+
+        with pytest.raises(ValueError, match="No source files found"):
+            cmd_write("test topic")
+
+    captured = capsys.readouterr()
+    assert "No source files found" in captured.out

@@ -1,0 +1,200 @@
+{
+  "topic": "The Duplessis Orphans",
+  "run_timestamp": "2026-03-14T18:58:00Z",
+  "sources": [
+    {
+      "index": 1,
+      "filename": "src_001.json",
+      "url": "https://en.wikipedia.org/wiki/The_Duplessis_Orphans",
+      "domain": "en.wikipedia.org",
+      "tier": 1,
+      "word_count": 637,
+      "fetch_status": "ok",
+      "evaluation_notes": "Wikipedia redirect page — no article exists at this exact URL. Content is entirely navigation boilerplate with no article text. No unique information.",
+      "deep_dive_urls": [],
+      "verdict": "skip"
+    },
+    {
+      "index": 2,
+      "filename": "src_002.json",
+      "url": "https://en.wikipedia.org/wiki/Duplessis_Orphans",
+      "domain": "en.wikipedia.org",
+      "tier": 1,
+      "word_count": 5934,
+      "fetch_status": "ok",
+      "evaluation_notes": "Comprehensive Wikipedia article covering the full history: reclassification mechanism, abuse, legal proceedings, and compensation. References the Bedard Report (1962), the Ombudsman report (1997), and the Law Commission of Canada study. Key deep-dive targets include the Bedard Report and the 1997 QLCE study. Corroborates the $0.70/$2.25 subsidy disparity figures.",
+      "deep_dive_urls": [
+        "https://publications.gc.ca/collections/collection_2007/lcc-cdc/JL2-28-2000E.pdf",
+        "https://www.thecanadianencyclopedia.ca/en/article/maurice-le-noblet-duplessis"
+      ],
+      "verdict": "recommended"
+    },
+    {
+      "index": 3,
+      "filename": "src_003.json",
+      "url": "https://historyofrights.ca/encyclopaedia/main-events/duplessis-orphans/",
+      "domain": "historyofrights.ca",
+      "tier": 2,
+      "word_count": 0,
+      "fetch_status": "failed",
+      "evaluation_notes": "Fetch failed — content too short (130 chars). No usable content.",
+      "deep_dive_urls": [],
+      "verdict": "skip"
+    },
+    {
+      "index": 4,
+      "filename": "src_004.json",
+      "url": "https://www.thecanadianencyclopedia.ca/en/article/duplessis-orphans",
+      "domain": "thecanadianencyclopedia.ca",
+      "tier": 2,
+      "word_count": 2297,
+      "fetch_status": "ok",
+      "evaluation_notes": "Authoritative article by historian Serge Dupuis (2020). Adds precise figures: $0.70/day per orphan vs $2.25/day per psychiatric patient. Documents 1997 Ombudsman report by Daniel Jacoby, the 1999 Bouchard government $3M fund, the 2001 settlement ($10,000 + $1,000/year cap $25,000), and 2007 additional program ($15,000 for non-psychiatric institutions). Contains images from Bibliotheque et archives nationales du Quebec (BAnQ) — potential visual media. Confirms 6,500+ requests received by Quebec government.",
+      "deep_dive_urls": [
+        "https://www.thecanadianencyclopedia.ca/en/article/grande-noirceur",
+        "https://www.biographi.ca/en/bio/duplessis_maurice_le_noblet_18E.html"
+      ],
+      "verdict": "recommended"
+    },
+    {
+      "index": 5,
+      "filename": "src_005.json",
+      "url": "https://www.cbc.ca/news/canada/montreal/duplessis-orphans-meet-irish-mother-baby-homes-1.4142930",
+      "domain": "cbc.ca",
+      "tier": 2,
+      "word_count": 1559,
+      "fetch_status": "ok",
+      "evaluation_notes": "CBC News article with direct survivor testimony from Louis-Joseph Hebert (Nestor). Contains verbatim quotes: 'When you are a bastard... being born into a garbage can' and 'We never did nothing wrong to God'. Links to CBC Digital Archives on the Duplessis Orphans — a high-value deep-dive target. Also references 2001 compensation and the waiver preventing legal action against the Catholic Church.",
+      "deep_dive_urls": [
+        "http://www.cbc.ca/archives/topic/the-duplessis-orphans",
+        "http://www.cbc.ca/news/canada/duplessis-orphans-accept-quebec-s-final-offer-1.278029"
+      ],
+      "verdict": "recommended"
+    },
+    {
+      "index": 6,
+      "filename": "src_006.json",
+      "url": "https://brewminate.com/duplessis-orphans-child-exploitation-quebec/",
+      "domain": "brewminate.com",
+      "tier": 2,
+      "word_count": 5107,
+      "fetch_status": "ok",
+      "evaluation_notes": "Deep academic analysis (5,107 words) by public historian Matthew McIntosh. Best structural analysis of the clerical-nationalist system, bureaucratic reclassification mechanism, and fiscal incentive structure. Covers the Quiet Revolution context and comparative parallels with other Western democracies (Ireland, Australia). References Wikimedia Commons images of Notre-Dame-de-la-Merci orphanage — potential visual media sources.",
+      "deep_dive_urls": [
+        "https://commons.wikimedia.org/wiki/File:Maurice_Duplessis.jpg",
+        "https://commons.wikimedia.org/wiki/File:Maitres_chez_nous_1962.jpg"
+      ],
+      "verdict": "recommended"
+    },
+    {
+      "index": 7,
+      "filename": "src_007.json",
+      "url": "https://orphelinsdeduplessis.ca/wp-content/uploads/2014/05/1930-1960-McAlister-orphans-DUPLESSIS.pdf",
+      "domain": "orphelinsdeduplessis.ca",
+      "tier": 2,
+      "word_count": 0,
+      "fetch_status": "failed",
+      "evaluation_notes": "PDF fetch failed. The orphelinsdeduplessis.ca domain is the official Duplessis Orphans advocacy group site — the PDF would be a primary document. The main website may contain additional valuable content.",
+      "deep_dive_urls": [
+        "https://orphelinsdeduplessis.ca/"
+      ],
+      "verdict": "skip"
+    },
+    {
+      "index": 8,
+      "filename": "src_008.json",
+      "url": "https://grokipedia.com/page/Duplessis_Orphans",
+      "domain": "grokipedia.com",
+      "tier": 2,
+      "word_count": 6342,
+      "fetch_status": "ok",
+      "evaluation_notes": "Large encyclopedic article (6,342 words) with detailed coverage of reclassification mechanism, administrative processes for certification, daily life in asylums, and legal proceedings. Covers the Bedard Report in detail and references that one-third of 22,000 psychiatric patients were wrongfully classified. Good corroborating source for Wikipedia data but limited unique primary source URLs.",
+      "deep_dive_urls": [],
+      "verdict": "recommended"
+    },
+    {
+      "index": 9,
+      "filename": "src_009.json",
+      "url": "https://medium.com/@chelsealynnqueen94/the-tragic-legacy-of-the-duplessis-orphans-a-dark-chapter-in-quebecs-history-682ee9bc847c",
+      "domain": "medium.com",
+      "tier": 2,
+      "word_count": 309,
+      "fetch_status": "ok",
+      "evaluation_notes": "Very thin content (309 words). Generic overview duplicating Wikipedia with no unique URLs or perspectives. Not worth deep dive.",
+      "deep_dive_urls": [],
+      "verdict": "skip"
+    },
+    {
+      "index": 10,
+      "filename": "src_010.json",
+      "url": "https://www.biographi.ca/en/topics/topic-match-list.php?id=2310",
+      "domain": "biographi.ca",
+      "tier": 2,
+      "word_count": 629,
+      "fetch_status": "ok",
+      "evaluation_notes": "Dictionary of Canadian Biography index page — links to the Maurice Duplessis biography (a key primary figure). The actual biography article would be a high-quality academic source. The index itself contains only a brief paragraph.",
+      "deep_dive_urls": [
+        "https://www.biographi.ca/en/bio/duplessis_maurice_le_noblet_18E.html"
+      ],
+      "verdict": "recommended"
+    },
+    {
+      "index": 11,
+      "filename": "src_011.json",
+      "url": "https://www.connexions.org/CxLibrary/Docs/CxP-DuplessisOrphans.htm",
+      "domain": "connexions.org",
+      "tier": 2,
+      "word_count": 1405,
+      "fetch_status": "ok",
+      "evaluation_notes": "Contains unique financial figures from Lauzon/Poirier 1999 report: religious groups received $70M in subsidies (1999 dollars); government saved $37M from one redesignated orphanage. Documents UN Human Rights Council appearance (2010). Names seven religious communities involved. Documents cemetery exhumation request and allegation of medical experimentation on orphans. Cites Thifault/Perreault academic paper (Canadian Bulletin of Medical History, 2002).",
+      "deep_dive_urls": [
+        "https://www.connexions.org/CxLibrary/Child-Youth-Abuse-Neglect-24370CX.htm"
+      ],
+      "verdict": "recommended"
+    },
+    {
+      "index": 12,
+      "filename": "src_012.json",
+      "url": "https://www.youtube.com/watch?v=OvsC75vzJ4c",
+      "domain": "youtube.com",
+      "tier": 2,
+      "word_count": 92,
+      "fetch_status": "ok",
+      "evaluation_notes": "YouTube page with only 92 words — metadata only, no transcript or useful content extracted. Not useful for research.",
+      "deep_dive_urls": [],
+      "verdict": "skip"
+    },
+    {
+      "index": 13,
+      "filename": "src_013.json",
+      "url": "http://canadiangenocide.nativeweb.org/duplessis_orphans.html",
+      "domain": "canadiangenocide.nativeweb.org",
+      "tier": 2,
+      "word_count": 981,
+      "fetch_status": "ok",
+      "evaluation_notes": "Contains National Post article (June 19, 2004) about the exhumation request and medical experimentation allegations. Includes named survivor testimony: Albert Sylvio (transported ~60 bodies from operating rooms to morgue) and Paul St. Aubain (lobotomized at 18 without consent). Documents the 1942 Quebec law allowing nuns to sell unclaimed bodies to medical schools for $10. Notes hospital registries disappeared from government archives. High-value unique content not found in other sources.",
+      "deep_dive_urls": [],
+      "verdict": "recommended"
+    }
+  ],
+  "pass2_sources": [
+    {
+      "index": 1,
+      "filename": "pass2_001.json",
+      "url": "https://publications.gc.ca/collections/collection_2007/lcc-cdc/JL2-28-2000E.pdf",
+      "domain": "publications.gc.ca",
+      "tier": 2,
+      "word_count": 113,
+      "fetch_status": "ok"
+    },
+    {
+      "index": 2,
+      "filename": "pass2_002.json",
+      "url": "https://www.thecanadianencyclopedia.ca/en/article/maurice-le-noblet-duplessis",
+      "domain": "thecanadianencyclopedia.ca",
+      "tier": 2,
+      "word_count": 1911,
+      "fetch_status": "ok"
+    }
+  ]
+}

@@ -17,13 +17,13 @@ Requirements for milestone v1.2 "The Writer". Each maps to roadmap phases.
 
 ### Script Generation
 
-- [ ] **SCRIPT-01**: Writer generates numbered chapter-based narration from a project's Research.md
-- [ ] **SCRIPT-02**: Writer anchors all claims to Research.md sources — no hallucinated facts
-- [ ] **SCRIPT-03**: Writer maintains channel voice consistency using STYLE_PROFILE.md + channel.md
-- [ ] **SCRIPT-04**: Writer consumes HOOK and QUOTE callouts from Research.md for narrative impact
-- [ ] **SCRIPT-05**: Writer supports open endings for unsolved mystery topics
-- [ ] **SCRIPT-06**: Writer outputs pure narration text (no visual cues, no production notes, no host commentary)
-- [ ] **SCRIPT-07**: Writer outputs Script.md into the project directory (`projects/N. [Title]/`)
+- [x] **SCRIPT-01**: Writer generates numbered chapter-based narration from a project's Research.md
+- [x] **SCRIPT-02**: Writer anchors all claims to Research.md sources — no hallucinated facts
+- [x] **SCRIPT-03**: Writer maintains channel voice consistency using STYLE_PROFILE.md + channel.md
+- [x] **SCRIPT-04**: Writer consumes HOOK and QUOTE callouts from Research.md for narrative impact
+- [x] **SCRIPT-05**: Writer supports open endings for unsolved mystery topics
+- [x] **SCRIPT-06**: Writer outputs pure narration text (no visual cues, no production notes, no host commentary)
+- [x] **SCRIPT-07**: Writer outputs Script.md into the project directory (`projects/N. [Title]/`)
 
 ## Future Requirements
 
@@ -54,13 +54,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STYLE-03 | Phase 11 | Complete |
 | STYLE-04 | Phase 11 | Complete |
 | STYLE-05 | Phase 11 | Complete |
-| SCRIPT-01 | Phase 12 | Pending |
-| SCRIPT-02 | Phase 12 | Pending |
-| SCRIPT-03 | Phase 12 | Pending |
-| SCRIPT-04 | Phase 12 | Pending |
-| SCRIPT-05 | Phase 12 | Pending |
-| SCRIPT-06 | Phase 12 | Pending |
-| SCRIPT-07 | Phase 12 | Pending |
+| SCRIPT-01 | Phase 12 | Complete |
+| SCRIPT-02 | Phase 12 | Complete |
+| SCRIPT-03 | Phase 12 | Complete |
+| SCRIPT-04 | Phase 12 | Complete |
+| SCRIPT-05 | Phase 12 | Complete |
+| SCRIPT-06 | Phase 12 | Complete |
+| SCRIPT-07 | Phase 12 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 12 total

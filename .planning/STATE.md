@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: The Writer
 status: roadmap_ready
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-14T22:04:29.000Z"
+stopped_at: Completed 12-writer-agent-01-PLAN.md
+last_updated: "2026-03-14T22:28:38.237Z"
 last_activity: 2026-03-14 — Roadmap created
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 ---
@@ -56,6 +56,7 @@ Last activity: 2026-03-14 — Roadmap created
 | Timeline | 2 days | 3 days | - |
 | Phase 11 P01 | 3 | 2 tasks | 3 files |
 | Phase 11-style-extraction-skill P02 | 45 | 3 tasks | 3 files |
+| Phase 12-writer-agent P01 | 281 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ All v1.1 decisions archived to `milestones/v1.1-ROADMAP.md`. Key decisions persi
 - [Phase 11]: 4 mandatory STYLE_PROFILE.md sections guard against cult-arc overfitting
 - [Phase 11-style-extraction-skill]: STYLE_PROFILE.md separates Universal Voice Rules from Narrative Arc Templates — 5 rules apply to all topics, arc templates are opt-in by topic type
 - [Phase 11-style-extraction-skill]: writting_style_guide.md was untracked; deleted via rm — no git history loss
+- [Phase 12-writer-agent]: Writer CLI is stdlib-only (argparse, pathlib, sys) — no third-party deps, no LLM calls
+- [Phase 12-writer-agent]: resolve_project_dir falls back to .claude/scratch/writer/{topic} when no project match found
+- [Phase 12-writer-agent]: pytest.ini updated to include writer scripts in pythonpath
 
 ### Pending Todos
 
@@ -88,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T22:04:28.998Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-writer-agent/12-CONTEXT.md
+Last session: 2026-03-14T22:28:38.235Z
+Stopped at: Completed 12-writer-agent-01-PLAN.md
+Resume file: None

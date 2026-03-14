@@ -37,6 +37,7 @@ Channel-automation V3/
 │   ├── skills/                   # Agent skills (deterministic code + prompts)
 │   │   ├── channel-assistant/    # Agent 1.1: Topics, competitors, project init
 │   │   ├── researcher/           # Agent 1.2: Two-pass research pipeline
+│   │   ├── writer/               # Agent 1.3: Research dossier → narrated script
 │   │   ├── visual-style-extractor/  # Frame analysis → visual patterns
 │   │   └── crawl4ai-scraper/     # Web scraping utility
 │   └── scratch/                  # Transient data (gitignored, ephemeral)
@@ -58,7 +59,7 @@ Channel-automation V3/
 | Research a topic | researcher | `survey` → evaluate → `deepen` → `write` |
 | Extract visual style | visual-style-extractor | 6-stage pipeline |
 | Extract channel voice style | style-extraction | SKILL.md invocation |
-| Write script | *(not yet implemented)* | — |
+| Write script | writer | `cmd_load` + Claude heuristic |
 | Create shot list | *(not yet implemented)* | — |
 
 ### What to Load
@@ -69,7 +70,7 @@ Channel-automation V3/
 | Research | channel.md, researcher/CONTEXT.md, projects/N/metadata.md | competitors/, visual-references/ — research is topic-focused |
 | Style extraction | visual-style-extractor/CONTEXT.md, target video/URL | Everything else — self-contained pipeline |
 | Channel style extraction | style-extraction/CONTEXT.md, context/script-references/ | Everything else — self-contained |
-| Script writing *(Phase 12)* | channel.md, STYLE_PROFILE.md, script-references/, projects/N/research/Research.md | competitors/ — writer needs voice + research, not strategy |
+| Script writing | channel.md, STYLE_PROFILE.md, script-references/, projects/N/research/Research.md | competitors/ — writer needs voice + research, not strategy |
 | Visual planning *(future)* | visual-references/*/VISUAL_STYLE_GUIDE.md, projects/N/script.md | competitors/, channel.md — director needs visuals + script |
 
 ### Reference Files
@@ -87,6 +88,7 @@ Channel-automation V3/
 |-------|-------|---------|
 | `channel-assistant` | 1.1 | Competitor intel, topic ideation, project init |
 | `researcher` | 1.2 | Two-pass web research → narrative dossier |
+| `writer` | 1.3 | Research dossier → narrated chapter script |
 | `visual-style-extractor` | — | Reference video → visual pattern toolkit |
 
 ### Utility Skills

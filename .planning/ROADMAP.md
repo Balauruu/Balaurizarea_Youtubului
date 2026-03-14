@@ -59,7 +59,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: cmd_survey subcommand + survey_evaluation.md prompt (Pass 1 full flow)
+- [ ] 08-01-PLAN.md — test stubs + tiers.py Reddit reclassification + url_builder.py DDG expansion refactor
+- [ ] 08-02-PLAN.md — cli.py DDG URL extraction + domain field + summary table + survey_evaluation.md prompt + SKILL.md workflow
 
 ### Phase 9: Deep-Dive Pass (Pass 2)
 **Goal**: Users can run a second command that reads Claude's evaluated source manifest and fetches 5-10 targeted primary sources, completing the two-pass research architecture with full provenance from broad survey to primary source depth.
@@ -103,7 +104,7 @@ Plans:
 | 4. Project Initialization + Metadata | v1.0 | 2/2 | Complete | 2026-03-11 |
 | 5. Trend Scanning + Content Gaps | v1.0 | 2/2 | Complete | 2026-03-11 |
 | 6. Tech Debt Cleanup + OUTP-02 Wiring | v1.0 | 1/1 | Complete | 2026-03-11 |
-| 7. Scraping Foundation | 2/2 | Complete   | 2026-03-12 | - |
-| 8. Survey Pass (Pass 1) | v1.1 | 0/1 | Not started | - |
+| 7. Scraping Foundation | v1.1 | 2/2 | Complete | 2026-03-12 |
+| 8. Survey Pass (Pass 1) | v1.1 | 0/2 | Not started | - |
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 0/1 | Not started | - |
 | 10. Dossier Output | v1.1 | 0/3 | Not started | - |

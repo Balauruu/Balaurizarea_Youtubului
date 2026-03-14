@@ -27,7 +27,8 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 
 ### Active
 
-(None — define with `/gsd:new-milestone`)
+- [ ] Style extraction from reference scripts → STYLE_PROFILE.md
+- [ ] Script generation from research dossier → numbered chapters with pure narration
 
 ### Out of Scope
 
@@ -48,6 +49,14 @@ This is the **Narrative Engineering phase** of the documentary pipeline (see `Ar
 - Agent 1.2 (The Researcher): 1,737 LOC Python + prompts, two-pass research `survey → deepen → write`, validated on real topic
 - SQLite database with 37 migrated competitor videos from 3 channels
 - Full test suite passing across both agents
+
+## Current Milestone: v1.2 The Writer
+
+**Goal:** Extract writing style from reference scripts and generate narrated video scripts from research dossiers.
+
+**Target features:**
+- Style extraction skill (one-time heuristic) from reference scripts in `context/script-references/`
+- Script generation agent that reads Research.md + STYLE_PROFILE.md + channel DNA → numbered chapters with pure narration
 
 **Channel profile:** Dark history, true crime, unsolved mysteries. 20-50 min documentaries. Neutral, cinematic tone. Target audience: 22-38, intellectually curious. See `context/channel/channel.md`.
 
@@ -80,4 +89,4 @@ This is the **Narrative Engineering phase** of the documentary pipeline (see `Ar
 | Budget guard: max 15 total source files | Prevents context bloat across both passes | Good |
 
 ---
-*Last updated: 2026-03-14 after v1.1 milestone completion*
+*Last updated: 2026-03-14 after v1.2 milestone start*

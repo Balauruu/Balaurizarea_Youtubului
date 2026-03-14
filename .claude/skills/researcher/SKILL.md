@@ -2,20 +2,20 @@
 
 **Purpose:** Agent 1.2 — The Researcher. Executes web scraping to build factual foundations for documentary videos.
 
-**Status:** Phase 7-8 modules implemented. Phase 9-10 modules planned.
+**Status:** All modules implemented. v1.1 complete.
 
 ---
 
 ## Invocation
 
 ```bash
-# Run a subcommand (Phase 8+)
+# Run a subcommand
 PYTHONPATH=.claude/skills/researcher/scripts python -m researcher <subcommand>
 
-# Subcommands (planned):
+# Subcommands:
 #   survey  — Pass 1: bulk topic scraping
 #   deepen  — Pass 2: targeted deep dives
-#   write   — Output research dossier
+#   write   — Aggregate sources into synthesis_input.md
 ```
 
 ---
@@ -57,11 +57,11 @@ export PYTHONUTF8=1
 |--------|---------|--------|
 | `deepen` command | Pass 2: targeted deep dives on recommended sources | Implemented |
 
-### Phase 10 (planned)
+### Phase 10 (implemented)
 
-| Module | Purpose | Status |
-|--------|---------|--------|
-| `write` command | Output research dossier (Research.md) | Phase 10 |
+| Module | Purpose | Exports |
+|--------|---------|---------|
+| `writer.py` | Source file aggregation into synthesis_input.md | `load_source_files`, `build_synthesis_input`, `write_synthesis_input` |
 
 ---
 
@@ -129,11 +129,39 @@ A summary table is printed and source_manifest.json is updated with a pass2_sour
 
 ### Step 3 — Handoff
 
-After cmd_deepen completes, both passes are done. Run cmd_write to generate Research.md:
+After cmd_deepen completes, both passes are done. Proceed to Pass 3 (Write Dossier) below.
+
+---
+
+## Workflow (Pass 3 — Write Dossier)
+
+### Step 1 — Run write command
 
 ```bash
 PYTHONPATH=.claude/skills/researcher/scripts python -m researcher write "Your Topic Here"
 ```
+
+The command reads all src_*.json and pass2_*.json files, aggregates them into synthesis_input.md
+(full content, no truncation), and prints the file path and synthesis prompt path.
+
+### Step 2 — Claude synthesizes dossier [HEURISTIC]
+
+After cmd_write prints its summary, Claude reads:
+- The synthesis_input.md file (path printed by cmd_write as "Synthesis input: ...")
+- The synthesis prompt: @.claude/skills/researcher/prompts/synthesis.md
+
+Claude produces two files:
+- **Research.md** (~2,000 words, narrative-first dossier with all 9 sections)
+- **media_urls.md** (visual media catalog grouped by asset type)
+
+Both files are written to the output directory shown in the synthesis_input.md header.
+Claude writes these files directly using its file tools — no code step involved.
+
+### Step 3 — Review
+
+Read Research.md. Verify all 9 sections are present and content is factual.
+Word count should be approximately 2,000 words of body text.
+Check media_urls.md for valid URLs grouped correctly by asset type.
 
 ---
 
@@ -178,6 +206,27 @@ PYTHONPATH=.claude/skills/researcher/scripts python -m researcher write "Your To
 Note: `evaluation_notes`, `deep_dive_urls`, and `verdict` are added by the [HEURISTIC] evaluation
 step (Step 2 of the Workflow). They are not written by cmd_survey itself.
 
+**Synthesis input file:** `synthesis_input.md` (written to `.claude/scratch/researcher/` by cmd_write)
+
+Header fields:
+```
+**Topic:** [topic name]
+**Output directory:** [path to projects/N. Title/research/]
+**Sources included:** [N]
+**Skipped / failed sources:** [N] (if any)
+```
+
+Per-source sections:
+```markdown
+---
+## Source N: [domain]
+**URL:** [url]
+**Tier:** [1/2]
+**Pass:** [1/2]
+
+[full content field from src_NNN.json or pass2_NNN.json]
+```
+
 ---
 
 ## Key Decisions
@@ -192,3 +241,4 @@ step (Step 2 of the Workflow). They are not written by cmd_survey itself.
 - **duckduckgo-search renamed:** Package renamed to `ddgs`. Use `pip install ddgs` and `from ddgs import DDGS`.
 - **resolve_output_dir:** Returns `projects/N. Title/research/` if project found, else `.claude/scratch/researcher/` (standalone mode). Creates dir automatically.
 - **Integration test isolation:** Run `pytest tests/test_researcher/test_integration.py` separately — test_fetcher.py installs a module-level crawl4ai mock that interferes if tests run together without the `_clear_crawl4ai_mock()` guard.
+- **synthesis_input.md includes ALL source content (no code-level truncation).** Word cap is enforced by the synthesis prompt — Claude distills 20–50k words to ~2,000 words of curated dossier content.

@@ -2,9 +2,11 @@
 
 Subcommands:
     survey  — Pass 1: resolve output dir, fetch initial URLs, write src_*.json files.
+    deepen  — Pass 2: fetch targeted primary sources from evaluated manifest.
 
 Usage:
     PYTHONPATH=.claude/skills/researcher/scripts python -m researcher survey "Jonestown Massacre"
+    PYTHONPATH=.claude/skills/researcher/scripts python -m researcher deepen "Jonestown Massacre"
 """
 import argparse
 import asyncio
@@ -347,15 +349,185 @@ def _get_tier_from_url(url: str) -> int:
     return classify_domain(url)
 
 
+def _collect_deep_dive_urls(manifest_path: Path) -> list[str]:
+    """Read source_manifest.json and return deduplicated, filtered deep-dive URLs.
+
+    Only collects URLs from sources with verdict == "recommended".
+    Sources with missing verdict are treated as skip.
+    Tier 3 URLs are filtered out.
+    Order preserved as they appear in the manifest.
+
+    Args:
+        manifest_path: Path to source_manifest.json.
+
+    Returns:
+        Deduplicated list of URL strings to fetch.
+    """
+    from researcher.tiers import classify_domain  # noqa: PLC0415
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    seen: set[str] = set()
+    result: list[str] = []
+
+    for source in manifest.get("sources", []):
+        if source.get("verdict") != "recommended":
+            continue
+        for url in source.get("deep_dive_urls", []):
+            if url in seen:
+                continue
+            seen.add(url)
+            if classify_domain(url) == 3:
+                continue
+            result.append(url)
+
+    return result
+
+
+def _get_fetched_urls(output_dir: Path) -> set[str]:
+    """Return the set of URLs already fetched in Pass 1 (src_*.json files).
+
+    Silently skips files that fail to parse.
+
+    Args:
+        output_dir: Directory containing src_*.json files.
+
+    Returns:
+        Set of URL strings already fetched.
+    """
+    fetched: set[str] = set()
+    for src_file in output_dir.glob("src_*.json"):
+        try:
+            data = json.loads(src_file.read_text(encoding="utf-8"))
+            url = data.get("url")
+            if url:
+                fetched.add(url)
+        except Exception:  # noqa: BLE001
+            pass
+    return fetched
+
+
 def cmd_deepen(topic: str) -> None:
     """Pass 2: fetch targeted primary sources from evaluated source manifest.
 
-    Stub — full implementation in Task 2.
+    Steps:
+      a. Resolve output directory.
+      b. Verify source_manifest.json exists.
+      c. Delete existing pass2_*.json files (clean re-run).
+      d. Collect deep-dive URLs from recommended sources only.
+      e. Filter out URLs already fetched in Pass 1.
+      f. Apply budget guard: total src + pass2 files must not exceed 15.
+      g. Exit cleanly if no fetchable URLs remain.
+      h. Fetch each URL, write pass2_NNN.json files.
+      i. Print summary table.
+      j. Update source_manifest.json with pass2_sources key.
+      k. Print manifest path.
 
     Args:
         topic: Topic string (same as used for survey).
     """
-    raise NotImplementedError
+    root = _get_project_root()
+    output_dir = resolve_output_dir(root, topic)
+
+    manifest_path = output_dir / "source_manifest.json"
+    if not manifest_path.exists():
+        print(f"Error: source_manifest.json not found at {manifest_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # Clean previous Pass 2 artifacts
+    for old_file in output_dir.glob("pass2_*.json"):
+        old_file.unlink()
+
+    # Collect deep-dive URLs from recommended sources
+    deep_dive_urls = _collect_deep_dive_urls(manifest_path)
+
+    # Filter URLs already fetched in Pass 1
+    fetched_urls = _get_fetched_urls(output_dir)
+    deep_dive_urls = [u for u in deep_dive_urls if u not in fetched_urls]
+
+    # Budget guard: total files across both passes must not exceed 15
+    pass1_count = len(list(output_dir.glob("src_*.json")))
+    pass2_budget = 15 - pass1_count
+
+    if pass2_budget <= 0:
+        print(f"Budget exhausted: {pass1_count} src_*.json files already exist (max 15 total). Skipping Pass 2.")
+        return
+
+    # Clean exit if nothing to fetch
+    if not deep_dive_urls:
+        print("No deep-dive URLs found in manifest -- skip Pass 2 or re-evaluate sources")
+        return
+
+    # Log and truncate if over budget
+    if len(deep_dive_urls) > pass2_budget:
+        skipped_due_to_budget = deep_dive_urls[pass2_budget:]
+        deep_dive_urls = deep_dive_urls[:pass2_budget]
+        print(f"Budget: {pass2_budget} slots available. Skipping {len(skipped_due_to_budget)} URL(s) due to budget:")
+        for url in skipped_due_to_budget:
+            print(f"  [budget-skip] {url}")
+
+    pass2_sources = []
+
+    for idx, url in enumerate(deep_dive_urls, start=1):
+        print(f"  [pass2 {idx}/{len(deep_dive_urls)}] Fetching {url} ...", end=" ", flush=True)
+        result = fetch_with_retry(url)
+
+        status = result["fetch_status"]
+        content = result["content"] or ""
+
+        # Apply noise stripping to all content
+        content = _strip_wiki_noise(content)
+        word_count = len(content.split()) if content else 0
+
+        domain = urlparse(url).hostname or ""
+        domain = domain.removeprefix("www.")
+
+        if status == "ok":
+            print(f"ok ({word_count} words)")
+        elif status == "skipped_tier3":
+            print("skipped (tier 3)")
+        else:
+            print(f"failed — {result['error']}")
+
+        # Write full pass2 source file (includes content)
+        pass2_filename = f"pass2_{idx:03d}.json"
+        pass2_data = {
+            "index": idx,
+            "url": url,
+            "domain": domain,
+            "tier": _get_tier_from_url(url),
+            "word_count": word_count,
+            "fetch_status": status,
+            "error": result["error"],
+            "content": content,
+        }
+        (output_dir / pass2_filename).write_text(
+            json.dumps(pass2_data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+        # Lightweight entry for manifest (no content field)
+        pass2_sources.append({
+            "index": idx,
+            "filename": pass2_filename,
+            "url": url,
+            "domain": domain,
+            "tier": pass2_data["tier"],
+            "word_count": word_count,
+            "fetch_status": status,
+        })
+
+    # Print summary table
+    _print_summary_table(pass2_sources)
+
+    # Update manifest with pass2_sources key
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["pass2_sources"] = pass2_sources
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    print(f"Manifest: {manifest_path}")
 
 
 def main() -> None:
@@ -376,11 +548,27 @@ def main() -> None:
         help="Topic string (e.g. 'Jonestown Massacre')",
     )
 
+    # deepen subcommand
+    deepen_parser = subparsers.add_parser(
+        "deepen",
+        help="Pass 2: fetch targeted primary sources from evaluated manifest",
+    )
+    deepen_parser.add_argument(
+        "topic",
+        help="Topic string (same as used for survey)",
+    )
+
     args = parser.parse_args()
 
     if args.command == "survey":
         try:
             cmd_survey(args.topic)
+        except ValueError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
+    elif args.command == "deepen":
+        try:
+            cmd_deepen(args.topic)
         except ValueError as exc:
             print(f"Error: {exc}", file=sys.stderr)
             sys.exit(1)

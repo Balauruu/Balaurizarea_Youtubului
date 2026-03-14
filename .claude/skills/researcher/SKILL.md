@@ -51,11 +51,16 @@ export PYTHONUTF8=1
 | `url_builder.py` | Project directory resolution and URL construction | `find_project_dir`, `resolve_output_dir`, `make_ddg_url`, `build_survey_urls` |
 | `cli.py` | CLI entry point with `survey` subcommand | `main`, `cmd_survey` |
 
-### Phase 9-10 (planned)
+### Phase 9 (implemented)
 
 | Module | Purpose | Status |
 |--------|---------|--------|
-| `deepen` command | Pass 2: targeted deep dives on recommended sources | Phase 9 |
+| `deepen` command | Pass 2: targeted deep dives on recommended sources | Implemented |
+
+### Phase 10 (planned)
+
+| Module | Purpose | Status |
+|--------|---------|--------|
 | `write` command | Output research dossier (Research.md) | Phase 10 |
 
 ---
@@ -100,6 +105,35 @@ Claude then prints a verdict summary table and asks: "Proceed to Pass 2 (cmd_dee
 
 Review the verdict summary. Confirm to proceed to Phase 9 (cmd_deepen), or adjust
 deep_dive_urls manually before continuing.
+
+---
+
+## Workflow (Pass 2 — Deep Dive)
+
+### Step 1 — Confirm evaluation is complete
+
+Verify that source_manifest.json has `verdict` and `deep_dive_urls` populated on all
+sources. If any source is missing these fields, re-run the evaluation step (Step 2 of
+Pass 1 Workflow) before proceeding.
+
+### Step 2 — Run deepen command
+
+```bash
+PYTHONPATH=.claude/skills/researcher/scripts python -m researcher deepen "Your Topic Here"
+```
+
+The command reads source_manifest.json, collects deep_dive_urls from "recommended"
+sources only, filters Tier 3 URLs and already-fetched URLs, then fetches up to
+(15 - pass1_count) URLs. Each is saved as pass2_NNN.json in the output directory.
+A summary table is printed and source_manifest.json is updated with a pass2_sources key.
+
+### Step 3 — Handoff
+
+After cmd_deepen completes, both passes are done. Run cmd_write to generate Research.md:
+
+```bash
+PYTHONPATH=.claude/skills/researcher/scripts python -m researcher write "Your Topic Here"
+```
 
 ---
 

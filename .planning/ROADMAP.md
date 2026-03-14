@@ -70,10 +70,10 @@ Plans:
   1. Running `cmd_deepen` reads the JSON source manifest and fetches only the URLs Claude identified as deep-dive targets — not a fresh broad survey
   2. Pass 2 fetched content is written to `.claude/scratch/researcher/` as individual `pass2_src_N.md` files distinct from Pass 1 files
   3. The two passes together produce no more than 15 total fetched source files in scratch
-**Plans**: 2 plans
+**Plans**: 1 plan
 
 Plans:
-- [ ] 09-01: cmd_deepen subcommand — reads manifest, fetches targeted primary sources, writes to scratch
+- [ ] 09-01-PLAN.md — cmd_deepen subcommand with tests, budget guard, dedup, SKILL.md update
 
 ### Phase 10: Dossier Output
 **Goal**: Users can run a final command that synthesizes all scraped content into a structured, Writer-ready Research.md dossier and a separate media_urls.md — the complete deliverable for Agent 1.3 and SKILL.md fully documents the end-to-end workflow.

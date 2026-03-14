@@ -33,7 +33,7 @@
 ### v1.2 The Writer (Phases 11-12)
 
 - [x] **Phase 11: Style Extraction Skill** - Extract channel voice from reference scripts into reusable STYLE_PROFILE.md (completed 2026-03-14)
-- [ ] **Phase 12: Writer Agent** - Generate narrated chapter scripts from research dossiers using validated style context
+- [x] **Phase 12: Writer Agent** - Generate narrated chapter scripts from research dossiers using validated style context (completed 2026-03-14)
 
 ## Phase Details
 
@@ -62,7 +62,7 @@ Plans:
   3. Every factual claim in the script can be traced to a specific section of Research.md — no fact appears that is not present in the dossier
   4. Research.md HOOK and QUOTE callouts appear as chapter entry points or narration anchors in the generated script — they are not ignored or buried mid-chapter
   5. The generated script reaches 3,000-7,000 words and maintains the channel's calm, deadpan tone throughout — it does not shift to an emotionally heightened register in later chapters
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 12-01-PLAN.md — Build writer skill (CLI, generation prompt, tests, skill docs)
 - [ ] 12-02-PLAN.md — End-to-end validation (generate Duplessis Orphans script, human review, wire CLAUDE.md)
@@ -82,4 +82,4 @@ Plans:
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
 | 10. Dossier Output | v1.1 | 3/3 | Complete | 2026-03-14 |
 | 11. Style Extraction Skill | v1.2 | 2/2 | Complete | 2026-03-14 |
-| 12. Writer Agent | 1/2 | In Progress|  | - |
+| 12. Writer Agent | 2/2 | Complete   | 2026-03-14 | - |

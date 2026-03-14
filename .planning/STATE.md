@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: The Writer
 status: roadmap_ready
-stopped_at: Completed 12-writer-agent-01-PLAN.md
-last_updated: "2026-03-14T22:28:38.237Z"
+stopped_at: "Checkpoint: 12-02 Task 2 human-verify pending"
+last_updated: "2026-03-14T22:37:16.031Z"
 last_activity: 2026-03-14 — Roadmap created
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 ---
@@ -81,6 +81,8 @@ All v1.1 decisions archived to `milestones/v1.1-ROADMAP.md`. Key decisions persi
 - [Phase 12-writer-agent]: Writer CLI is stdlib-only (argparse, pathlib, sys) — no third-party deps, no LLM calls
 - [Phase 12-writer-agent]: resolve_project_dir falls back to .claude/scratch/writer/{topic} when no project match found
 - [Phase 12-writer-agent]: pytest.ini updated to include writer scripts in pythonpath
+- [Phase 12-02]: Script.md is gitignored (projects/ is pipeline output) — commit covers only CLAUDE.md routing update
+- [Phase 12-02]: Open Ending Template applied — Church never apologized, waiver blocks litigation, registries missing
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T22:28:38.235Z
-Stopped at: Completed 12-writer-agent-01-PLAN.md
+Last session: 2026-03-14T22:37:09.935Z
+Stopped at: Checkpoint: 12-02 Task 2 human-verify pending
 Resume file: None

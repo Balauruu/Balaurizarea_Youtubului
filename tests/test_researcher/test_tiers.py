@@ -31,8 +31,9 @@ def test_classify_domain_x_com_is_tier3():
     assert classify_domain("https://x.com/user") == 3
 
 
-def test_classify_domain_reddit_is_tier3():
-    assert classify_domain("https://reddit.com/r/test") == 3
+def test_classify_domain_reddit_is_tier2():
+    # Phase 8: reddit reclassified from Tier 3 to Tier 2
+    assert classify_domain("https://reddit.com/r/test") == 2
 
 
 def test_classify_domain_unknown_is_tier2():
@@ -52,7 +53,8 @@ def test_tier1_domains_has_expected_entries():
 def test_tier3_domains_has_expected_entries():
     assert "facebook.com" in TIER_3_DOMAINS
     assert "twitter.com" in TIER_3_DOMAINS
-    assert "reddit.com" in TIER_3_DOMAINS
+    # Phase 8: reddit.com moved to Tier 2 — no longer in Tier 3
+    assert "reddit.com" not in TIER_3_DOMAINS
 
 
 def test_classify_domain_loc_is_tier1():

@@ -5,7 +5,7 @@ Provides:
 - find_project_dir: Case-insensitive substring match against projects/ subdirectories.
 - resolve_output_dir: Return/create output directory (project research/ or scratch).
 - make_ddg_url: Build a DuckDuckGo HTML endpoint URL for a query string.
-- build_survey_urls: Return initial URL list for a topic (Wikipedia + DDG).
+- build_survey_urls: Return initial URL list for a topic (Wikipedia only; DDG handled in cli.py).
 """
 import urllib.parse
 from pathlib import Path
@@ -100,16 +100,15 @@ def make_ddg_url(query: str) -> str:
 def build_survey_urls(topic: str) -> list[str]:
     """Build initial URL list for a survey run.
 
-    Returns Wikipedia page URL and DDG search URL. Phase 8 will expand
-    this to include additional source domains.
+    Returns Wikipedia page URL only. DDG URL expansion is handled in
+    cmd_survey after link extraction.
 
     Args:
         topic: Topic string (e.g. "Jonestown Massacre").
 
     Returns:
-        List of URLs to fetch in survey pass.
+        List of URLs to fetch in survey pass (Wikipedia URL only).
     """
     wiki_query = urllib.parse.quote(topic.replace(" ", "_"))
     wikipedia_url = f"https://en.wikipedia.org/wiki/{wiki_query}"
-    ddg_url = make_ddg_url(topic)
-    return [wikipedia_url, ddg_url]
+    return [wikipedia_url]

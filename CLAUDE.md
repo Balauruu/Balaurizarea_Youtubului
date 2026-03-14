@@ -16,7 +16,7 @@ Channel-automation V3/
 │   ├── channel/
 │   │   ├── channel.md            # Channel DNA: voice, tone, pillars, audience
 │   │   ├── past_topics.md        # Previously covered topics (dedup safety)
-│   │   └── writting_style_guide.md  # Narration style rules
+│   │   └── STYLE_PROFILE.md      # Channel voice behavioral ruleset (rules, arc templates, transitions)
 │   ├── competitors/
 │   │   ├── competitors.json      # Registered channel registry
 │   │   └── analysis.md           # Stats, outliers, trends, topic clusters
@@ -57,6 +57,7 @@ Channel-automation V3/
 | Initialize video project | channel-assistant | `cmd_init_project` |
 | Research a topic | researcher | `survey` → evaluate → `deepen` → `write` |
 | Extract visual style | visual-style-extractor | 6-stage pipeline |
+| Extract channel voice style | style-extraction | SKILL.md invocation |
 | Write script | *(not yet implemented)* | — |
 | Create shot list | *(not yet implemented)* | — |
 
@@ -67,7 +68,8 @@ Channel-automation V3/
 | Topic ideation | channel.md, past_topics.md, analysis.md, channel-assistant/CONTEXT.md | visual-references/, script-references/ — not relevant to topic selection |
 | Research | channel.md, researcher/CONTEXT.md, projects/N/metadata.md | competitors/, visual-references/ — research is topic-focused |
 | Style extraction | visual-style-extractor/CONTEXT.md, target video/URL | Everything else — self-contained pipeline |
-| Script writing *(future)* | channel.md, writting_style_guide.md, script-references/, projects/N/research/Research.md | competitors/ — writer needs voice + research, not strategy |
+| Channel style extraction | style-extraction/CONTEXT.md, context/script-references/ | Everything else — self-contained |
+| Script writing *(Phase 12)* | channel.md, STYLE_PROFILE.md, script-references/, projects/N/research/Research.md | competitors/ — writer needs voice + research, not strategy |
 | Visual planning *(future)* | visual-references/*/VISUAL_STYLE_GUIDE.md, projects/N/script.md | competitors/, channel.md — director needs visuals + script |
 
 ### Reference Files
@@ -75,6 +77,7 @@ Channel-automation V3/
 - `Architecture.md` — Full pipeline specification (Phases 1-2)
 - `context/channel/channel.md` — Channel DNA (voice, tone, pillars, audience)
 - `context/channel/past_topics.md` — Past topics to avoid duplication
+- `context/channel/STYLE_PROFILE.md` — Channel voice behavioral ruleset (voice rules, arc templates, transitions)
 
 ## Skills
 

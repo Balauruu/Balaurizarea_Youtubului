@@ -347,6 +347,17 @@ def _get_tier_from_url(url: str) -> int:
     return classify_domain(url)
 
 
+def cmd_deepen(topic: str) -> None:
+    """Pass 2: fetch targeted primary sources from evaluated source manifest.
+
+    Stub — full implementation in Task 2.
+
+    Args:
+        topic: Topic string (same as used for survey).
+    """
+    raise NotImplementedError
+
+
 def main() -> None:
     """Parse CLI arguments and dispatch to subcommands."""
     parser = argparse.ArgumentParser(

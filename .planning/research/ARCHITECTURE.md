@@ -1,8 +1,8 @@
 # Architecture Research
 
-**Domain:** Agent 1.2 — Web Research Agent integrated into Claude Code skill pipeline
-**Researched:** 2026-03-12
-**Confidence:** HIGH (codebase direct inspection + established pattern reuse)
+**Domain:** Documentary pipeline — style extraction and script generation (v1.2)
+**Researched:** 2026-03-14
+**Confidence:** HIGH (direct codebase inspection of all existing skills)
 
 ---
 
@@ -11,275 +11,179 @@
 ### System Overview
 
 ```
-                      CLAUDE CODE (Orchestrator)
-                                |
-                reads researcher/SKILL.md for instructions
-                                |
-         +----------------------+----------------------+
-         |                                             |
-   [Pass 1: Survey]                          [Pass 2: Deep Dive]
-   DETERMINISTIC phase                       HEURISTIC + DETERMINISTIC
-         |                                             |
-   +-----+-----+                             +---------+---------+
-   | scraper.py|                             | scraper.py (reuse)|
-   | batch URLs|                             | targeted URLs     |
-   | -> files  |                             | -> files          |
-   +-----+-----+                             +---------+---------+
-         |                                             |
-         v                                             v
-   .claude/scratch/                          .claude/scratch/
-   pass1_raw_*.md                            pass2_raw_*.md
-         |                                             |
-         v                                             v
-   [HEURISTIC: Claude evaluates]             [HEURISTIC: Claude synthesizes]
-   source quality, coverage gaps,            chronology, contradictions,
-   selects deep dive targets                 narrative hooks, unanswered Qs
-         |                                             |
-         +------------------+--------------------------+
-                            |
-                            v
-              projects/N. Title/research/
-              Research.md  (scriptwriter input)
-              media_urls.md (separated URL catalog)
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Claude Code (Orchestrator)                         │
+│          Dispatches skills, performs all [HEURISTIC] reasoning        │
+├──────────────┬──────────────┬──────────────┬────────────────────────-┤
+│  Agent 1.1   │  Agent 1.2   │  Skill 1.3   │     Agent 1.3           │
+│  channel-    │  researcher  │  style-      │     writer              │
+│  assistant   │              │  extraction  │     (NEW)               │
+│  (existing)  │  (existing)  │  (NEW)       │                         │
+└──────┬───────┴──────┬───────┴──────┬───────┴──────────┬──────────────┘
+       |              |              |                  |
+       v              v              v                  v
+┌──────────────────────────────────────────────────────────────────────┐
+│                      Filesystem (shared state)                        │
+├─────────────────┬──────────────────┬────────────────────────---------┤
+│ context/        │ projects/N.Title/ │ context/script-references/      │
+│ channel/        │ research/         │ (reference scripts - read-only) │
+│ channel.md      │   Research.md     │                                 │
+│ STYLE_PROFILE.md│ script/           │                                 │
+│ (NEW)           │   Script.md (NEW) │                                 │
+└─────────────────┴──────────────────┴─────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Type | Responsibility | Lives In |
-|-----------|------|---------------|----------|
-| `cli.py` (new skill) | DETERMINISTIC | CLI entry point, argument parsing, path resolution | `researcher/scripts/researcher/cli.py` |
-| `fetcher.py` | DETERMINISTIC | crawl4ai wrapper with error handling, retry, output to file | `researcher/scripts/researcher/fetcher.py` |
-| `url_builder.py` | DETERMINISTIC | Generate search URLs and source URLs from topic + config | `researcher/scripts/researcher/url_builder.py` |
-| `pass1 context loader` | DETERMINISTIC | Print topic context + source list to stdout for Claude | `cli.py cmd_survey` |
-| `pass2 context loader` | DETERMINISTIC | Print scraped content summary + gap list to stdout | `cli.py cmd_deepen` |
-| `writer.py` | DETERMINISTIC | Write Research.md and media_urls.md with correct schema | `researcher/scripts/researcher/writer.py` |
-| Survey prompt | HEURISTIC | Claude evaluates sources, identifies gaps, picks deep targets | `researcher/prompts/survey_evaluation.md` |
-| Synthesis prompt | HEURISTIC | Claude synthesizes full research dossier from scraped content | `researcher/prompts/synthesis.md` |
-
----
-
-## How Heuristic/Deterministic Split Applies
-
-This is the critical architectural decision. The existing pattern from Agent 1.1 is the authoritative template:
-
-### Deterministic (Python code):
-- Fetching URLs via crawl4ai (I/O, no judgment)
-- Generating search query URLs from a topic string (string manipulation)
-- Writing Research.md to the project directory (file I/O)
-- Printing structured context to stdout for Claude to read (context-loader pattern)
-- Extracting and cataloging raw media URLs found in scraped pages
-
-### Heuristic (Claude reasoning):
-- Deciding which scraped sources are high quality vs. unreliable
-- Identifying what's still missing after Pass 1 and which gaps matter
-- Selecting the 5-10 best URLs for deep dive in Pass 2
-- Synthesizing contradictions across multiple sources
-- Extracting narrative hooks and unanswered questions
-- Writing the final Research.md content (Claude writes, `writer.py` saves)
-
-**Key rule inherited from Architecture.md:** Python never calls an LLM API. Claude reads outputs from Python scripts and reasons over them natively.
+| Component | Responsibility | Classification | Status |
+|-----------|----------------|----------------|--------|
+| `channel-assistant` | Competitor intel, topic briefs, project init | DETERMINISTIC + HEURISTIC | Existing - no changes |
+| `researcher` | Two-pass web research → Research.md | DETERMINISTIC + HEURISTIC | Existing - no changes |
+| `style-extraction` skill | One-time: read reference scripts, produce STYLE_PROFILE.md | HEURISTIC only | NEW |
+| `writer` skill | Per-video: Research.md + STYLE_PROFILE.md → Script.md | HEURISTIC + minimal DETERMINISTIC | NEW |
 
 ---
 
 ## Recommended Project Structure
 
 ```
-.claude/skills/researcher/
-├── SKILL.md                          # Claude's operating instructions
-├── scripts/
-│   └── researcher/
-│       ├── __init__.py
-│       ├── cli.py                    # Entry point: survey / deepen / write subcommands
-│       ├── fetcher.py                # crawl4ai wrapper (async, error handling, file output)
-│       ├── url_builder.py            # Generate search + source URLs from topic
-│       └── writer.py                 # Write Research.md and media_urls.md
-├── prompts/
-│   ├── survey_evaluation.md          # Pass 1 HEURISTIC: evaluate sources, pick deep targets
-│   └── synthesis.md                  # Pass 2 HEURISTIC: synthesize dossier from content
-└── tests/
-    ├── test_fetcher.py
-    ├── test_url_builder.py
-    └── test_writer.py
+.claude/skills/
+├── channel-assistant/           # Existing - no changes
+├── researcher/                  # Existing - no changes
+├── style-extraction/            # NEW skill (one-time, no Python code)
+│   ├── SKILL.md                 # Workflow instructions for Claude
+│   └── prompts/
+│       └── extract.md           # Style extraction prompt and output schema
+└── writer/                      # NEW skill (per-video)
+    ├── SKILL.md                 # Workflow instructions for Claude
+    ├── scripts/
+    │   └── writer/
+    │       ├── __init__.py
+    │       ├── __main__.py
+    │       └── cli.py           # Single 'load' subcommand
+    └── prompts/
+        └── write_script.md      # Script generation rules and output schema
 
-projects/N. Title/                    # Created by Agent 1.1 — researcher writes into it
-├── metadata.md                       # Input: topic brief, hook, scoring (Agent 1.1 output)
-└── research/                         # Created by Agent 1.1 scaffold — researcher fills
-    ├── Research.md                   # PRIMARY OUTPUT: full dossier for scriptwriter
-    └── media_urls.md                 # SECONDARY OUTPUT: separated URL catalog
+context/
+├── channel/
+│   ├── channel.md               # Existing - Channel DNA
+│   ├── past_topics.md           # Existing
+│   └── STYLE_PROFILE.md         # NEW - written once by style-extraction
+└── script-references/
+    └── Mexico's Most Disturbing Cult.md  # Existing reference script
+
+projects/
+└── N. [Video Title]/
+    ├── metadata.md              # Existing - from channel-assistant
+    ├── research/
+    │   ├── Research.md          # Existing - from researcher
+    │   └── media_urls.md        # Existing - from researcher
+    └── script/                  # Existing scaffold dir - writer fills it
+        └── Script.md            # NEW output
 ```
 
-### What Agent 1.1 Already Creates
+### Structure Rationale
 
-`project_init.py` calls `_create_scaffold()` which makes `research/`, `assets/`, and `script/` subdirectories. The researcher writes directly into the pre-existing `research/` folder — no directory creation logic needed in the new skill.
+- **style-extraction/ has no scripts/ directory:** It is a pure [HEURISTIC] operation. Claude reads reference scripts and writes STYLE_PROFILE.md directly using the Write tool. The only implementation artifacts are SKILL.md and the extract.md prompt.
+- **writer/ has a thin scripts/ directory:** One CLI subcommand (`load`) aggregates context files and prints to stdout for Claude to reason over — identical to the `researcher write` pattern where code prepares input and Claude produces output.
+- **STYLE_PROFILE.md lives in context/channel/:** It is channel-level context, not project-specific. Written once, reused across every video. Parallel to channel.md and past_topics.md.
+- **Script.md goes into projects/N. Title/script/:** The `script/` directory is already created by `channel-assistant`'s `project_init.py` scaffold. Writer fills it without creating directories.
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Context-Loader CLI (inherited from Agent 1.1)
+### Pattern 1: CLI Prints, Claude Reasons (established convention)
 
-**What:** CLI subcommand runs Python deterministic logic, then prints structured markdown to stdout. Claude reads stdout and performs HEURISTIC reasoning.
+All existing skills follow the same contract: Python CLI does [DETERMINISTIC] work (file I/O, aggregation, path resolution), prints structured data to stdout, and Claude performs [HEURISTIC] reasoning natively in-context.
 
-**When to use:** Every handoff point between deterministic and heuristic phases. This is the established project convention.
+**What:** The `load` subcommand reads three files — Research.md, STYLE_PROFILE.md, channel.md — concatenates them with clear section headers, and prints to stdout. Claude receives this in its context window and generates the script.
 
-**Agent 1.1 reference implementation:** `cmd_topics()` in `cli.py` — loads files, prints structured context, ends with an instruction line for Claude.
-
-**Researcher adaptation:**
+**Reference implementation (from researcher SKILL.md):**
 ```
-cmd_survey(topic):
-    1. [DETERMINISTIC] Build search query URLs from topic
-    2. [DETERMINISTIC] Fetch URLs via crawl4ai, write to .claude/scratch/pass1_raw_*.md
-    3. [DETERMINISTIC] Print: topic, scraped file paths, source count
-    4. Claude reads survey_evaluation.md prompt, evaluates sources, picks deep targets
-    5. Claude calls cmd_deepen with selected URL list
-
-cmd_deepen(urls_file):
-    1. [DETERMINISTIC] Read URL list from file
-    2. [DETERMINISTIC] Fetch each URL via crawl4ai, write to .claude/scratch/pass2_raw_*.md
-    3. [DETERMINISTIC] Print: file list, byte counts, any fetch failures
-    4. Claude reads synthesis.md prompt, synthesizes full dossier
-    5. Claude calls cmd_write with structured dossier data
-
-cmd_write(project_dir, dossier_json):
-    1. [DETERMINISTIC] Parse structured dossier
-    2. [DETERMINISTIC] Write Research.md using schema template
-    3. [DETERMINISTIC] Write media_urls.md
-    4. Print: file paths, section counts, word count
+researcher write "Topic"  ->  aggregates sources, prints synthesis_input.md path
+Claude reads file          ->  reads synthesis.md prompt
+Claude writes              ->  Research.md + media_urls.md
 ```
 
-### Pattern 2: Scratch Pad for Large Raw Content
-
-**What:** Scraped page content goes to `.claude/scratch/` as individual files, never into Claude's context directly. Claude receives file paths and reads targeted sections.
-
-**When to use:** Whenever individual scraped pages exceed ~1,500 tokens (almost always — web pages are large).
-
-**Why:** Matches the project's established context hygiene convention from CLAUDE.md. Raw Wikipedia article bodies, news articles, and archive pages are too large to embed in conversation.
-
-**Implementation:** Each crawl4ai fetch writes to `.claude/scratch/researcher/pass1_src_{N}.md`. Pass 1 produces N files. Claude receives a summary table (source, URL, file path, word count) and reads specific files on demand.
-
-### Pattern 3: Two-Pass Research with Gap Analysis
-
-**What:** Pass 1 is deliberately broad — search results and overview pages. After Claude evaluates coverage, Pass 2 targets specific primary sources that fill identified gaps.
-
-**When to use:** Any research task where quality differs by source and the researcher cannot know upfront which sources will be authoritative.
-
-**Trade-offs:**
-- Adds one Claude interaction between passes (costs one turn but dramatically improves output quality)
-- Prevents wasting crawl4ai calls on low-value sources
-- Maps cleanly to HEURISTIC (gap analysis) / DETERMINISTIC (fetching) separation
-
-**Pass 1 default sources (built by `url_builder.py`):**
-- Wikipedia search results
-- Archive.org search
-- Google News search (via DuckDuckGo — avoids bot detection)
-- 2-3 targeted academic/primary source domains from source_config.json
-
-**Pass 2 targets (selected by Claude after Pass 1 evaluation):**
-- Primary sources identified in Pass 1 (court records, official reports, named archives)
-- Individual Wikipedia article (full text, not search results)
-- Specific news investigations identified in Pass 1
-- Academic papers or documented sources cited in overview pages
-
-### Pattern 4: Structured Dossier Input to writer.py
-
-**What:** Claude synthesizes findings into a structured Python dict (or JSON), then calls `cmd_write` with that data. `writer.py` formats it into Research.md.
-
-**Why:** This maintains the HEURISTIC/DETERMINISTIC boundary. Claude reasons; Python formats and saves. Claude does not write file I/O directly (fragile in agent workflows). Python does not make content decisions.
-
-**Schema passed by Claude to writer.py:**
-```python
-{
-    "subject_overview": str,       # 500-word summary
-    "timeline": [                  # chronological events
-        {"date": str, "event": str, "source": str}
-    ],
-    "key_figures": [               # people involved
-        {"name": str, "role": str, "quotes": [str]}
-    ],
-    "primary_sources": [
-        {"title": str, "type": str, "url": str, "reliability": int}
-    ],
-    "secondary_sources": [
-        {"title": str, "outlet": str, "url": str, "reliability": int}
-    ],
-    "contradictions": [str],       # conflicting accounts
-    "unanswered_questions": [str], # narrative tension gaps
-    "narrative_hooks": [str],      # high-impact story beats for scriptwriter
-    "media_urls": [                # separated, goes to media_urls.md
-        {"description": str, "url": str, "type": str}
-    ]
-}
+**Writer equivalent:**
 ```
+writer load "Topic"   ->  prints Research.md + STYLE_PROFILE.md + channel.md to stdout
+Claude reads          ->  reads write_script.md prompt
+Claude writes         ->  projects/N. Title/script/Script.md
+```
+
+### Pattern 2: Prompt File Encodes Output Schema and Rules
+
+Both existing skills put all generation instructions in `.claude/skills/[name]/prompts/` files. SKILL.md references them by path. Code never embeds generation logic.
+
+**What:** The write_script.md prompt defines chapter structure, narration rules, word count targets, anti-patterns, and output format. The extract.md prompt defines what STYLE_PROFILE.md sections to produce and how to read reference scripts.
+
+**Trade-offs:** Prompts are cheap to iterate without touching Python code. They also make the reasoning contract explicit, inspectable, and versionable via git.
+
+### Pattern 3: One-Time vs Per-Run Operations
+
+Style extraction is a setup operation: run once when setting up the channel, re-run only when new reference scripts are added. Writer runs once per video.
+
+**What:** style-extraction has no CLI entry point. Its SKILL.md describes a single workflow: read all files in `context/script-references/`, apply the extract.md prompt, write `context/channel/STYLE_PROFILE.md`. No loop, no incremental state.
+
+**When to update STYLE_PROFILE.md:** Only when a new high-performing video is added to `context/script-references/` and the style profile needs to reflect it.
 
 ---
 
 ## Data Flow
 
-### Full Research Flow
+### Style Extraction Flow (one-time, channel setup)
 
 ```
-User provides topic name (e.g., "The Matamoros Cult Murders")
-    |
-    v
-SKILL.md instructs Claude to locate project dir
-    |
-    +---> Read projects/N. Title/metadata.md (Agent 1.1 output)
-    |     Extract: topic title, hook, complexity score, estimated runtime
-    |
-    v
-cmd_survey "[topic title]"
-    |
-    +---> [DETERMINISTIC] url_builder.py generates 8-12 initial URLs
-    |
-    +---> [DETERMINISTIC] fetcher.py crawls each URL
-    |     Writes: .claude/scratch/researcher/pass1_src_0.md
-    |             .claude/scratch/researcher/pass1_src_1.md
-    |             ... (one file per source)
-    |
-    +---> Prints summary table to stdout:
-    |     source | url | file_path | word_count | status
-    |
-    v
-[HEURISTIC] Claude reads survey_evaluation.md prompt
-    Evaluates: source quality, coverage gaps, primary source leads
-    Outputs: ranked list of 5-10 deep dive target URLs
-    |
-    v
-cmd_deepen --urls-file .claude/scratch/researcher/deep_targets.txt
-    |
-    +---> [DETERMINISTIC] fetcher.py crawls each deep target URL
-    |     Writes: .claude/scratch/researcher/pass2_src_0.md
-    |             .claude/scratch/researcher/pass2_src_1.md
-    |
-    +---> Prints summary table to stdout
-    |
-    v
-[HEURISTIC] Claude reads synthesis.md prompt
-    Synthesizes: all pass1 + pass2 content into structured dossier
-    Produces: structured JSON matching Research.md schema
-    |
-    v
-cmd_write --project-dir "projects/N. Title" --dossier dossier.json
-    |
-    +---> [DETERMINISTIC] writer.py formats and writes:
-    |     projects/N. Title/research/Research.md
-    |     projects/N. Title/research/media_urls.md
-    |
-    +---> Prints: confirmation + word count + section count
-    |
-    v
-Downstream: Agent 1.3 (Writer) reads Research.md
+context/script-references/
+    [one or more reference script files]
+         |
+         | (Claude reads directly via Read tool)
+         v
+[HEURISTIC] apply prompts/extract.md
+         |
+         v
+context/channel/STYLE_PROFILE.md
+    (committed to repo, shared across all future videos)
+```
+
+### Script Generation Flow (per video)
+
+```
+projects/N. Title/research/Research.md   -+
+context/channel/STYLE_PROFILE.md          +-> writer load "Topic"
+context/channel/channel.md               -+        |
+                                                    | (printed to stdout)
+                                                    v
+                                        [HEURISTIC] write_script.md prompt
+                                                    |
+                                                    v
+                                    projects/N. Title/script/Script.md
+```
+
+### Full v1.2 Pipeline (all phases combined)
+
+```
+channel-assistant -> projects/N. Title/ (metadata.md + directory scaffold)
+                                    |
+researcher        -> projects/N. Title/research/Research.md
+                                    |
+style-extraction  -> context/channel/STYLE_PROFILE.md (one-time, already done)
+                                    |
+                    writer load "Topic" (merges all context)
+                                    |
+                    [HEURISTIC] generate script
+                                    |
+                    projects/N. Title/script/Script.md
 ```
 
 ### Key Data Flows
 
-1. **Agent 1.1 → Agent 1.2:** Via filesystem. `projects/N. Title/metadata.md` is the handoff document. Researcher reads it to get topic brief, hook, and estimated complexity.
-
-2. **Pass 1 → Pass 2 (within Agent 1.2):** Via `.claude/scratch/researcher/deep_targets.txt`. Claude writes target URLs after survey evaluation; `cmd_deepen` reads the file. File-based, not in-memory — matches project conventions.
-
-3. **Agent 1.2 → Agent 1.3:** Via filesystem. `projects/N. Title/research/Research.md` is the output artifact. Writer agent reads this directly.
-
-4. **Media URL separation:** `media_urls.md` is written separately from `Research.md` to keep the dossier clean for scriptwriting. Agent 1.4 (Visual Director) will consume media URLs when building the shot list.
+1. **Research.md is the primary writer input:** The writer consumes only Research.md from the research directory. Raw source files (src_*.json, synthesis_input.md) are not needed — Research.md already distills them into a scriptwriter-optimized dossier.
+2. **STYLE_PROFILE.md is shared, stable state:** Treat it like channel.md — stable channel-level context that does not change per video.
+3. **Project path resolution:** writer's `load` command uses the same directory-matching logic as researcher — walk `projects/` and match on topic string. This pattern is established and must be reused, not reimplemented differently.
+4. **script/ directory already exists:** `channel-assistant`'s `project_init.py` creates the `script/` subdirectory in the project scaffold. Writer writes directly into it with no directory creation logic required.
 
 ---
 
@@ -289,167 +193,132 @@ Downstream: Agent 1.3 (Writer) reads Research.md
 
 | Component | Location | What It Is |
 |-----------|----------|------------|
-| `researcher/SKILL.md` | `.claude/skills/researcher/` | Operating instructions for Claude |
-| `researcher/cli.py` | `scripts/researcher/` | Entry point with `survey`, `deepen`, `write` subcommands |
-| `researcher/fetcher.py` | `scripts/researcher/` | crawl4ai wrapper with file output, retry, error handling |
-| `researcher/url_builder.py` | `scripts/researcher/` | Generate search + source URLs from topic string |
-| `researcher/writer.py` | `scripts/researcher/` | Write Research.md and media_urls.md from dossier dict |
-| `prompts/survey_evaluation.md` | `researcher/prompts/` | HEURISTIC prompt: source evaluation + gap analysis |
-| `prompts/synthesis.md` | `researcher/prompts/` | HEURISTIC prompt: dossier synthesis from scraped content |
-| `tests/test_fetcher.py` | `researcher/tests/` | Unit tests for fetcher (mock crawl4ai calls) |
-| `tests/test_url_builder.py` | `researcher/tests/` | Unit tests for URL generation |
-| `tests/test_writer.py` | `researcher/tests/` | Unit tests for file output formatting |
+| `style-extraction/SKILL.md` | `.claude/skills/style-extraction/` | Workflow instructions — no Python code |
+| `style-extraction/prompts/extract.md` | `.claude/skills/style-extraction/prompts/` | Style extraction prompt + STYLE_PROFILE.md schema |
+| `context/channel/STYLE_PROFILE.md` | `context/channel/` | Output of style-extraction — committed to repo |
+| `writer/SKILL.md` | `.claude/skills/writer/` | Workflow instructions |
+| `writer/scripts/writer/cli.py` | `.claude/skills/writer/scripts/writer/` | `load` subcommand — context aggregation only |
+| `writer/prompts/write_script.md` | `.claude/skills/writer/prompts/` | Script generation rules + output schema |
+| `projects/N. Title/script/Script.md` | `projects/N. Title/script/` | Per-video output |
 
-### Modified (exists, no changes needed)
+### Existing — No Changes Needed
 
-| Component | Reason No Change Needed |
-|-----------|------------------------|
-| `crawl4ai-scraper/scripts/scraper.py` | Researcher uses this for ad-hoc single-URL scraping; `fetcher.py` handles batch with file output separately |
-| `channel-assistant/project_init.py` | Already creates `research/` subdirectory in scaffold — no modification needed |
-| `projects/N. Title/metadata.md` | Already contains topic brief — researcher reads it as input |
-
-### Reused Without Modification
-
-| Component | How Researcher Uses It |
-|-----------|----------------------|
-| `crawl4ai-scraper/SKILL.md` | Not invoked directly — `fetcher.py` imports crawl4ai directly following the same async pattern |
-| `_get_project_root()` pattern from cli.py | Copy into researcher's cli.py (walk up to CLAUDE.md) |
-| `.claude/scratch/` convention | Researcher writes pass1/pass2 raw files here, same as Agent 1.1 |
+| Component | Reason |
+|-----------|--------|
+| `channel-assistant` | Upstream — already creates project scaffold including `script/` dir |
+| `researcher` | Upstream — already writes Research.md in correct location |
+| `projects/N. Title/research/Research.md` | Writer reads this as-is |
+| `context/channel/channel.md` | Writer reads this as-is |
+| `context/script-references/` | Style-extraction reads this as-is |
+| `project_init.py` scaffold | Already creates `script/` subdirectory |
 
 ---
 
 ## Integration Points
 
-### Upstream: Agent 1.1 Output
+### Internal Boundaries
 
-| Artifact | Location | What Researcher Reads |
-|----------|----------|----------------------|
-| `metadata.md` | `projects/N. Title/metadata.md` | Topic title, hook sentence, complexity/shock scores, estimated runtime |
-| Directory scaffold | `projects/N. Title/research/` | Pre-created by `project_init.py` — researcher writes output here |
-
-The researcher SKILL.md should instruct Claude to locate the project directory by listing `projects/` and finding the most recently created one (or by taking the project number as an argument).
-
-### Downstream: Agent 1.3 Writer Input
-
-| Artifact | Location | What Writer Reads |
-|----------|----------|------------------|
-| `Research.md` | `projects/N. Title/research/Research.md` | Full structured dossier |
-| `media_urls.md` | `projects/N. Title/research/media_urls.md` | Optional reference |
-
-The Writer agent does not need any changes — it will read Research.md as context, same filesystem handoff pattern.
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| researcher → writer | File: `projects/N. Title/research/Research.md` | Writer reads directly, no modification needed |
+| style-extraction → writer | File: `context/channel/STYLE_PROFILE.md` | One-time write, per-run read |
+| channel-assistant → writer | Directory structure: `projects/N. Title/script/` already exists | Writer does not need to create directories |
+| writer → editor (DaVinci Resolve) | File: `projects/N. Title/script/Script.md` | Terminal output — no downstream agent in v1.2 |
 
 ### External Services
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| crawl4ai | Python import in `fetcher.py`, async `AsyncWebCrawler` | Already in environment |
-| Web search | DuckDuckGo HTML search (no API key) via crawl4ai | Avoids bot detection better than Google direct |
-| Wikipedia | Direct article URL scraping via crawl4ai | Full article text available, no API needed |
-| Archive.org | Direct search URL via crawl4ai | Public domain, crawler-friendly |
+None. Both new skills operate entirely on filesystem content already in the repo. No web scraping, no API calls, no new dependencies.
 
 ---
 
 ## Build Order
 
-Dependencies determine build order. Tests unlock confidence for each stage.
+Sequence is determined by validation dependencies — you cannot test the writer without STYLE_PROFILE.md:
 
-```
-Phase 1: fetcher.py + url_builder.py + tests
-    Why first: All subsequent phases depend on working scraping and URL generation.
-    Deliverable: Can scrape a URL list and write files to .claude/scratch/
-    Test: Mock crawl4ai responses, verify file output and error handling.
-    |
-    v
-Phase 2: cli.py (cmd_survey subcommand) + SKILL.md skeleton
-    Why: Establishes the CLI pattern and enables the first end-to-end test of Pass 1.
-    Deliverable: `python -m researcher.cli survey "Topic"` fetches and files sources.
-    Note: SKILL.md can be written before prompts — instructions can reference prompts as TBD.
-    |
-    v
-Phase 3: survey_evaluation.md prompt
-    Why: Pass 1 is only useful if Claude can evaluate and select deep dive targets.
-    Deliverable: Full Pass 1 flow works end-to-end (survey → gap analysis → target list).
-    Note: This is a HEURISTIC component — no Python code, just a well-structured prompt file.
-    |
-    v
-Phase 4: cli.py (cmd_deepen subcommand)
-    Why: Needs Phase 1 infrastructure (fetcher) and Phase 3 (knows what to fetch).
-    Deliverable: `python -m researcher.cli deepen --urls-file targets.txt` works.
-    |
-    v
-Phase 5: synthesis.md prompt
-    Why: Pass 2 content is only useful once a synthesis prompt exists.
-    Deliverable: Full two-pass flow works — raw content → structured dossier in conversation.
-    |
-    v
-Phase 6: writer.py + cli.py (cmd_write subcommand) + tests
-    Why: Final step — persists Claude's synthesis to Research.md on disk.
-    Deliverable: `python -m researcher.cli write --project-dir "..." --dossier dossier.json` writes both files.
-    Test: Verify schema compliance, section completeness, media URL separation.
-    |
-    v
-Phase 7: SKILL.md finalization + integration test
-    Why: After all components work individually, SKILL.md needs complete instructions.
-    Deliverable: Full pipeline from "topic name" → Research.md in one Claude Code session.
-```
+### Step 1: style-extraction skill (SKILL.md + extract.md prompt)
 
-**Minimum viable:** Phases 1-3 deliver a working Pass 1 survey. Phases 4-5 complete the two-pass design. Phase 6 persists the output. Phase 7 is polish.
+No Python code to write. The entire implementation is two files. Run it immediately against `context/script-references/Mexico's Most Disturbing Cult.md` to produce STYLE_PROFILE.md. Validate the output before proceeding. This is the prerequisite for meaningful writer testing.
+
+**Deliverable:** `context/channel/STYLE_PROFILE.md` committed to repo.
+
+### Step 2: writer prompts/write_script.md
+
+Write the script generation prompt before the CLI, because the prompt structure determines what context the CLI needs to load. The prompt defines: chapter structure, word count targets, narration voice rules, section schema, anti-patterns.
+
+**Deliverable:** Reviewable prompt that can be evaluated against STYLE_PROFILE.md for coherence before any code is written.
+
+### Step 3: writer scripts/writer/cli.py (load subcommand)
+
+Simple file aggregation: resolve project directory from topic string, read Research.md, read STYLE_PROFILE.md, read channel.md, print concatenated output to stdout with clear section headers. Write tests for path resolution logic.
+
+**Deliverable:** `writer load "Topic"` prints assembled context to stdout.
+
+### Step 4: writer SKILL.md
+
+Write complete workflow instructions after both the prompt and CLI are validated. SKILL.md references both: it tells Claude to run `writer load`, then read write_script.md, then produce Script.md.
+
+**Deliverable:** Complete skill with testable end-to-end workflow.
+
+### Step 5: End-to-end validation
+
+Run the full v1.2 pipeline against the existing Duplessis Orphans project, which already has a completed Research.md. This is the integration test — produce the first real Script.md and evaluate it against the channel's quality standards.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Reading All Scraped Content into Context
+### Anti-Pattern 1: Embedding Style Rules Directly in write_script.md
 
-**What people do:** Fetch 10 web pages, concatenate them all, pass the full text to Claude in one prompt.
+**What people do:** Hardcode narration style instructions (sentence length, vocabulary register, pacing ratios) directly in write_script.md instead of referencing STYLE_PROFILE.md.
 
-**Why it's wrong:** 10 web pages = 50,000-200,000 tokens. Blows context window. Claude loses coherence on earlier sources by the time it reads later ones.
+**Why it's wrong:** Hardcoded rules drift away from actual reference scripts as the channel evolves. Updating them requires editing the prompt. STYLE_PROFILE.md is generated from actual reference scripts, so it stays grounded.
 
-**Do this instead:** Write each page to `.claude/scratch/researcher/pass1_src_N.md`. Give Claude a summary table (URL, file path, word count). Let Claude read specific files on demand using the Read tool.
+**Do this instead:** write_script.md instructs Claude to apply STYLE_PROFILE.md. All specific style rules live in STYLE_PROFILE.md, updated by re-running style-extraction when the reference library changes.
 
-### Anti-Pattern 2: Single-Pass Research
+### Anti-Pattern 2: Passing Raw Research Sources to the Writer
 
-**What people do:** Fetch the first 10 search results and synthesize immediately.
+**What people do:** Give the writer access to synthesis_input.md or src_*.json files for "richer context."
 
-**Why it's wrong:** Search results for obscure documentary topics are dominated by secondary sources (Wikipedia, listicle sites). Primary sources (court documents, archived news investigations, academic papers) appear buried or not at all in search results.
+**Why it's wrong:** Research.md already distills 40,000+ words of scraped source material into ~2,000 words of curated, scriptwriter-optimized content including narrative hooks, timeline, contradictions, and key figures. Raw sources add noise and bloat without improving script quality.
 
-**Do this instead:** Two passes. Pass 1 identifies what primary sources exist and where. Pass 2 fetches those primary sources directly.
+**Do this instead:** Writer reads only Research.md. If the dossier lacks something, fix the researcher's synthesis.md prompt — that is where the curation decision belongs.
 
-### Anti-Pattern 3: Hardcoding Source Domains
+### Anti-Pattern 3: Regenerating STYLE_PROFILE.md Per Video
 
-**What people do:** Build a fixed list of domains to scrape for every topic (e.g., always scrape archive.org, always scrape Wikipedia).
+**What people do:** Run style-extraction at the start of every video production to "stay fresh."
 
-**Why it's wrong:** Some topics have rich Wikipedia coverage; others have almost none. Some topics are in government archives; others are in newspaper morgues. Hardcoded domains miss topic-specific primary sources.
+**Why it's wrong:** STYLE_PROFILE.md represents stable channel DNA — patterns extracted from reference scripts. Regenerating it per-run adds latency, introduces noise from per-run variation, and undermines the purpose of having a stable style guide.
 
-**Do this instead:** `url_builder.py` generates a starting list of search queries and 2-3 default domains. Pass 1 evaluation (HEURISTIC) identifies the topic-specific sources worth deep diving. Pass 2 targets those dynamically.
+**Do this instead:** Run style-extraction once. Commit STYLE_PROFILE.md. Update reactively when a new high-performing video is added to `context/script-references/`.
 
-### Anti-Pattern 4: Writing Research.md Directly from Claude Without a Writer Module
+### Anti-Pattern 4: Adding LLM API Calls to the Writer CLI
 
-**What people do:** Have Claude write the Research.md content directly using a Write tool call with a huge markdown string.
+**What people do:** Add script generation logic to cli.py using an LLM SDK, following the naive "code for generation" pattern.
 
-**Why it's wrong:** Fragile — any Claude error or interruption loses all unsaved synthesis. Schema enforcement is impossible. Media URL separation cannot be verified.
+**Why it's wrong:** Architecture.md Rule 1 prohibits LLM API wrappers. Claude Code is the runtime. Script generation is entirely [HEURISTIC] — it requires no deterministic code beyond context loading.
 
-**Do this instead:** Claude produces a structured JSON dossier (validates schema), then calls `cmd_write` which formats and saves. Python handles all I/O; Claude handles all reasoning.
+**Do this instead:** cli.py does one thing: aggregate and print context. Claude does all script generation natively using the write_script.md prompt.
 
-### Anti-Pattern 5: Mixing Research.md and Media URLs
+### Anti-Pattern 5: Having style-extraction Write to the Project Directory
 
-**What people do:** Include image URLs, video links, and archive media links inline in Research.md.
+**What people do:** Put STYLE_PROFILE.md in `projects/N. Title/` alongside Research.md, treating it as a per-video artifact.
 
-**Why it's wrong:** Pollutes the scriptwriting context with 50+ media URLs. The Writer agent doesn't need URLs — it needs narrative content. The Visual Director (Agent 1.4) needs URLs but reads a separate file anyway.
+**Why it's wrong:** Writing style is a channel-level property, not a per-video property. Putting it in the project directory requires re-extraction for every new video, and breaks the separation between channel context and project context that the existing architecture maintains.
 
-**Do this instead:** `writer.py` always writes two files: `Research.md` (clean narrative dossier) and `media_urls.md` (URL catalog with descriptions and types). Downstream agents consume whichever file they need.
+**Do this instead:** STYLE_PROFILE.md lives in `context/channel/`, same tier as channel.md. It is channel context, not project context.
 
 ---
 
 ## Sources
 
-- Existing codebase: `.claude/skills/channel-assistant/scripts/channel_assistant/cli.py` (HIGH confidence — direct inspection)
-- Existing codebase: `.claude/skills/channel-assistant/SKILL.md` (HIGH confidence — pattern reference)
-- Existing codebase: `.claude/skills/crawl4ai-scraper/scripts/scraper.py` (HIGH confidence — tool reference)
-- Architecture rules: `Architecture.md` (HIGH confidence — binding project constraints)
-- Project requirements: `.planning/PROJECT.md` v1.1 milestone spec (HIGH confidence)
-- Project conventions: `CLAUDE.md` scratch pad rules (HIGH confidence)
+- Direct inspection: `.claude/skills/researcher/SKILL.md` and `cli.py` (HIGH confidence)
+- Direct inspection: `.claude/skills/channel-assistant/SKILL.md` and `project_init.py` (HIGH confidence)
+- Direct inspection: `.claude/skills/researcher/prompts/synthesis.md` — output schema reference (HIGH confidence)
+- Direct inspection: `projects/1. The Duplessis Orphans.../research/Research.md` — confirmed existing dossier format (HIGH confidence)
+- Direct inspection: `context/script-references/Mexico's Most Disturbing Cult.md` — confirmed reference script format (HIGH confidence)
+- `Architecture.md` — CRITICAL ARCHITECTURE RULES (binding project constraints) (HIGH confidence)
+- `.planning/PROJECT.md` — v1.2 milestone requirements and key decisions table (HIGH confidence)
 
 ---
-*Architecture research for: Agent 1.2 Web Research integration into Claude Code skill pipeline*
-*Researched: 2026-03-12*
+*Architecture research for: style extraction and script generation — Channel Automation Pipeline v1.2*
+*Researched: 2026-03-14*

@@ -1,150 +1,210 @@
 # Pitfalls Research
 
-**Domain:** Web Research Agent for Documentary Content Production (Agent 1.2 — The Researcher)
-**Researched:** 2026-03-12
-**Confidence:** HIGH (crawl4ai limitations verified via GitHub issues and official docs; hallucination risks documented by recent NeurIPS/GPTZero studies; source access challenges confirmed by major news publishers' 2025-2026 AI blocking actions)
+**Domain:** Style Extraction and Script Generation — Agentic Documentary Pipeline (v1.2 "The Writer")
+**Researched:** 2026-03-14
+**Confidence:** HIGH (based on direct analysis of the existing codebase, the reference script at `context/script-references/`, Architecture.md constraints, and established patterns for prompt-driven LLM pipelines)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: LLM Fabricates Sources That Look Authoritative
+### Pitfall 1: Style Extraction Implemented as NLP Code Instead of a Prompt
 
 **What goes wrong:**
-The research agent synthesizes findings and produces plausible-sounding citations — court case numbers that don't exist, news articles with real outlets but fake titles, academic papers with believable authors. A GPT-4o study found 56% of AI-generated citations were fake or contained errors. A January 2026 GPTZero audit of NeurIPS 2025 papers found 100+ hallucinated references that passed human review. For documentary content, a single fabricated "primary source" that makes it into the script destroys credibility.
+The style extraction skill gets implemented as deterministic Python: sentence-length counters, readability scores (Flesch-Kincaid), vocabulary frequency tables, regex-based transition phrase extraction. The code ships, it produces numbers, and those numbers are useless to the Writer because they describe surface statistics rather than the actual narrative craft patterns that make the channel's voice distinctive. The STYLE_PROFILE.md ends up full of "average sentence length: 14.2 words" instead of "sentences fragment mid-thought at moments of revelation to force a beat before the next clause."
 
 **Why it happens:**
-LLMs generate text that satisfies the grammatical and semantic pattern of citations. They have training exposure to real sources, so they blend real outlet names, real author styles, and real topic domains into fabricated references that look valid. The synthesis step — where crawl4ai-fetched content is summarized — is the highest-risk moment because the LLM may confuse what it scraped vs. what it was trained on.
+Style analysis feels like a data problem — you have text, you want to quantify it. Developers default to code for anything that involves processing text files. The Architecture.md classification rule (HEURISTIC vs. DETERMINISTIC) is the explicit guard against this, but the temptation is strong because NLP code looks objective.
 
 **How to avoid:**
-- Enforce a strict separation between "scraped content" (URL + raw extract) and "synthesized claims" (LLM summary). Every claim in Research.md must trace back to a specific URL that was actually fetched.
-- Never ask the LLM to generate citations. Instead, have it cite only URLs returned by crawl4ai fetch operations that succeeded (HTTP 200).
-- The Research.md schema should include a `sources` section where each entry has: `url` (the actual URL fetched), `title` (from page metadata, not LLM-generated), `fetched_at` (timestamp), and `relevant_excerpt` (direct quote, not paraphrase).
-- Build a verification step: after research completes, the user (or a verification subagent) can spot-check 3-5 URLs from the sources list. If links are dead or content does not match, the run is flagged.
+Style extraction is entirely [HEURISTIC]. The deliverable is a prompt file that Claude reads against the reference scripts. No code written. The prompt should ask for:
+- Sentence rhythm pattern (how clauses are assembled, where they break)
+- Chapter opening conventions (how scenes are entered — environment, character, event)
+- Tension-building technique (what the narrator withholds vs. reveals and when)
+- Vocabulary register (clinical, journalistic, conversational — with specific examples)
+- Structural template (act count, act function, pacing ratio between exposition and tension)
+- Explicit prohibitions (what the reference scripts never do)
+
+The output (STYLE_PROFILE.md) is a writing brief with examples, not a statistics report.
 
 **Warning signs:**
-- Research.md contains citations with no URLs, only author/title/date.
-- Sources section lists academic papers or court documents that the scraper would have had no way to access.
-- Source URLs in Research.md return 404 or redirect to unrelated content.
+- A Python file named `style_extractor.py` or similar is created.
+- The STYLE_PROFILE.md contains numerical metrics without prose examples.
+- The profile describes what the text IS (sentence count) rather than how it WORKS (narrative function).
 
-**Phase to address:** Phase 1 (Research Schema Design). The schema must enforce URL provenance from day one. Adding it later requires rewriting the output format and re-testing all downstream consumers.
+**Phase to address:** Phase 1 (Style Extraction Skill Design). Classify before touching a keyboard. If the classification comes out DETERMINISTIC, that is a classification error, not a code opportunity.
 
 ---
 
-### Pitfall 2: crawl4ai Browser Context Contamination After Failures
+### Pitfall 2: The Generated Script Loses Channel Voice Within the First Chapter
 
 **What goes wrong:**
-After crawl4ai fails to scrape a page (timeout, bot detection, redirect loop), the internal browser context becomes contaminated — subsequent requests in the same session return empty results, "no results" pages, or stale cache. A documented GitHub issue (#501) shows this causing silent failures where the crawler returns a result object with no error but empty content. For a research agent running 20-40 URL fetches per topic, one mid-session failure can silently corrupt all subsequent fetches.
+The script generation prompt provides the research dossier, the STYLE_PROFILE.md, and channel DNA — and the Writer still produces generic documentary narration. Sentences like "This case shocked the nation" and "Let us examine the events that unfolded." The voice is competent but indistinct. It sounds like Wikipedia read aloud, not the channel's clinical deadpan that lets facts deliver their own horror.
 
 **Why it happens:**
-Playwright's browser context preserves state (cookies, session storage, history) across requests in the same context. When a failed page leaves the context in an unexpected state (partial load, error page cached, security challenge unresolved), subsequent requests inherit that broken state.
+LLMs default to the mode of "competent documentary narrator" when given research + generic style instructions. The style profile needs to be specific enough to override the LLM's prior. Vague instructions ("be neutral and journalistic") are already the LLM's default — they add nothing. What breaks the default is concrete behavioral rules with examples pulled from the actual reference scripts.
 
 **How to avoid:**
-- Use a fresh browser context for each distinct source domain. Do not share a single context across archive.org, Wikipedia, and news sites in sequence.
-- Implement explicit success verification: check that `result.markdown_v2.raw_markdown` (or equivalent field) has a minimum length before treating the fetch as successful. Empty or near-empty results are failures, not successes.
-- After any fetch that returns less than 200 characters of content, reset the browser context before the next fetch.
-- Use `async with AsyncWebCrawler() as crawler` context manager pattern — it guarantees cleanup on exit, even after exceptions.
+The synthesis prompt for script generation must include:
+- Three or four verbatim excerpts from the reference script showing the channel's actual voice in action, labeled with what they demonstrate ("Note: revelation withheld until the end of the paragraph — the worst detail comes last").
+- Explicit prohibitions extracted from what the reference script never does: no rhetorical questions directed at the audience, no "imagine if you will," no meta-commentary about the documentary itself.
+- The channel's specific deadpan device: stating a grotesque fact in the same register as a logistical detail. This must be named and demonstrated, not just described.
+- A chapter opener template from the reference script — because chapter openings are where generic narration most reliably creeps in.
 
 **Warning signs:**
-- Fetches returning empty content after a known-difficult site is scraped.
-- Research.md sections covering late-in-the-run sources are conspicuously thin compared to early sources.
-- crawl4ai returns `success: True` with `markdown: ""`.
+- Script chapter 1 opens with a broad historical context paragraph (the LLM's default frame).
+- The script uses second-person address ("you might wonder," "consider this").
+- Facts are introduced with emotional signposting ("shockingly," "horrifyingly") rather than stated plainly.
+- The script reads naturally in isolation but sounds wrong next to the reference script.
 
-**Phase to address:** Phase 1 (crawl4ai Integration Layer). Build the resilience wrapper before writing research logic. A fragile fetcher produces a fragile research agent regardless of how good the prompts are.
+**Phase to address:** Phase 1 (Script Generation Prompt Engineering). Build and test the voice constraints before wiring up the full pipeline. Test the prompt against the existing reference topic (The Duplessis Orphans) — if it cannot reconstruct a plausible version of a known documentary topic in the channel's voice, the prompt is not ready.
 
 ---
 
-### Pitfall 3: Anti-Bot Detection Kills Primary Source Access
+### Pitfall 3: STYLE_PROFILE.md Is Written Once and Never Validated Against New Topics
 
 **What goes wrong:**
-The most valuable sources for documentary research — news archive paywalls (NYT, Washington Post, Guardian), court record databases (PACER), government document repositories — are also the most aggressively protected. crawl4ai's success rate drops to 72% on anti-bot protected sites without proxy infrastructure. As of 2026, major publishers including the New York Times and Gannett are actively blocking AI crawlers and have added `archive.org_bot` to robots.txt, meaning even archive.org bypass strategies are now blocked. The agent confidently attempts 20 URLs, 8 fail silently, and the research dossier has structural gaps the scriptwriter cannot detect.
+The style extraction runs once against "Mexico's Most Disturbing Cult" and produces a STYLE_PROFILE.md. The profile works well for that reference. Then The Duplessis Orphans is scripted — a completely different topic (Canadian institutional abuse vs. Mexican cult) — and the profile's chapter structure template (built on the cult narrative arc) produces a mismatch. The profile says "open with the physical setting and atmosphere" which works for cult content but forces an awkward geography intro onto an institutional corruption story.
 
 **Why it happens:**
-Cloudflare, Akamai, PerimeterX, and DataDome detect headless browsers via TLS fingerprinting, canvas rendering signatures, timing analysis, and behavioral heuristics. AI crawlers are now a large enough problem that publishers are actively hardening defenses. The crawl4ai "undetected browser" mode reduces but does not eliminate detection, and adds resource overhead.
+A single reference script is a sample of one. Style patterns that are universal to the channel's voice get mixed with patterns specific to that topic's narrative arc. The style profile inherits both without distinguishing them.
 
 **How to avoid:**
-- Tier sources by access reliability in the agent's source strategy. Tier 1 (reliably accessible without proxies): Wikipedia, archive.org for pre-2025 content, government `.gov` domains, HathiTrust, Internet Archive document collections, Wikisource. Tier 2 (try but expect failures): regional news sites, older news archives. Tier 3 (do not attempt, waste of time): NYT, Washington Post, Guardian, any Gannett property, PACER.
-- Do not treat failed fetches as empty data — log them explicitly as `access_blocked` in the sources manifest and flag them for manual retrieval.
-- For paywalled content: scrape the URL structure (headline, date, author, teaser) even if body is blocked. The metadata itself is useful context for the scriptwriter.
-- robots.txt compliance: crawl4ai supports `check_robots_txt=True` — enable it. Scraping disallowed paths creates legal exposure, not just technical risk.
+- If more than one reference script exists, run style extraction across all of them and derive only the patterns that appear in all references. Topic-specific structural patterns are excluded from STYLE_PROFILE.md.
+- Structure STYLE_PROFILE.md with two explicit sections: "Universal Voice Rules" (apply to every script) and "Narrative Arc Templates" (optional templates by story type — cult/group, institutional corruption, disappearance, etc.). The Writer picks the matching template for the topic type.
+- The current single reference ("Mexico's Most Disturbing Cult") should be labeled as providing a "cult/group narrative arc template" — not the universal structure template.
 
 **Warning signs:**
-- All high-quality sources (major newspapers, court records) show as failed fetches.
-- Research dossier relies exclusively on Wikipedia and free blogs with no archival sources.
-- crawl4ai returns HTTP 403 or CAPTCHA pages repeatedly on the same domain.
+- Every generated script begins with an atmospheric physical setting description regardless of topic type.
+- The profile has only one chapter structure template with no variation by story type.
+- A script about institutional corruption opens with geography or weather (borrowed from the cult reference).
 
-**Phase to address:** Phase 1 (Source Strategy and Tiering). Define the accessible source list before the first research run. Do not discover access limits mid-production.
+**Phase to address:** Phase 1 (Style Extraction Design). Acknowledge the single-reference limitation upfront. Design the profile format to accommodate multiple arc templates. Flag in STYLE_PROFILE.md which sections are "universal voice" vs. "one reference script only."
 
 ---
 
-### Pitfall 4: Two-Pass Design Collapses Into One Expensive Pass
+### Pitfall 4: Research.md → Script Handoff Loses Narrative Hooks
 
 **What goes wrong:**
-The two-pass design (broad survey → deep dive) requires discipline. In practice, the broad survey pass tends to expand: "while we're here, let's go deep on this promising URL." The deep dive pass then restarts with unstructured scope. The result is one expensive, unfocused pass that scrapes 60 URLs randomly without the prioritization a true two-pass structure provides. Research quality degrades because depth and breadth are pursued simultaneously.
+Agent 1.2 (The Researcher) produces Research.md with a narrative-first structure that includes explicit HOOK and QUOTE callouts. Agent 1.3 (The Writer) reads the file but treats it as a fact database — pulling timeline events and key figures while ignoring the callouts. The script that results is factually complete but lacks the "hook quality" that makes the channel's content work. The best quotes end up buried in chapter 4. The most disturbing contradiction never surfaces.
 
 **Why it happens:**
-The temptation is natural — if Pass 1 finds a promising primary source, why not extract everything from it now? But Pass 1's job is mapping the territory, not inhabiting it. Mixing the passes loses the strategic advantage: the ability to make informed decisions about where to invest deep-dive effort after seeing the full landscape.
+The Writer's synthesis prompt focuses on "convert research into a script" and the LLM interprets that as "organize the facts into chapters." The narrative tension signals embedded in the research dossier are not referenced in the writing prompt, so they get ignored.
 
 **How to avoid:**
-- Define hard constraints per pass enforced in code, not just in prompts. Pass 1: maximum 2 URLs per source type, no full-document downloads, output is a structured source manifest with relevance scores and not a draft Research.md. Pass 2: operates exclusively on the source manifest from Pass 1, maximum 15 deep-fetch operations, each fetch justified by a specific schema field it fills.
-- Pass 1 output must be a machine-readable intermediate artifact (JSON source manifest), not a prose summary. Prose output from Pass 1 means Pass 2 context is wasted re-processing language instead of fetching new data.
-- The user should be able to review and edit the Pass 1 source manifest before Pass 2 begins. This catches scope issues early and adds a human-in-the-loop quality gate.
+The Writer's synthesis prompt must explicitly instruct how to use Research.md's structure:
+- "The HOOK callout in Research.md is the story's entry point — build the introduction around it, do not bury it in chapter 2."
+- "QUOTE callouts are primary source moments — they anchor the chapter they appear in, not summarize it."
+- "The 'unanswered_questions' section is the documentary's engine — each one should either drive a chapter's tension or be withheld as the final revelation."
+- "The 'contradictions' section provides the points of unease. Use them where the narration needs to shift register."
+
+The handoff is not a file path. It is a structured reading instruction.
 
 **Warning signs:**
-- Pass 1 takes longer than 10 minutes (it is doing Pass 2's work).
-- The source manifest from Pass 1 already contains full article content rather than URLs and relevance scores.
-- Pass 2 cannot execute because context is already full from Pass 1's output.
+- Script introduction is a broad historical overview rather than the Research.md HOOK.
+- The most impactful quote from Research.md appears late or is paraphrased rather than quoted directly.
+- Script chapters map to timeline sections rather than narrative tension arcs.
 
-**Phase to address:** Phase 1 (Research Architecture Design). The two-pass boundary must be a hard architectural constraint, not a soft guideline in a prompt. Define the intermediate artifact schema before writing any research logic.
+**Phase to address:** Phase 2 (Script Generation Prompt Engineering — Research Integration). The reading instructions for Research.md belong in the synthesis prompt, not in a comment or readme.
 
 ---
 
-### Pitfall 5: Automated Credibility Scoring Produces False Confidence
+### Pitfall 5: LLM API Wrapper Introduced for "Script Quality" Evaluation
 
 **What goes wrong:**
-The research agent assigns credibility scores to sources (1-10, or low/medium/high). Scores give the scriptwriter false confidence — a source rated 8/10 gets used without independent verification. But credibility scoring by domain name alone is broken: a credible outlet like Reuters can publish one bad article; a low-rated fringe site can publish a documented fact that mainstream outlets missed (which is often the case for the channel's obscure topics). Research shows that labeling every article from a low-rated domain as false is "as reliable as flipping a coin."
+After the Writer produces a script, a temptation arises to add automated quality evaluation: "does this sound like the channel?" The solution proposed is a second LLM call using the Anthropic SDK to score the script against the style profile. Code is written. An `@anthropic-ai/sdk` or `anthropic` Python import appears. This violates Architecture.md Rule 1 (ZERO LLM API WRAPPERS) and breaks the pipeline's foundational design.
 
 **Why it happens:**
-Automated credibility scoring typically reduces to domain reputation heuristics (`.gov` is reliable, personal blogs are not). This ignores article-level quality, recency, corroboration, and most importantly, the topic domain — where "credibility" of mainstream outlets for obscure historical events is often low because they simply did not cover the event.
+Quality evaluation feels like it needs another "agent" — and the reflex is to implement agents as API calls. The architecture rule is explicit, but when building iteratively it is easy to rationalize "just one evaluation call." The violation compounds: once one API wrapper exists, the pattern propagates.
 
 **How to avoid:**
-- Do not use binary or scalar credibility scores. Use a structured credibility signal instead:
-  - `corroborated_by`: list of other sources that report the same claim
-  - `source_type`: primary (document, court record, direct account) / secondary (journalism, analysis) / tertiary (wiki, aggregator)
-  - `recency`: date of publication
-  - `access_quality`: full_text / excerpt_only / blocked (so the scriptwriter knows how much was actually read)
-- Flag claims that appear in only one source as `single_source` — the scriptwriter should treat these as unverified.
-- Never assign a single credibility number. Numbers create unwarranted precision in what is fundamentally a qualitative judgment.
+Script quality evaluation is [HEURISTIC] and belongs to Claude Code natively. After the Writer produces the script:
+1. Claude reads the output script and STYLE_PROFILE.md in the same session.
+2. Claude performs the quality check using its native reasoning.
+3. If the script fails the check, Claude revises in-context or flags specific sections for re-generation.
+
+No Python code evaluates script quality. No API calls. The runtime IS the evaluator.
 
 **Warning signs:**
-- Research.md has a `credibility: 8` field next to every source with no explanation.
-- Scriptwriter treats all highly-scored sources as verified facts without questioning.
-- The scoring rubric rewards domain prestige (NYT = 9) rather than content quality.
+- Any file in the writer skill directory imports `anthropic`, `openai`, or any LLM SDK.
+- A `evaluate_script.py` or `score_voice.py` script is created.
+- The SKILL.md mentions "API call" in the quality check step.
 
-**Phase to address:** Phase 1 (Research Schema Design). Define the credibility signal structure in the schema before writing the research prompts.
+**Phase to address:** Phase 1 (Architecture Classification). Before writing any writer code, classify every step. Evaluation = HEURISTIC = no code.
 
 ---
 
-### Pitfall 6: Research.md Overloads the Scriptwriter's Context Window
+### Pitfall 6: Script Generation Prompt Tries to Enforce Structure Through Formatting Rules Alone
 
 **What goes wrong:**
-The research agent produces a thorough 8,000-word Research.md with every source, every quote, every contradicting account, and every piece of discovered media. The scriptwriter agent then receives this as context — but 8,000 words of research consumes the bulk of a useful context window before any script-writing work begins. The scriptwriter either truncates the research (losing critical details), or produces a script that reads like a Wikipedia article (because it is trying to incorporate everything).
+The script generation prompt instructs the Writer to "produce 4-7 chapters, each 600-900 words, with a chapter title on its own line followed by the narration." The LLM complies with the format but not the narrative logic — chapters are split at arbitrary word count thresholds rather than natural tension breaks. Chapter 3 ends mid-revelation because the word count was hit. Chapter 5 is mostly recap filler because there was quota to fill.
 
 **Why it happens:**
-Research agents optimize for completeness. The researcher's job is to not miss things. But downstream consumers need curation, not completeness. These are opposite optimization targets that are rarely reconciled in the schema design.
+Formatting constraints are easier to specify than narrative logic constraints. Developers reach for word counts and structural templates because those are measurable. But for narrative content, format compliance is not quality.
 
 **How to avoid:**
-- Split Research.md into two files: `Research.md` (scriptwriter-facing, curated) and `ResearchArchive.md` (complete, for reference).
-- Research.md scriptwriter version: maximum 2,000 words covering the narrative spine (timeline, key figures, best quotes, contradictions, unanswered questions). Everything that does not directly serve the narrative goes to archive.
-- ResearchArchive.md: full source list, all fetched content excerpts, media URLs, credibility signals. Used by scriptwriter only when drafting specific sections that need source verification.
-- Alternatively: structure Research.md with a mandatory 500-word executive summary at the top, and full detail in collapsible sub-sections. The scriptwriter reads the summary first and expands only what they need.
+Chapter boundaries must be defined by narrative logic, not word count:
+- "Each chapter ends when a new question is introduced or a revelation is made — not before."
+- "A chapter may be 300 words if the narrative beat is complete, or 1,200 words if the tension arc requires it."
+- Provide the channel's chapter function template from the reference script: Intro (hook + thesis), Act 1 (establish world), Act 2 (introduce threat), Act 3 (escalation), Act 4 (peak horror), Act 5 (aftermath/open question).
+- Word count targets belong in the SKILL.md as a post-generation check ("if total script word count is outside 3,000-7,000 words, flag for review") — not as a constraint inside the generation prompt.
 
 **Warning signs:**
-- Research.md exceeds 5,000 words.
-- The scriptwriter's output is a listicle of facts rather than a narrative.
-- Script lacks the "hook" quality of the channel's reference scripts despite rich research.
+- Chapters end at suspiciously similar word counts (600-900 words each, uniformly).
+- A chapter's final sentence does not complete a narrative thought — it trails.
+- The script has uniform chapter lengths regardless of topic complexity.
 
-**Phase to address:** Phase 1 (Output Schema Design). Define the Research.md word budget and structure before the first research run. Retrofitting a schema after the agent is producing output is painful.
+**Phase to address:** Phase 2 (Script Generation Prompt Engineering — Chapter Structure). Specify narrative logic constraints before formatting constraints. Test with the Duplessis Orphans research dossier and verify chapter breaks land on narrative beats.
+
+---
+
+### Pitfall 7: STYLE_PROFILE.md Becomes a Living Document That Drifts
+
+**What goes wrong:**
+After the first script is generated, the user edits the script manually (natural — they are the creator). The style extraction skill gets re-run to "update the profile" based on the edited script. Then a second reference script is added to `context/script-references/`. The profile is updated again. After three scripts, STYLE_PROFILE.md contains contradictory rules because each update layered new observations without reconciling them with the old. The Writer receives a profile that says "keep sentences short" in section 2 and "use long, subordinate-clause-heavy sentences for historical exposition" in section 5.
+
+**Why it happens:**
+Style profiles are tempting to maintain continuously. Each new reference or manual edit feels like new signal to incorporate. There is no reconciliation step.
+
+**How to avoid:**
+- STYLE_PROFILE.md is a versioned artifact, not a living document. It is regenerated from scratch when new reference material warrants it — never patched in-place.
+- Style extraction runs only on scripts that are explicitly marked as "reference quality" in `context/script-references/`. Not on drafts, not on generated output.
+- Each STYLE_PROFILE.md regeneration includes a reconciliation step: "Does any rule in the new profile contradict a rule in the previous profile? If so, which takes precedence and why?" The answer is written into the profile explicitly.
+- Version the profile: `STYLE_PROFILE_v1.md`, `STYLE_PROFILE_v2.md`. The Writer's SKILL.md specifies which version to load.
+
+**Warning signs:**
+- STYLE_PROFILE.md contains contradictory instructions with no resolution.
+- The profile has been edited in-place more than twice.
+- Generated scripts produce inconsistent voice quality across topics even when research quality is consistent.
+
+**Phase to address:** Phase 1 (Style Extraction Design). Design the versioning and regeneration policy before the first profile is written.
+
+---
+
+### Pitfall 8: Writer Skill Reads Too Much Context, Degrades Output
+
+**What goes wrong:**
+The Writer's invocation loads: Research.md (2,000+ words), ResearchArchive.md (5,000+ words), STYLE_PROFILE.md (1,500+ words), channel.md (1,000+ words), the full reference script (5,000+ words as few-shot example), and past_topics.md. Total context load: 15,000+ words before any script generation begins. The LLM's output quality degrades in the latter chapters because attention is distributed across too many inputs. Chapter 5 is measurably worse than Chapter 2 because the context is saturated.
+
+**Why it happens:**
+The instinct is "more context = better output." Each file seems individually justified. The aggregate cost is not considered until the degradation appears in output.
+
+**How to avoid:**
+The Writer loads a curated context package, not everything available:
+- Research.md (curated dossier, target 2,000 words) — required.
+- STYLE_PROFILE.md — required, but trimmed to the sections most relevant to this topic type.
+- A single verbatim excerpt from the reference script (the intro + one full chapter), not the full script. The excerpt demonstrates voice; the full script is not needed.
+- channel.md executive summary only (first 200 words), not the full file.
+- Past topics: not needed at script generation time. Deduplication happens upstream.
+
+The ResearchArchive.md is available for targeted lookups (specific dates, quotes) but is not loaded into the generation context by default.
+
+**Warning signs:**
+- SKILL.md instructs the Writer to load more than four files at script generation time.
+- Chapter quality is inconsistent across the script (early chapters richer than late chapters).
+- Generation prompt includes the full text of a reference script rather than a curated excerpt.
+
+**Phase to address:** Phase 2 (Writer Context Engineering). Define the exact context package before writing the generation prompt. Test with a token count estimate and verify it stays under 8,000 words of total context.
 
 ---
 
@@ -152,13 +212,12 @@ Research agents optimize for completeness. The researcher's job is to not miss t
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Single crawl4ai browser context for all fetches | Simpler code, fewer setup calls | Silent failures contaminate subsequent fetches (Pitfall 2) | Never |
-| Source credibility as a 1-10 scalar | Simple to generate and read | False precision, drives bad decisions (Pitfall 5) | Never |
-| Research.md as one monolithic file | Simple output | Overloads scriptwriter context (Pitfall 6) | MVP only, split before v1 ships |
-| Skip robots.txt check for speed | Fewer HTTP calls per run | Legal exposure, IP bans on high-value research domains | Never |
-| Hardcoding "reliable" domains list | Avoids credibility logic complexity | Domain reputation != article quality | MVP only, replace with structured credibility signals |
-| Fetching entire pages vs. targeted CSS selectors | Works for all page structures | 11% noise ratio wastes context tokens, hurts extraction quality | Only for pages with no identifiable content structure |
-| Storing all research in a single pass | Simpler orchestration | Loses the strategic advantage of the two-pass design (Pitfall 4) | Never — two passes is the architectural rationale |
+| Implementing style extraction as Python NLP code | Feels objective, ships fast | Produces statistics, not craft insight; useless to the Writer | Never — this is a HEURISTIC task |
+| Single STYLE_PROFILE.md with no versioning | Simpler file management | Profile drifts and contradicts itself after second reference added | Never |
+| Loading all research files into Writer context | Maximum information | Context saturation degrades chapter quality in second half of script | MVP only — define a curated context package before v1 ships |
+| Formatting constraints (word count per chapter) as quality gate | Easy to measure | Chapters split on word count thresholds, not narrative beats | Never for content quality; acceptable as a secondary range check only |
+| One narrative arc template for all topic types | Simpler STYLE_PROFILE.md | Cult arc template forces wrong structure onto institutional corruption topics | MVP only if only one topic type is planned |
+| Writing research integration instructions in readme rather than synthesis prompt | Keeps the prompt "clean" | Writer ignores HOOK callouts and narrative signals in Research.md | Never — instructions belong in the prompt the Writer uses |
 
 ---
 
@@ -166,48 +225,25 @@ Research agents optimize for completeness. The researcher's job is to not miss t
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| crawl4ai on Windows 11 | Skipping `crawl4ai-setup` after pip install; Playwright browsers not found | Always run `crawl4ai-setup` post-install, run `crawl4ai-doctor` to verify; set `PLAYWRIGHT_BROWSERS_PATH` if custom install dir |
-| crawl4ai async context | Using `await crawler.arun()` without async context manager | Always use `async with AsyncWebCrawler() as crawler:` — guarantees browser cleanup on exceptions |
-| crawl4ai + Git Bash on Windows | Paths with spaces in the project directory cause subprocess failures | Quote all paths; use `pathlib.Path` for path construction; avoid spaces in crawl4ai temp file paths |
-| Research.md → Scriptwriter handoff | Passing the full Research.md file path with no structure signal | Pass a structured context block: `## Research Summary\n[summary]\n\n## Key Sources\n[top 5 sources]\n\n## Full Research\n[path to file]` |
-| Source URL provenance | LLM paraphrases a URL rather than returning the crawled URL | Fetch URLs must be passed into the research prompt, never generated by the LLM |
-| crawl4ai markdown extraction | `result.markdown` vs `result.markdown_v2.raw_markdown` — API changed between versions | Pin crawl4ai version, test output field names explicitly, do not assume field stability |
-| Two-pass intermediate artifact | Storing Pass 1 output as prose in the conversation context | Write Pass 1 output to a JSON file in the project directory; Pass 2 reads the file — keeps context clean |
-
----
-
-## Performance Traps
-
-| Trap | Symptoms | Prevention | When It Breaks |
-|------|----------|------------|----------------|
-| Scraping 40+ URLs sequentially with no rate limiting | 429 errors, IP blocks mid-research run | Enforce minimum 5-10 second jittered delay between fetches; hard cap of 30 fetches per run | First run on a new topic with many sources |
-| Loading all fetched content into a single LLM call | Context window exceeded; LLM truncates silently | Process sources in batches; write extracted facts to scratch files between batches | At ~15 full-page fetches worth of markdown |
-| No caching of successful fetches | Same URLs refetched on every research run iteration | Cache fetched content keyed by URL + date; skip re-fetch if cached within 24 hours | On any topic that requires iteration or correction |
-| Browser instances not closed between topics | Memory grows monotonically; system slows after 2-3 topics | Use `async with` pattern; explicitly close crawler between topic runs | After 3+ consecutive research runs without restart |
-| Parsing raw crawl4ai markdown output directly | Brittle code breaks when crawl4ai updates markdown format | Write a content extractor abstraction that normalizes crawl4ai output; update one place when API changes | Every crawl4ai minor version update |
-
----
-
-## Security Mistakes
-
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| Logging full scraped content to files | Scraped pages may contain PII (victim names, personal details in court records) | Log only URLs and fetch status, not content; content stays in memory and scratch files only |
-| No robots.txt compliance | Legal exposure from scraping disallowed paths; ethical violation | Enable `check_robots_txt=True` in crawl4ai config; never override for "important" sources |
-| Passing raw scraped content directly to prompts without sanitization | Prompt injection: a malicious web page could contain instructions that hijack the research agent's behavior | Sanitize scraped content before adding to prompts: strip content between `<script>` tags, limit extraction to visible text content only |
-| Storing API keys or credentials in research scripts | Credential exposure in version control | No credentials needed for this agent's scope — all sources are public. If credentials are ever added, use environment variables only |
+| Research.md → Writer handoff | Passing the file path; Writer treats it as a fact dump | Pass a structured reading instruction in the synthesis prompt specifying how each Research.md section maps to script structure |
+| STYLE_PROFILE.md → Writer handoff | Loading the full profile verbatim in every generation | Load only the sections relevant to the topic type; trim universal rules to the five most constraining ones |
+| Reference script as few-shot example | Including the full reference script in the Writer's context | Include intro + one chapter only as a verbatim voice example; label what it demonstrates |
+| Style extraction timing | Running style extraction once at project start and treating it as permanent | Re-run from scratch when new reference scripts are added; version the output |
+| channel.md in Writer context | Loading the full channel.md file | Load executive summary only (voice, tone, audience in 200 words); the Writer does not need competitive analysis or pipeline docs |
+| Script output location | Writing to `.claude/scratch/` | Write to `projects/N. [Video Title]/Script.md` — it is a first-class production artifact, not a scratch file |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Source provenance:** Research.md contains citations — verify each has a real crawled URL, not an LLM-generated reference. Spot-check 3 URLs manually.
-- [ ] **Pass 1 / Pass 2 boundary:** Both passes complete — verify Pass 1 produced a machine-readable source manifest, not prose. Verify Pass 2 operated exclusively on that manifest.
-- [ ] **Failed fetch handling:** Research completes successfully — check the fetch log for silently-failed URLs. If >30% of attempted fetches failed, research has structural gaps.
-- [ ] **Content extraction quality:** crawl4ai returned results — verify extracted markdown has meaningful content (>500 chars per source) and not boilerplate navigation/footer text.
-- [ ] **Schema completeness:** Research.md looks complete — verify it contains all required schema fields: `timeline`, `key_figures`, `contradictions`, `unanswered_questions`, `source_reliability`. Missing sections mean the scriptwriter gets an incomplete dossier.
-- [ ] **Windows path handling:** Research runs on dev machine — verify the output path `projects/N. [Video Title]/Research.md` handles the space in the title correctly on Windows without path truncation.
-- [ ] **Context hygiene:** Research agent completes — verify fetch content was written to `.claude/scratch/`, not held in conversation context. Re-running should not OOM.
+- [ ] **Style profile is craft-oriented:** STYLE_PROFILE.md contains behavioral rules with verbatim examples from the reference script — not statistical summaries. Verify no Flesch-Kincaid scores or sentence-length averages appear.
+- [ ] **Voice persists to the end:** Read the generated script's final chapter. Verify the channel's deadpan register is intact — it should not drift into summary mode or emotional signposting in the closing act.
+- [ ] **Narrative hooks are used:** Cross-reference the Research.md HOOK callout against the script introduction. Verify the hook is the entry point, not buried in chapter 2.
+- [ ] **No LLM API imports:** Search for `import anthropic`, `from anthropic`, `import openai`, `from openai` in all writer skill scripts. Any match is a violation.
+- [ ] **Chapter breaks are narrative:** Read chapter boundaries — the last sentence of each chapter should complete a thought or land a revelation. Verify no chapter ends mid-sentence or mid-argument because a word count threshold was hit.
+- [ ] **Script word count is in range:** Total script word count should fall between 3,000 and 7,000 words. Outside this range, flag for review before the script moves to visual orchestration.
+- [ ] **Context package is bounded:** Count the total words loaded into the Writer's context at generation time. It should not exceed 8,000 words across all input files.
+- [ ] **Output path is correct:** Script.md lands in `projects/N. [Video Title]/` — not in `.claude/scratch/` or the researcher's output directory.
 
 ---
 
@@ -215,12 +251,13 @@ Research agents optimize for completeness. The researcher's job is to not miss t
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Hallucinated citations discovered post-research | MEDIUM | Delete Research.md; re-run with stricter URL-provenance enforcement; add spot-check step to workflow |
-| Browser context contamination mid-run | LOW | Restart crawl4ai with fresh context; re-run from the failed URL onward using the source manifest checkpoint |
-| 60%+ of sources blocked by anti-bot | HIGH | Switch to Tier 1 sources only; add manual research step to the workflow for Tier 2-3 sources; document which sources require human access |
-| Research.md too long for scriptwriter | LOW | Split into Research.md (curated) + ResearchArchive.md (full); update scriptwriter context to load only curated version |
-| Two passes collapsed, research unfocused | MEDIUM | Define strict Pass 1 URL cap in code; add intermediate review step between passes; re-run with hard constraints |
-| crawl4ai version update breaks field names | LOW | Pin version in requirements.txt; run extraction tests after any update before using in production |
+| Style profile contains statistics, not craft rules | LOW | Delete profile; re-run extraction with corrected HEURISTIC prompt; no code changes needed |
+| Generated script loses channel voice | LOW | Revise synthesis prompt with stronger voice constraints and verbatim examples; re-generate |
+| Style profile has contradictory rules | MEDIUM | Re-run full extraction from scratch against all reference scripts; reconcile conflicts explicitly in the new profile |
+| Research.md hooks ignored in script | LOW | Add explicit reading instructions to synthesis prompt; re-generate script |
+| LLM API wrapper introduced | MEDIUM | Remove all API wrapper code; re-classify the task as HEURISTIC; rebuild the evaluation step as a Claude Code in-session check |
+| Context saturation degrades chapter quality | LOW | Define and enforce the curated context package; re-generate with trimmed inputs |
+| Script output written to wrong location | LOW | Update SKILL.md output path; move existing output to correct directory |
 
 ---
 
@@ -228,37 +265,29 @@ Research agents optimize for completeness. The researcher's job is to not miss t
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Hallucinated citations (Pitfall 1) | Phase 1: Schema Design | Each source in Research.md has a verified crawled URL |
-| Browser context contamination (Pitfall 2) | Phase 1: crawl4ai Integration | Run 20+ sequential fetches, verify no silent failures after any error |
-| Anti-bot access failures (Pitfall 3) | Phase 1: Source Strategy | Source tier list defined; failed fetches logged explicitly as `access_blocked` |
-| Two-pass collapse (Pitfall 4) | Phase 1: Architecture Design | Pass 1 produces JSON source manifest; Pass 2 reads it; neither pass can be skipped |
-| False credibility scoring (Pitfall 5) | Phase 1: Schema Design | No scalar credibility scores exist in Research.md; structured signals used instead |
-| Context window overload (Pitfall 6) | Phase 1: Output Schema | Research.md has defined word budget; scriptwriter-facing version is separate from archive |
-| Windows path issues | Phase 1: Integration Testing | Research run completes successfully with a project title containing spaces |
-| Prompt injection via scraped content | Phase 1: crawl4ai Integration | Sanitization layer verified; test with a page containing adversarial instructions |
+| Style extraction as NLP code (Pitfall 1) | Phase 1: Skill Design — classify as HEURISTIC before any code is written | No `.py` file created for style extraction; STYLE_PROFILE.md contains craft rules with examples |
+| Script loses channel voice (Pitfall 2) | Phase 1: Script Generation Prompt Engineering | Run pilot against Duplessis Orphans research; compare voice against reference script excerpt |
+| Single-reference profile generalizes badly (Pitfall 3) | Phase 1: Style Extraction Design | STYLE_PROFILE.md distinguishes "universal voice rules" from "topic arc template" |
+| Research hooks lost in handoff (Pitfall 4) | Phase 2: Writer Prompt — Research Integration | Script introduction uses Research.md HOOK callout; best quotes anchor chapters, not summaries |
+| LLM API wrapper introduced (Pitfall 5) | Phase 1: Architecture Classification | `grep -r "import anthropic\|import openai"` on writer skill directory returns no results |
+| Formatting constraints override narrative logic (Pitfall 6) | Phase 2: Script Generation Prompt Engineering | Chapter breaks fall on narrative beats; chapter lengths vary based on act complexity |
+| STYLE_PROFILE.md drifts with in-place edits (Pitfall 7) | Phase 1: Style Extraction Design | Profile is versioned; no in-place edits after generation; regeneration policy documented in SKILL.md |
+| Context saturation degrades output (Pitfall 8) | Phase 2: Writer Context Engineering | Context package defined and word-count-budgeted; tested with token estimate before generation |
 
 ---
 
 ## Sources
 
-- [Crawl4AI GitHub Issue #501: Browser context contamination after failed scrapes](https://github.com/unclecode/crawl4ai/issues/501)
-- [Crawl4AI GitHub Issue #1256: Memory leak on repeated requests](https://github.com/unclecode/crawl4ai/issues/1256)
-- [Crawl4AI GitHub Issue #1379: Browser closed during pagination with managed browser](https://github.com/unclecode/crawl4ai/issues/1379)
-- [Crawl4AI Documentation: Anti-Bot and Fallback](https://docs.crawl4ai.com/advanced/anti-bot-and-fallback/)
-- [Crawl4AI Documentation: Undetected Browser](https://docs.crawl4ai.com/advanced/undetected-browser/)
-- [Morphllm: AI Web Scraping 2026 — 89.7% success rate, 72% on anti-bot sites](https://www.morphllm.com/ai-web-scraping)
-- [Nieman Journalism Lab: News publishers limit Internet Archive access due to AI scraping (2026)](https://www.niemanlab.org/2026/01/news-publishers-limit-internet-archive-access-due-to-ai-scraping-concerns/)
-- [Techdirt: News Publishers Are Now Blocking The Internet Archive (2026)](https://www.techdirt.com/2026/02/13/news-publishers-are-now-blocking-the-internet-archive-and-we-may-all-regret-it/)
-- [GPTZero: 100 hallucinated citations found in NeurIPS 2025 accepted papers](https://gptzero.me/news/neurips/)
-- [StudyFinds: GPT-4o fabricated 56% of citations in mental health literature review](https://studyfinds.org/chatgpts-hallucination-problem-fabricated-references/)
-- [Historica: AI Hallucinations and the Risks to Historical Research Integrity](https://www.historica.org/blog/ai-fictions-historiography-misinformation)
-- [PMC: Source credibility assessment — domain-level scoring as unreliable as coin flip](https://revistas.unir.net/index.php/ijimai/article/download/856/915)
-- [arxiv: Deep Research Agents — Systematic Examination (2025)](https://arxiv.org/html/2506.18096v1)
-- [Medium: Can LLMs really do web research? Failure modes in search, page selection, extraction](https://medium.com/@prxshetty/can-llms-really-do-web-research-and-why-your-agent-still-gets-stuck-d74598b44e45)
-- [EFF: Keeping the Web Up Under the Weight of AI Crawlers (2025)](https://www.eff.org/deeplinks/2025/06/keeping-web-under-weight-ai-crawlers)
-- [ScrapingBee: Crawl4AI Hands-on Guide](https://www.scrapingbee.com/blog/crawl4ai/)
+- Direct analysis: `context/script-references/Mexico's Most Disturbing Cult.md` — existing reference script showing actual channel voice patterns
+- Direct analysis: `Architecture.md` — Rule 1 (zero LLM API wrappers), Rule 2 (HEURISTIC vs. DETERMINISTIC classification)
+- Direct analysis: `context/channel/channel.md` — channel DNA, voice rules, audience profile
+- Direct analysis: `.claude/skills/researcher/SKILL.md` — existing Research.md schema and HOOK/QUOTE callout conventions
+- Direct analysis: `.planning/PROJECT.md` — v1.2 milestone goals, existing key decisions log
+- Known pattern: LLM attention degradation in long-context generation — documented in multiple long-context benchmarks (RULER, InfiniteBench) showing quality drop in second half of long-form outputs under high input load
+- Known pattern: LLM default to "competent but generic" documentary mode without strong behavioral constraints — observed in GPT-4 and Claude creative writing evaluations; overridden by verbatim examples and explicit prohibitions, not by vague style descriptors
+- Known pattern: Style profiles as statistics vs. craft rules — failure mode documented in automated readability research showing Flesch-Kincaid and similar metrics do not predict perceived quality or voice distinctiveness
 
 ---
 
-*Pitfalls research for: Web Research Agent (Agent 1.2) — documentary video production pipeline*
-*Researched: 2026-03-12*
+*Pitfalls research for: Style Extraction and Script Generation (v1.2 "The Writer") — documentary video production pipeline*
+*Researched: 2026-03-14*

@@ -1,17 +1,17 @@
 # Project Research Summary
 
-**Project:** Agent 1.2 — The Researcher (Web Research Agent for Documentary Pipeline)
-**Domain:** Agentic web research skill integrated into Claude Code documentary production pipeline
-**Researched:** 2026-03-12
+**Project:** Channel Automation v1.2 — "The Writer"
+**Domain:** Prompt-driven style extraction and automated script generation for documentary video pipeline
+**Researched:** 2026-03-14
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Agent 1.2 is a multi-pass web research agent that converts a topic name (inherited from Agent 1.1's output) into a structured `Research.md` dossier consumed directly by Agent 1.3 (The Writer). The skill must be built as a Claude Code skill following the exact same heuristic/deterministic split pattern established by Agent 1.1: Python handles all I/O deterministically (scraping, file writes, context loading), and Claude handles all reasoning heuristically (source evaluation, synthesis, narrative hooks). The entire pipeline is orchestrated through a CLI with three subcommands — `survey`, `deepen`, `write` — that serve as handoff points between deterministic and heuristic phases.
+This milestone adds two skills to a working agentic pipeline (v1.1 ships Channel Assistant + Researcher): Skill 1.3 (Style Extraction) and Agent 1.3 (The Writer). Both are almost entirely [HEURISTIC] operations — Claude Code does the reasoning natively, and the only deterministic code required is a thin context-loader CLI that aggregates files and prints them to stdout. The recommended approach is to resist the pull toward NLP libraries, LLM SDKs, and complex templating in favor of prompt files and stdlib-only Python. Zero new pip dependencies are required.
 
-The recommended approach is a strict two-pass design. Pass 1 scrapes 10-15 broad URLs (Wikipedia, DuckDuckGo results, archive.org) to map the topic landscape and produce a machine-readable JSON source manifest. Claude then evaluates that manifest and selects 5-10 high-value primary source targets. Pass 2 fetches those targets in depth. This separation is the core architectural constraint — collapsing the two passes into one destroys the strategic advantage and is the most common failure mode. The output splits across two files: `Research.md` (curated narrative dossier, max ~2,000 words of scriptwriter-facing content) and `media_urls.md` (URL catalog for downstream agents).
+The core insight from combined research: this is a prompt engineering problem, not a software engineering problem. STYLE_PROFILE.md is the key artifact — it must contain craft-oriented behavioral rules with verbatim examples from the reference script, not statistical summaries. The Writer's quality ceiling is determined by how precisely the synthesis prompt names the channel's deadpan-neutral voice patterns and how explicitly it instructs use of Research.md's HOOK/QUOTE callouts as narrative anchors. The build order is sequential and non-negotiable: style extraction must be validated before meaningful writer testing can begin.
 
-The key risks are well-documented. LLM hallucination of citations is a structural threat — every claim in the dossier must trace back to a URL that was actually fetched and returned HTTP 200, never to something Claude generated from training memory. Anti-bot detection will block the highest-quality news archive sources; the solution is to tier sources by access reliability from the start and log blocked fetches explicitly rather than silently dropping them. crawl4ai browser context contamination after failures must be handled with domain-isolated contexts and minimum-content verification after each fetch. All of these pitfalls must be designed around in Phase 1 — retrofitting source schema, credibility signals, or context hygiene after the agent is producing output is expensive.
+The primary risk is misclassification — defaulting to deterministic code for tasks that are inherently heuristic. The Architecture.md HEURISTIC/DETERMINISTIC rule is the explicit guard against this. A secondary risk is context saturation: loading too many files into the Writer's generation context degrades output quality in the later chapters of the script. The research identifies a hard budget of 8,000 words of total context at generation time. Both risks are avoidable by strictly applying the classification rule before touching a keyboard.
 
 ---
 
@@ -19,142 +19,111 @@ The key risks are well-documented. LLM hallucination of citations is a structura
 
 ### Recommended Stack
 
-The v1.0 stack (Python 3.14, SQLite, yt-dlp, sqlite-utils, tabulate) is unchanged and validated. Agent 1.2 adds only two hard new dependencies: **crawl4ai 0.8.x** for multi-URL async scraping with JS rendering (already specified in Architecture.md; use `arun_many()` with `MemoryAdaptiveDispatcher` for 10-30 concurrent fetches), and **trafilatura 2.0.0** as a boilerplate-stripping fallback when crawl4ai's markdown output is noisy.
-
-Everything else is already installed: `internetarchive 5.8.0` (official archive.org API client — use this instead of scraping archive.org HTML), `beautifulsoup4 4.14.3` (targeted HTML parsing for structured sources), `requests 2.32.5` (MediaWiki API calls for Wikipedia), and `difflib` (stdlib source deduplication for 10-30 sources per run). PyMuPDF for PDF extraction should be added reactively only when government record PDFs are first encountered.
+The v1.0/v1.1 stack is unchanged and requires no re-evaluation. For v1.2 specifically, zero new third-party dependencies are needed. All deterministic work uses Python stdlib: `re` for sentence splitting, `collections.Counter` for word frequency, `statistics` for length distribution, `pathlib` for file operations, and `argparse` for the CLI. This is the correct outcome for a primarily heuristic milestone — the deterministic layer is intentionally thin by design.
 
 **Core technologies:**
-- **crawl4ai 0.8.x**: Multi-URL async scraping — primary scraping engine, already specified in Architecture.md, handles JS-rendered news sites
-- **trafilatura 2.0.0**: Boilerplate stripping — F1=0.958 on extraction benchmark, supersedes unmaintained newspaper3k, fallback for noisy crawl4ai output
-- **internetarchive 5.8.0**: archive.org API client — already installed, use official client not HTML scraping for archive.org content
-- **difflib (stdlib)**: Near-duplicate source detection — adequate for 10-30 source runs, zero install cost
-- **requests 2.32.5**: MediaWiki API — already installed, use direct API calls not the `wikipedia` PyPI wrapper (disambiguation bugs, unmaintained)
+- `re` (stdlib): Sentence splitting and pattern detection for style metric computation — no third-party tokenizer needed for transcribed speech input
+- `collections` (stdlib): Word frequency and vocabulary analysis via Counter — already idiomatic in the channel-assistant codebase
+- `statistics` (stdlib): Sentence length distribution (mean, median, stdev) — anchors quantitative surface metrics in STYLE_PROFILE.md
+- `pathlib` (stdlib): File discovery and project path resolution — already the project standard per CLAUDE.md
+- `argparse` (stdlib): CLI argument parsing — same pattern as researcher and channel-assistant CLIs
 
-**Critical install note:** `crawl4ai-setup` must be run after pip install — it runs `playwright install` which installs ~300MB of browser binaries. Set `PYTHONUTF8=1` in the skill's run environment for non-Latin source content. Do NOT install `crawl4ai[torch]` or `crawl4ai[transformer]` extras — those enable LLM-based extraction which violates Architecture.md Rule 1.
+**Explicitly rejected:** textstat (wrong signal — readability indices do not capture voice patterns), spaCy (50MB install for POS tagging that adds nothing on transcribed speech input), NLTK (heavy corpus downloads, no advantage over stdlib for this use case), LangChain/LlamaIndex (violates Architecture.md Rule 1 — zero LLM API wrappers), any LLM embedding library (style similarity is Claude's job, not cosine distance).
 
 ### Expected Features
 
-The dossier is not for human browsing — it is structured input for an LLM scriptwriter (Agent 1.3) that needs attributed, narrative-ready facts to produce a 20-50 minute documentary without a human filtering step in between. Every feature decision flows from this consumer requirement.
+The Writer milestone delivers two features. Style extraction is a one-time channel setup operation; script generation is a per-video production step. Both feed directly into the downstream Visual Orchestrator (Agent 1.4, future milestone), so the script output format must be stable.
 
-**Must have (table stakes) — P1, ship with v1:**
-- Manual topic input (CLI `topic` arg maps to `projects/N. [Title]/`) — without this, agent cannot run
-- Pass 1: Broad survey scrape (Wikipedia, news archives, DuckDuckGo) — baseline topic landscape
-- Pass 2: Primary source deep-dive (archive.org, loc.gov, gov archives) — provides script authority; secondary-only dossiers feel thin
-- Chronological timeline with source attribution per entry — critical for documentary script structure
-- Key figures section: full names, roles, relationships, at least one attributed quote per figure — backbone of narration
-- Subject overview (500-word synthesis) — establishing context for the Writer
-- Contradictions section — documentary gold; creates narrative tension without resolution
-- Unanswered questions section — best documentary endings; ambiguity is a feature
-- Source list with structured credibility signals (not scalar scores) — lets Writer calibrate assertion confidence
-- Output to `projects/N. [Title]/research/Research.md` — required for pipeline continuity
+**Must have (table stakes):**
+- Style extraction prompt that produces STYLE_PROFILE.md with craft-oriented behavioral rules and verbatim examples — not statistics or readability scores
+- STYLE_PROFILE.md stored in `context/channel/` as stable channel-level context (parallel to channel.md, not inside any project directory)
+- Writer SKILL.md: numbered chapter structure, pure narration output, no stage directions or embedded production notes
+- Factual anchoring: every claim in the script traceable to Research.md — Writer does not generate facts from training memory
+- HOOK/QUOTE integration: Writer prompt explicitly instructs use of Research.md callouts as chapter entry points and narration anchors
+- Script word count in target range: 3,000–7,000 words (20–50 min runtime per channel.md output targets)
+- Channel tone enforcement: calm, journalistic, deadpan — achieved by loading STYLE_PROFILE.md + channel.md as generation context
 
-**Should have (differentiators) — P2, add post-validation:**
-- Source chain tracing — traces facts through multiple attribution layers (critical for the channel's "correcting the record" angle)
-- Direct quote extraction as separate labeled callout — reference script relies on verbatim historical quotes for scene anchoring
-- Narrative hooks identification — 3-5 high-impact story beats explicitly labeled for the Writer
-- `media_urls.md` as separate file — keeps Research.md clean for Writer; feeds Agent 1.4 (Visual Director)
-- Wikipedia error check — flags where Wikipedia contradicts primary sources; channel differentiator
+**Should have (differentiators):**
+- Transition phrase library extracted verbatim from reference script — prevents generic connective language ("furthermore", "notably") that breaks the deadpan register
+- Pacing profile: slow historical build for first third, escalation to horror — qualitative instruction, not a hard word-count ratio
+- Open-ending template derived from reference — prevents LLMs from artificially resolving ambiguity in unsolved cases (explicit style rule in writting_style_guide.md)
+- Chapter title generation in the reference register: evocative short titles ("Strangers in the Jungle") rather than generic labels ("Background", "Chapter 1")
+- Source authority woven into narration naturally ("court records from 1962 show...") without disrupting pacing
+- STYLE_PROFILE.md distinguished into "Universal Voice Rules" vs. "Narrative Arc Templates by story type" — avoids cult-topic arc template overfitting to non-cult topics
 
 **Defer (v2+):**
-- Scope estimation (minutes-of-material estimate) — defer until enough Research.md outputs exist to calibrate
-- Cross-reference with past topics — low risk without it; add when backlog grows large enough that overlap is a real concern
+- Chapter outline approval checkpoint before full script generation — add reactively only if full scripts frequently need structural revision
+- Multiple script variants for A/B testing — doubles review work, no feedback loop exists yet
+- Style drift detection across generated scripts — needs more than one reference to establish a meaningful baseline
+- TTS/voiceover generation — out of scope per Architecture.md; audio is handled in DaVinci Resolve
 
 ### Architecture Approach
 
-The skill follows the context-loader CLI pattern established by Agent 1.1: Python CLI subcommands run deterministic I/O logic, print structured context to stdout, and Claude performs heuristic reasoning. All scraped page content goes to `.claude/scratch/researcher/` as individual files — never concatenated into Claude's context. Claude receives a summary table (source, URL, file path, word count) and reads specific files on demand. The Pass 1 output is a machine-readable JSON source manifest (not prose) that Claude uses to select deep-dive targets; Pass 2 reads that manifest file. Claude synthesizes a structured JSON dossier, then calls `cmd_write` which formats and saves — Python handles all file I/O, Claude handles all content decisions.
+Both new skills extend the established "CLI prints, Claude reasons" pattern used by all existing skills. The style-extraction skill has no Python code at all — two files only (SKILL.md + extract.md prompt). The writer skill adds a thin `cli.py` with a single `load` subcommand that aggregates Research.md + STYLE_PROFILE.md + channel.md and prints to stdout. Claude performs all generation natively from that context. No new architectural concepts are introduced — both skills are direct applications of patterns already proven in researcher and channel-assistant.
 
 **Major components:**
-1. `cli.py` — Entry point with `survey`, `deepen`, `write` subcommands; context-loader pattern; inherits `_get_project_root()` from Agent 1.1
-2. `fetcher.py` — crawl4ai wrapper with per-domain browser context isolation, minimum-content verification (>200 chars), retry, file output to `.claude/scratch/researcher/`
-3. `url_builder.py` — Generates 8-12 initial search URLs from topic string; Pass 1 default sources only; Pass 2 targets selected by Claude heuristically
-4. `writer.py` — Formats and writes `Research.md` and `media_urls.md` from validated dossier JSON; enforces schema completeness
-5. `prompts/survey_evaluation.md` — HEURISTIC prompt: source quality evaluation, gap identification, deep-dive target selection
-6. `prompts/synthesis.md` — HEURISTIC prompt: full dossier synthesis from all scraped content into structured JSON
+1. `style-extraction/SKILL.md` + `prompts/extract.md` — One-time channel setup: reads reference scripts, writes STYLE_PROFILE.md. Pure heuristic, zero Python code written
+2. `context/channel/STYLE_PROFILE.md` — Stable channel-level artifact: written once by style-extraction, read by every Writer invocation. Lives at the same tier as channel.md
+3. `writer/scripts/writer/cli.py` — Thin context aggregator: resolves project path from topic string, reads three files, prints to stdout. Single `load` subcommand, identical pattern to researcher's CLI
+4. `writer/prompts/write_script.md` — Script generation rules: chapter structure defined by narrative logic (not word count), voice constraints with verbatim examples, explicit Research.md reading instructions, output format specification
+5. `projects/N. Title/script/Script.md` — Per-video terminal output: first-class production artifact (not scratch), feeds Agent 1.4 in the next milestone
+
+**Build sequence (non-negotiable order):** style-extraction SKILL.md and extract.md prompt → validate STYLE_PROFILE.md output → writer prompts/write_script.md → writer cli.py → writer SKILL.md → end-to-end validation against Duplessis Orphans Research.md.
 
 ### Critical Pitfalls
 
-1. **LLM hallucination of citations** — GPT-4o fabricates 56% of citations; 100+ hallucinated refs made it into NeurIPS 2025 accepted papers. Every source entry in Research.md must include `url` (actually fetched), `fetched_at` (timestamp), and `relevant_excerpt` (direct quote, not paraphrase). Never ask Claude to generate citation text — only cite URLs that crawl4ai returned HTTP 200.
+1. **Style extraction implemented as NLP code instead of a prompt** — Any Python file created for style extraction is a classification error. STYLE_PROFILE.md must contain behavioral rules with examples ("sentences fragment mid-thought at revelation moments to force a beat") not statistics ("average sentence length: 14.2 words"). If the profile describes what the text IS rather than how it WORKS, discard and re-run with a corrected prompt.
 
-2. **crawl4ai browser context contamination** — After a failed fetch, subsequent requests in the same context return silent empty results (GitHub issue #501). Use a fresh browser context per source domain. Verify `result.markdown` length > 200 chars after every fetch; reset context on short results. Always use `async with AsyncWebCrawler() as crawler:` pattern.
+2. **Script loses channel voice within the first chapter** — LLMs default to "competent documentary narrator" when given research + vague style instructions. Break the default with: verbatim reference script excerpts labeled with what they demonstrate, explicit prohibitions (no rhetorical questions, no "imagine if you will", no emotional signposting like "shockingly"), and the channel's specific deadpan device named and demonstrated. Validate the prompt against the Duplessis Orphans Research.md before considering the prompt finished.
 
-3. **Anti-bot access failures** — crawl4ai's success rate is 72% on anti-bot protected sites. Major publishers (NYT, WaPo, Gannett) actively block AI crawlers as of 2026. Tier sources by access reliability: Tier 1 (Wikipedia, archive.org pre-2025, `.gov` domains, HathiTrust) — reliable; Tier 2 (regional news, older archives) — attempt but expect failures; Tier 3 (major newspapers, PACER) — do not attempt. Log all blocked fetches as `access_blocked` explicitly.
+3. **Research.md HOOK/QUOTE callouts ignored in script output** — Agent 1.2 embeds explicit narrative signal callouts in the dossier specifically for the Writer. The Writer's synthesis prompt must contain reading instructions: "The HOOK is the story's entry point — build the introduction around it, not buried in chapter 2." "QUOTE callouts anchor the chapter they appear in — they are not summary material." The handoff is a structured reading instruction, not a file path.
 
-4. **Two-pass design collapse into one expensive unfocused pass** — The survey pass expands when promising sources are immediately deep-dived. Enforce hard constraints in code: Pass 1 maximum 2 URLs per source type, output is JSON source manifest only (no draft Research.md content). Pass 2 operates exclusively on that manifest, maximum 15 fetches.
+4. **Context saturation degrades second-half chapter quality** — Hard budget: 8,000 words of total input context at generation time. Curated package: Research.md + STYLE_PROFILE.md (relevant sections only) + reference script excerpt (intro + one chapter, not the full script) + channel.md executive summary (first 200 words). Do not load ResearchArchive.md, raw source files, or past_topics.md at generation time.
 
-5. **Scalar credibility scores create false confidence** — Domain-level scoring (`.gov` = reliable) is as reliable as a coin flip for obscure topics. Use structured signals: `source_type` (primary/secondary/tertiary), `corroborated_by` (list of corroborating sources), `access_quality` (full_text/excerpt_only/blocked), and `single_source` flag. No scalar numbers.
-
-6. **Research.md overloads scriptwriter context** — An 8,000-word comprehensive dossier consumes the Writer agent's context before script work begins, producing listicle output rather than narrative. Research.md scriptwriter-facing version: maximum 2,000 words. Full source detail goes to `ResearchArchive.md` or remains in `.claude/scratch/`.
+5. **LLM API wrapper introduced for quality evaluation or any other step** — Any `import anthropic` or `import openai` in writer skill scripts is an Architecture.md Rule 1 violation. Script quality evaluation is [HEURISTIC] — Claude reads the output and evaluates natively in the same session. No code evaluates script quality.
 
 ---
 
 ## Implications for Roadmap
 
-Based on combined research, all 6 critical pitfalls map to Phase 1 design decisions — there are no safe shortcuts to defer to later phases. The build order follows strict component dependencies.
+Based on combined research, two phases cover the entire milestone. Both are tightly coupled by validation dependencies — Phase 1 must complete and produce a validated STYLE_PROFILE.md before Phase 2 has any meaningful tests to run.
 
-### Phase 1: Foundation — crawl4ai Integration Layer
+### Phase 1: Style Extraction Skill
 
-**Rationale:** `fetcher.py` is the dependency for everything downstream. A fragile scraper produces a fragile research agent regardless of prompt quality. This phase must be built and tested before any research logic is written. Browser context contamination and anti-bot failures are impossible to patch retroactively.
-**Delivers:** Working `fetcher.py` with domain-isolated browser contexts, minimum-content verification, retry logic, and file output to `.claude/scratch/researcher/`. Working `url_builder.py` with source tier configuration.
-**Addresses features:** Pass 1 broad survey (infrastructure), Pass 2 primary source dive (infrastructure)
-**Avoids:** Pitfall 2 (browser context contamination), Pitfall 3 (anti-bot access failures)
+**Rationale:** STYLE_PROFILE.md is a prerequisite for meaningful Writer testing. Without it, writer output cannot be evaluated against the channel's voice — you have no anchor. This phase has zero code to write (pure heuristic), so it completes quickly and unblocks Phase 2 immediately. The sooner STYLE_PROFILE.md is committed to the repo, the sooner all downstream work has stable channel DNA to reference.
 
-### Phase 2: Survey CLI + SKILL.md Skeleton
+**Delivers:** `context/channel/STYLE_PROFILE.md` committed to the repository as stable channel-level context. Also delivers `.claude/skills/style-extraction/SKILL.md` and `prompts/extract.md`.
 
-**Rationale:** Establishes the CLI pattern and enables first end-to-end test of Pass 1. SKILL.md can be written before prompts — instructions reference prompts as TBD. This phase is fast because it directly reuses the Agent 1.1 context-loader pattern.
-**Delivers:** `cmd_survey` subcommand — fetches initial sources, writes to scratch, prints summary table to stdout. Skeleton SKILL.md.
-**Uses:** `fetcher.py` + `url_builder.py` from Phase 1; `_get_project_root()` pattern from Agent 1.1 `cli.py`
-**Implements:** Context-loader CLI pattern (Architecture Pattern 1)
+**Addresses (features):** STYLE_PROFILE.md with craft-oriented behavioral rules, transition phrase library, pacing profile, open-ending template, "Universal Voice Rules" vs. "Narrative Arc Templates" distinction (mitigates single-reference overfitting to cult topic type).
 
-### Phase 3: Pass 1 Heuristic — Survey Evaluation Prompt
+**Avoids:** Pitfall 1 (style extraction as NLP code — classify as HEURISTIC before any file is created), Pitfall 3 (single-reference profile forcing cult arc onto non-cult topics — design the profile format to accommodate multiple arc templates from the start), Pitfall 7 (STYLE_PROFILE.md drifting via in-place edits — set the versioning and regeneration policy before the first profile is written).
 
-**Rationale:** Pass 1 only delivers value if Claude can evaluate source quality and produce a machine-readable JSON source manifest for deep-dive targeting. This is the critical phase where the intermediate artifact schema is defined — must happen before Pass 2 infrastructure so the contract between passes is locked.
-**Delivers:** `prompts/survey_evaluation.md` — instructs Claude to evaluate scraped sources, identify coverage gaps, score relevance, and output a JSON source manifest. Full Pass 1 flow works end-to-end.
-**Avoids:** Pitfall 4 (two-pass collapse — manifest is machine-readable JSON, enforced by prompt design)
-**Critical design gate:** Intermediate artifact is JSON source manifest, never prose. This boundary is enforced in the prompt.
+### Phase 2: Writer Agent
 
-### Phase 4: Deep-Dive CLI
+**Rationale:** Depends directly on Phase 1 output. The write_script.md prompt is written before the CLI because the prompt structure determines what context the CLI needs to load and print. Validated against the existing Duplessis Orphans Research.md as an integration test — this project has a completed dossier, so no new research work is required to run the first real end-to-end script generation.
 
-**Rationale:** Needs Phase 1 infrastructure and Phase 3's defined intermediate artifact schema. `cmd_deepen` reads the JSON source manifest written by Claude in Phase 3 and fetches targeted primary source URLs.
-**Delivers:** `cmd_deepen` subcommand — reads `deep_targets.txt`, fetches primary sources, writes `pass2_src_N.md` files to scratch, prints summary table.
-**Implements:** Two-pass research architecture (Architecture Pattern 3)
+**Delivers:** `writer/SKILL.md`, `writer/prompts/write_script.md`, `writer/scripts/writer/cli.py`, and `projects/1. The Duplessis Orphans.../script/Script.md` as the integration test output.
 
-### Phase 5: Synthesis Prompt
+**Uses (stack):** stdlib only — `pathlib`, `argparse`. No new installs required.
 
-**Rationale:** Pass 2 content is only useful once a synthesis prompt produces a schema-compliant structured JSON dossier. This phase also finalizes the Research.md content structure and credibility signal design — both must be designed here because retrofitting them after the agent is producing output is expensive.
-**Delivers:** `prompts/synthesis.md` — instructs Claude to synthesize all pass1 + pass2 content into structured JSON matching the Research.md schema, with structured credibility signals, contradiction pairs, unanswered questions, and narrative hooks.
-**Avoids:** Pitfall 1 (hallucinated citations — prompt enforces URL provenance), Pitfall 5 (scalar credibility scores replaced with structured signals), Pitfall 6 (2,000-word curated output budget enforced in prompt)
+**Implements (architecture):** "CLI prints, Claude reasons" pattern (established convention from researcher and channel-assistant). Project path resolution via directory matching — reuse researcher's pattern exactly, do not reimplement. Context aggregation: Research.md + STYLE_PROFILE.md + channel.md printed to stdout with clear section headers.
 
-### Phase 6: Output Layer — writer.py + cmd_write
-
-**Rationale:** Final persistence layer. Formats Claude's structured JSON dossier into `Research.md` and `media_urls.md`. Schema validation here catches incomplete dossiers before they reach the Writer agent.
-**Delivers:** `writer.py` with schema compliance checking + `cmd_write` subcommand. Writes `Research.md` (curated, max 2,000 words) and `media_urls.md` (separated URL catalog). Unit tests for schema enforcement.
-**Addresses features:** Media inventory as separate file (keeps Research.md clean for Writer; feeds Agent 1.4 eventually)
-**Avoids:** Pitfall 6 (context window overload — word budget enforced by writer.py)
-
-### Phase 7: SKILL.md Finalization + Integration Test
-
-**Rationale:** After all components work individually, SKILL.md needs complete operating instructions. Integration test with a real topic validates the full pipeline end-to-end in one Claude Code session.
-**Delivers:** Complete SKILL.md. Integration test passing with a project title containing spaces (Windows path handling validation).
-**Critical verification:** Spot-check 3 URLs from Research.md (source provenance), verify Pass 1 produced JSON manifest not prose, verify no fetch content held in conversation context.
+**Avoids:** Pitfall 2 (script loses channel voice — use verbatim examples and explicit prohibitions in write_script.md), Pitfall 4 (Research.md hooks lost in handoff — explicit reading instructions in synthesis prompt, not in a comment or readme), Pitfall 5 (LLM API wrapper for evaluation — evaluation is heuristic, no code), Pitfall 6 (formatting constraints override narrative logic — chapter breaks defined by narrative beats, not word count thresholds), Pitfall 8 (context saturation — enforce 8,000-word context budget before writing the generation prompt).
 
 ### Phase Ordering Rationale
 
-- Phases 1-2 come first because all subsequent phases depend on working scraping infrastructure and the established CLI pattern
-- Phase 3 must precede Phase 4 because it defines the intermediate artifact schema that Phase 4 reads — the contract between passes must be defined before the second pass is built
-- Phase 5 must precede Phase 6 because `writer.py` formats the dossier schema that the synthesis prompt defines
-- Phase 7 is polish — integration test and SKILL.md finalization after all components are individually proven
-- The pitfalls research is emphatic: all 6 critical pitfalls have "Phase 1" as their prevention phase — schema design, credibility signals, source tiering, and browser context handling cannot be deferred
+- Style extraction must precede script generation because the Writer has no validated voice anchor without STYLE_PROFILE.md. Running Phase 2 before Phase 1 produces untestable output with no quality baseline.
+- Within Phase 2, write_script.md must precede cli.py because the prompt defines the required context package, which determines what the CLI loads. Writing the CLI first produces a loader that may not serve the actual generation needs.
+- SKILL.md for the writer is written last — after both prompt and CLI are validated — because SKILL.md references both and must accurately describe a tested, working workflow.
+- End-to-end validation against the Duplessis Orphans project is the terminal step, not an optional check. It is the only meaningful integration test because it exercises the full pipeline on a real topic with a completed Research.md dossier.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 1 (crawl4ai Integration):** crawl4ai's Windows-specific behavior and `PYTHONUTF8=1` requirement may need hands-on testing; API field names differ between versions (`result.markdown` vs `result.markdown_v2.raw_markdown`) — run `crawl4ai-doctor` and verify field names on install before writing `fetcher.py`
-- **Phase 3 (Survey Evaluation Prompt):** Source tier list for the channel's specific niche (dark history, cults, true crime) needs validation in practice; DuckDuckGo HTML scraping behavior via crawl4ai may require iteration
+Phases with standard patterns (no deeper research needed during planning):
+- **Phase 1 (Style Extraction):** No code, pure prompt design. Classification is HEURISTIC per Architecture.md Rule 2. No unknowns to research — the only variable is STYLE_PROFILE.md output quality, which is validated empirically by running the extraction and reviewing the result.
+- **Phase 2 (Writer Agent):** CLI follows the researcher's established pattern exactly. The prompt engineering variables are fully documented by pitfalls research (8 specific failure modes with prevention strategies). No deeper technical research needed.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 2 (Survey CLI):** Direct reuse of Agent 1.1's context-loader pattern — well-documented, low risk
-- **Phase 6 (writer.py):** Straightforward JSON-to-Markdown formatting with schema validation — standard Python file I/O
-- **Phase 7 (Integration Test):** Standard testing protocol
+No phases require `/gsd:research-phase` during planning. Both phases are well-defined by direct codebase inspection and Architecture.md constraints. The only open question is whether the single reference script produces a STYLE_PROFILE.md that generalizes adequately to non-cult topic types — this is validated in Phase 1, not researched in advance.
 
 ---
 
@@ -162,48 +131,43 @@ Phases with standard patterns (skip research-phase):
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | crawl4ai, trafilatura, internetarchive all verified on PyPI with current versions; Python 3.14 compatibility confirmed; Windows-specific PYTHONUTF8 requirement documented from official sources |
-| Features | HIGH | Downstream consumer (Agent 1.3 Writer) is fully defined; output schema specified in Architecture.md; reference script analyzed for scriptwriter requirements; feature set derived from concrete pipeline constraints |
-| Architecture | HIGH | Pattern derived from direct codebase inspection of Agent 1.1 (channel-assistant/cli.py); build order follows strict dependency chain; all integration points verified against existing project structure |
-| Pitfalls | HIGH | crawl4ai issues verified via GitHub issue tracker; citation hallucination rates from NeurIPS 2025 audit and GPT-4o study; anti-bot blocking from Nieman Lab and Techdirt reports (2026); credibility scoring research from PMC |
+| Stack | HIGH | Zero new dependencies — all stdlib. No version conflicts possible. Confirmed by direct codebase analysis of existing channel-assistant and researcher skills, both stdlib-only. |
+| Features | HIGH | Derived from direct analysis of existing reference script, channel.md, writting_style_guide.md, Architecture.md spec, and the live Duplessis Orphans Research.md. Feature boundaries driven by the HEURISTIC/DETERMINISTIC rule, which is explicit and binding. No speculation involved. |
+| Architecture | HIGH | Based on direct inspection of all existing skills. Both new skills extend established patterns without introducing new concepts. Build order is determined by validation dependencies, not preference. |
+| Pitfalls | HIGH | Pitfalls derived from Architecture.md Rules 1 and 2 (binding constraints), direct analysis of the degraded reference script format, and documented LLM behavior patterns in long-context generation (RULER, InfiniteBench benchmarks). Prevention strategies map to specific, actionable prompt engineering decisions. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **PyMuPDF on Windows (MEDIUM confidence):** PDF extraction speed benchmarks verified, but whether government PDFs in the channel's niche are text-based or scanned images is unknown. Add PyMuPDF reactively on first PDF encounter; flag scanned PDFs as requiring OCR (currently out of scope).
-- **DuckDuckGo HTML scraping stability:** Recommended over direct Google search (better bot detection tolerance), but this is community experience, not a documented crawl4ai guarantee. Validate in Phase 1 testing before committing to it as the default search path.
-- **Pass 1 source manifest schema:** The exact JSON structure for the intermediate artifact between passes needs to be explicitly defined before Phase 3 prompt writing. This is a design decision, not a research gap, but it must be resolved before Phase 3.
-- **crawl4ai API field stability:** Research documents that field names changed between minor versions. Pin crawl4ai version in requirements.txt on install and test output field names explicitly — do not assume stability across minor updates.
+- **Single reference script limits STYLE_PROFILE.md coverage:** STYLE_PROFILE.md will be derived from one reference (`Mexico's Most Disturbing Cult.md`), which is a cult/group narrative — not all topic types on the channel. Mitigate by explicitly labeling profile sections as "universal voice rules" vs. "cult arc template (one reference only)." Add a second reference when a clean transcript becomes available for a non-cult topic (institutional corruption, disappearance, or dark web topic).
+- **Auto-caption format degrades quantitative style metrics:** The reference script is a YouTube auto-caption export with no punctuation and arbitrary line breaks. Sentence boundary detection and length distribution will have lower signal quality than a properly punctuated transcript. The extraction prompt must work qualitatively — inferring rhythm from line groupings and narrative structure from chapter headers — rather than quantitatively. This is acknowledged and handled in the prompt design approach; it is not a blocker.
+- **Script quality validation is manual at launch:** There is no automated way to verify a generated script matches the channel's voice. The validation step is human review of the Duplessis Orphans script against the reference. This is by design (heuristic task), but it means iteration speed depends on reviewer availability. Add a pacing audit heuristic (post-generation word count per chapter review) as a secondary check in v1.x after the first scripts are validated.
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Existing codebase: `.claude/skills/channel-assistant/scripts/channel_assistant/cli.py` — Agent 1.1 pattern reference (direct inspection)
-- Existing codebase: `.claude/skills/channel-assistant/SKILL.md` — context-loader pattern reference (direct inspection)
-- `Architecture.md` — binding project constraints, Research Dossier Schema, heuristic/deterministic rules
-- [Crawl4AI Documentation v0.8.x](https://docs.crawl4ai.com/) — features, installation, `arun_many()`, MemoryAdaptiveDispatcher
-- [Crawl4AI PyPI](https://pypi.org/project/Crawl4AI/) — v0.8.0 January 16, 2026 confirmed
-- [Trafilatura PyPI](https://pypi.org/project/trafilatura/) — v2.0.0 December 3, 2024 confirmed
-- [Trafilatura Evaluation](https://trafilatura.readthedocs.io/en/latest/evaluation.html) — F1=0.958 benchmark
-- [internetarchive PyPI](https://pypi.org/project/internetarchive/) — v5.8.0 February 18, 2026 confirmed
-- [Crawl4AI GitHub Issue #501](https://github.com/unclecode/crawl4ai/issues/501) — browser context contamination after failures
-- [GPTZero NeurIPS 2025 audit](https://gptzero.me/news/neurips/) — 100+ hallucinated citations in accepted papers
+
+- `.claude/skills/researcher/SKILL.md` and `cli.py` — established "CLI prints, Claude reasons" pattern that writer replicates directly
+- `.claude/skills/channel-assistant/SKILL.md` and `project_init.py` — confirmed that scaffold already creates `script/` subdirectory; writer needs no directory creation logic
+- `Architecture.md` — CRITICAL ARCHITECTURE RULES (binding project constraints): Rule 1 (zero LLM API wrappers), Rule 2 (HEURISTIC vs. DETERMINISTIC classification)
+- `context/script-references/Mexico's Most Disturbing Cult.md` — confirmed reference script format (auto-caption, degraded), chapter structure, voice patterns, transition phrases
+- `context/channel/channel.md` — channel DNA, tone rules, audience profile, output targets (3,000–7,000 words, 20–50 min)
+- `context/channel/writting_style_guide.md` — six style rules: narration-only, chapters, pacing, sources, silence, open endings
+- `projects/1. The Duplessis Orphans.../research/Research.md` — confirmed live dossier format, HOOK/QUOTE callout structure, word count
+- `.planning/PROJECT.md` — v1.2 milestone definition, key decisions log
 
 ### Secondary (MEDIUM confidence)
-- [Morphllm AI Web Scraping 2026](https://www.morphllm.com/ai-web-scraping) — 72% crawl4ai success rate on anti-bot sites
-- [Nieman Journalism Lab 2026](https://www.niemanlab.org/2026/01/news-publishers-limit-internet-archive-access-due-to-ai-scraping-concerns/) — publisher AI blocking actions
-- [StudyFinds: GPT-4o citation fabrication](https://studyfinds.org/chatgpts-hallucination-problem-fabricated-references/) — 56% fabricated citations study
-- [PMC: source credibility domain-level scoring](https://revistas.unir.net/index.php/ijimai/article/download/856/915) — domain scoring as unreliable as coin flip
-- [PyMuPDF Features Comparison](https://pymupdf.readthedocs.io/en/latest/about.html) — speed benchmarks vs pdfminer (official docs, partially self-reported)
-- [MediaWiki API:Query](https://www.mediawiki.org/wiki/API:Query) — Wikipedia API endpoint reference
 
-### Tertiary (informational)
-- `context/script references/Mexico's Most Disturbing Cult.md` — reference script analysis for scriptwriter requirements
-- [ScrapingHub Article Extraction Benchmark](https://github.com/scrapinghub/article-extraction-benchmark) — trafilatura vs newspaper3k comparison
+- Programming Historian: Introduction to Stylometry with Python — validated TTR, sentence length, punctuation density as standard stylometric features for style analysis
+- LLM long-context behavior (RULER, InfiniteBench benchmarks) — quality degradation in second half of long-form outputs under high input load; informed the 8,000-word context budget recommendation
+
+### Tertiary (LOW confidence)
+
+- LLM default to "competent but generic" documentary narrator mode — observed behavior pattern documented in multiple creative writing evaluation contexts; overridden by verbatim examples and explicit prohibitions rather than by abstract style descriptions
 
 ---
-*Research completed: 2026-03-12*
+*Research completed: 2026-03-14*
 *Ready for roadmap: yes*

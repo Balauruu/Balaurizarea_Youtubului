@@ -1,16 +1,25 @@
 # Feature Research
 
-**Domain:** Web Research Agent for Documentary Scriptwriting (Agent 1.2: The Researcher)
-**Researched:** 2026-03-12
-**Confidence:** HIGH (downstream consumer is known, schema is specified in Architecture.md, reference script exists)
+**Domain:** Style extraction and automated script generation for documentary narrative content
+**Researched:** 2026-03-14
+**Confidence:** HIGH (domain derived from existing reference scripts, channel DNA, and Architecture.md spec — not speculation)
 
-## Context
+---
 
-Agent 1.2 operates inside a fixed pipeline. It reads a topic (from an existing `projects/N. [Title]/` directory created by Agent 1.1) and produces a `Research.md` dossier consumed directly by Agent 1.3 (The Writer). The Writer converts this dossier into a narrated 20-50 minute documentary script without any human filtering step in between.
+## Context: What Already Exists
 
-This shapes every feature decision: the dossier is not for human browsing — it is for an LLM scriptwriter that needs structured, attributed, narrative-ready facts. Anything that wastes tokens or introduces ambiguity in the dossier directly degrades script quality.
+This milestone adds two features to a working pipeline (v1.1 shipped):
 
-The channel niche spans dark history, true crime, cults, institutional corruption, and unsolved disappearances. Sources range from court records and police reports to academic papers, newspaper archives, and wikis. The agent must handle all of these without niche-specific hardcoding.
+- Agent 1.1 (Channel Assistant) — topic briefs, competitor intel, project init
+- Agent 1.2 (The Researcher) — two-pass web research → `Research.md` dossier with HOOK/QUOTE callouts
+- `context/script-references/Mexico's Most Disturbing Cult.md` — one reference script (auto-captioned transcript, fragmented format)
+- `context/channel/channel.md` — channel DNA (tone, voice, audience, output targets)
+- `context/channel/writting_style_guide.md` — six style rules (narration-only, chapters, pacing, sources)
+
+The two new features:
+
+- **Skill 1.3: Style Extraction** — one-time heuristic that reads reference scripts, writes `STYLE_PROFILE.md`
+- **Agent 1.3: The Writer** — per-video agent that reads `Research.md` + `STYLE_PROFILE.md` + channel DNA → numbered chapter script
 
 ---
 
@@ -18,143 +27,107 @@ The channel niche spans dark history, true crime, cults, institutional corruptio
 
 ### Table Stakes (Users Expect These)
 
-Features the agent must have or it provides no value over asking Claude to research from memory.
+Features the pipeline must have or the output is unusable / requires heavy manual correction.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Manual topic input** | User must be able to invoke the agent with a topic name and have it pick up the correct project directory. | LOW | CLI: `topic` argument maps to `projects/N. [Title]/`. Agent reads `metadata.md` for working title and hook from Agent 1.1. |
-| **Broad survey pass (Pass 1)** | Documentary research starts wide — identify the full landscape before diving deep. Without this, you miss key angles and secondary actors. | MEDIUM | crawl4ai scrapes Wikipedia, major news archives, relevant wiki-type sources. Produces a structured understanding of the topic: who, what, when, where, why. [DETERMINISTIC] scraping, [HEURISTIC] synthesis. |
-| **Primary source deep-dive pass (Pass 2)** | Wikipedia and news articles are secondary sources. Scripts that cite only those feel thin. Court records, police reports, government documents, academic papers, and archived primary materials give the script authority and credibility. | HIGH | crawl4ai targets archive.org, loc.gov, archives.gov, court record databases, newspaper archives (Chronicling America, ProQuest-accessible free tiers). [DETERMINISTIC] scraping. |
-| **Chronological timeline with sources** | The Writer needs events in date order with attribution. Without this, the script either invents a timeline or misorders events. Documentary scripts are structurally anchored to chronology. | MEDIUM | Each timeline entry: date, event description, source name, source URL. Gaps in the timeline must be labeled explicitly as gaps rather than silently omitted. |
-| **Key figures section** | Named people are the backbone of documentary narrative. The Writer needs names, roles, relationships, and direct quotes. Anonymous "officials said" is useless for narration. | MEDIUM | Full names, roles/titles, relationship to the central event, at least one attributed quote per figure where available. Flag figures where only partial identification exists. |
-| **Subject overview (500-word summary)** | The Writer needs a dense, factually-grounded overview before diving into the structured sections. This is the "establishing shot" of the dossier. | LOW | [HEURISTIC] Claude synthesizes scraped content into a 500-word summary anchored to documented facts. |
-| **Source list with reliability ratings** | The Writer must know whether a fact came from a court record or a Reddit thread. Reliability shapes how confidently the narration can state something. | MEDIUM | Each source: name, URL, type (primary/secondary/tertiary), reliability rating (HIGH/MEDIUM/LOW), brief note on why. |
-| **Contradictions section** | Conflicting accounts are documentary gold — they create narrative tension. Without surfacing contradictions, the Writer produces a falsely clean narrative. | MEDIUM | Pairs of conflicting claims with their respective sources. Not resolved — left as documented conflict for the Writer to use as narrative tension. |
-| **Unanswered questions section** | Gaps that resist resolution are the best endings for documentaries. The Writer needs to know what can't be answered and why. | LOW | List of specific questions that research could not answer, with notation of what was tried. Ambiguity is a feature, not a bug. |
-| **Output to project directory** | Research.md must land at `projects/N. [Title]/Research.md`. The Writer reads from a fixed path. | LOW | Deterministic file write. No path ambiguity. |
-
----
+| Chapter structure with numbered acts | Reference script shows chapters 1–N with evocative titles; channel DNA mandates numbered acts | LOW | Style extraction must identify chapter boundaries in reference; Writer must output same format |
+| Pure narration output — no stage directions, no host commentary | Style rule #2: "Script is narration only." Producer cannot hand this to a voiceover artist if production notes are embedded | LOW | Enforced via prompt output format spec; the existing SKILL.md pattern handles this |
+| Factual fidelity anchored to Research.md | Style rule #4: "Every claim must be sourced. Speculation labeled as such." Hallucinated facts undermine the channel's authority positioning | MEDIUM | Writer prompt must anchor to dossier content; Research.md already provides per-claim attribution |
+| Channel tone: calm, journalistic, deadpan | Channel DNA defines this as the core voice. Deviation breaks brand consistency across every video | MEDIUM | Achieved via STYLE_PROFILE.md + channel.md loaded as context in Writer prompt |
+| Script word count in target range | 3,000–7,000 words, 20–50 min runtime (channel.md output targets). Too short = thin content; too long = padding | MEDIUM | Writer prompt must state target; may need a review pass if first draft is significantly short or long |
+| STYLE_PROFILE.md captures actionable patterns | "Calm tone" is not actionable. Must capture sentence rhythm, transition phrases, pacing structure, vocabulary register | MEDIUM | Reference script is a YouTube auto-caption transcript (no punctuation, arbitrary line breaks). Extraction prompt must work with this degraded format — see Implementation Notes |
+| STYLE_PROFILE.md as standalone readable artifact | Writer loads it as context on every video; it must be human-readable for manual review and editing | LOW | Plain markdown; stored in `context/` — not embedded in code |
 
 ### Differentiators (Competitive Advantage)
 
-Features that make the dossier meaningfully better than what an LLM produces from training data alone.
+Features that make this pipeline produce better scripts than a generic "write a documentary script about X" prompt.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Source chain tracing** | The reference script (Mexico's Most Disturbing Cult) traces facts through multiple layers: a news report cites a court document which cites a police report. Flat "source lists" miss this. A chain trace shows the Writer where authority actually originates. | HIGH | For each key claim, trace: assertion → source → that source's basis. Particularly important for contradicted or contested facts. [HEURISTIC] Claude reads scraped content and explicitly traces attribution chains. |
-| **Direct quote extraction** | The reference script uses direct quotes from historical figures to punctuate narration ("in 1961 he said..."). These must come from primary sources, not paraphrase. Unquoted facts are narrated; quoted facts become memorable moments. | MEDIUM | Explicitly extract verbatim quotes with full attribution (speaker, date, context, source). Separate section or inline callout. |
-| **Narrative hooks identification** | The Writer needs to know which facts are most dramatically potent — what the audience does not expect, where the story pivots, what the "reveal" is. The raw research does not surface these; a heuristic pass does. | MEDIUM | [HEURISTIC] After research synthesis, Claude identifies 3-5 narrative hooks: "the detail that changes everything," "the fact most people get wrong," "the unanswered question that haunts the case." These are explicitly labeled for the Writer. |
-| **Media inventory (separate file)** | The Director (Agent 1.4) and Media Acquisition agent (Agent 2.1) need URLs for available images, video, audio. Keeping this in Research.md bloats the dossier for the Writer. Separate file keeps both consumers happy. | LOW | Output as `media_inventory.md` in the project directory, separate from `Research.md`. Contains URLs, media type, subject described, licensing notes. |
-| **Wikipedia "Errors vs. Other Sources" check** | For this channel's niche, the reference script explicitly notes "the internet has been telling the story incorrectly since the turn of the century." Wikipedia is often the corrupted source. Flagging where Wikipedia contradicts primary sources is high-value. | MEDIUM | Compare Wikipedia's account against primary/academic sources. Flag divergences explicitly as "Wikipedia states X; primary source states Y." These become narrative moments: "you may have read..." |
-| **Scope estimation for runtime** | The Writer must produce a 20-50 minute script (3,000-7,000 words, 4-7 acts). If the research is too thin for 20 minutes, the Writer will pad. If too rich for 50, it will miss critical material. Knowing depth upfront shapes script structure. | LOW | [HEURISTIC] After research, Claude estimates: "This topic has sufficient material for approximately X-Y minutes based on timeline depth, source density, and sub-narrative count." |
-| **Cross-reference with past topics** | The agent should flag if any researched material overlaps significantly with a topic the channel has already covered. Prevents the Writer from producing a script that retreads ground. | LOW | Reads `context/channel/past_topics.md` (already exists from v1.0). Flags thematic overlap. Does not block — just informs. |
-
----
+| Hook and quote integration from Research.md | Research.md already contains `HOOK:` and `QUOTE:` callouts placed by Agent 1.2 specifically for the Writer. Consuming these directly = narrative tension for free | LOW | Writer prompt must explicitly instruct: use HOOK/QUOTE callouts as chapter openers and narration anchors. High ROI, zero extra work |
+| Transition phrase library extracted from reference | Reference script uses specific connective phrases ("this proved to be", "in the spring of", "it was upon this track that"). Capturing these preserves voice consistency; generic transitions ("furthermore", "notably") break the deadpan register | LOW | Simple verbatim extraction during style analysis. High signal, low effort |
+| Pacing profile: exposition vs. tension escalation | Reference script spends 2–3 chapters in slow historical setup before escalating to horror. Encoding this pattern as a qualitative instruction ("build slowly for the first third, then escalate") prevents flat pacing in generated scripts | MEDIUM | Word count per chapter in reference gives a rough baseline; qualitative instruction in STYLE_PROFILE.md is more durable than a hard ratio |
+| Open-ending pattern explicitly encoded | Style rule #6: if a mystery is unsolved, present evidence and leave the weight with the audience. Without explicit instruction, LLMs tend to artificially resolve ambiguity | LOW | STYLE_PROFILE.md includes an open-ending template derived from reference; prompt constraint reinforces it |
+| Chapter title generation in reference register | Reference uses evocative short titles ("Strangers in the Jungle", "Initial Control"). These titles carry narrative weight. Writer generates titles in same register, not generic "Background" or "Chapter 1" | LOW | Example titles from reference provide direct model for Writer |
+| Source authority woven into narration | Dossier provides per-claim attribution. Weaving these into narration naturally ("court records from 1962 show...") elevates perceived credibility without disrupting pacing | MEDIUM | Prompt instruction + example from reference of how factual authority is conveyed (stated with conviction, not always explicitly cited) |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Automated scraping of paywalled sources** | Academic papers, newspaper archives, court records often sit behind paywalls. "Get everything" sounds like it means paywalls too. | CFAA and equivalents. Also: login bypass adds brittle auth logic, account risks, and legal liability. Not worth it. | Scrape freely accessible portions (abstracts, previews, snippets). Flag paywalled sources explicitly so the user can manually retrieve if needed. |
-| **Real-time fact verification against every claim** | "Check every fact" sounds like quality control. | Every claim verification multiplies crawl4ai calls by 5-10x, dramatically increasing runtime and rate-limit risk for marginal gain. The source rating system already conveys confidence. | Rate sources HIGH/MEDIUM/LOW. Flag low-confidence claims in the dossier. Batch verification is the user's job if they choose to do it. |
-| **Automated interview subject identification and contact** | "Find me someone to interview" sounds useful. | Scraping personal contact info is a different legal and ethical domain. The agent cannot conduct interviews. This is fundamentally out of scope. | List named sources and their institutional affiliations in the key figures section. User finds contact info manually if needed. |
-| **Multi-language research by default** | International topics often have better primary sources in local languages (Spanish-language sources for Mexico cases, German for WWII topics, etc.). | Translation-on-scrape multiplies complexity significantly. crawl4ai returns raw HTML; translation requires an LLM call per page. Also: multi-language output creates consistency problems for the dossier. | Scrape English-language sources first. If key sources are only in another language, flag them with the URL and language tag so the user can manually translate and inject. |
-| **Storing research in SQLite database** | "What if we want to retrieve old research?" | Research.md is already a persistent file in the project directory. A parallel database adds complexity without enabling queries that the file system cannot already handle. Re-running research on an existing topic is rare enough that a file is sufficient. | File-based persistence. One Research.md per project directory. If the user wants to update research, they re-run the agent and the file is overwritten (with the previous version accessible via git history). |
-| **Sentiment analysis on sources** | "Know whether sources are biased" | NLP sentiment of scraped text is a weak proxy for source bias. Source type (primary court record vs. tabloid article) and source rating (HIGH/MEDIUM/LOW) provide more honest and actionable signal. | Reliability ratings with brief justification (e.g., "LOW — single tabloid source, no corroboration") replace sentiment analysis. |
-| **Auto-generated chapter outline** | "Give the Writer a chapter structure" | Imposing chapter structure in the Research phase constrains the Writer's narrative choices before they've engaged with the material. The Writer should derive structure from the material, not receive a pre-baked outline. | Narrative hooks section gives the Writer potent turning points without mandating structure. The Writer applies the style guide and reference scripts to determine act structure. |
+| Multiple script variants (A/B versions) | Seems useful for optimization | Doubles review work; pipeline converges on one topic per video; no feedback loop exists yet to evaluate which variant performs better | One authoritative script per run; manual iteration if revision is needed |
+| Inline production notes in script text | Directors want visual cues alongside narration | Breaks the "pure narration" rule (style rule #2); confuses voiceover source with direction; Agent 1.4 (Visual Orchestrator) reads the finished script and generates the shotlist — that is where visual cues live | Clean narration only; Agent 1.4 handles visual interpretation |
+| Style extraction re-run every video | "Fresher style" sounds like quality | Style extraction is explicitly one-time per Architecture.md Skill 1.3 spec; re-running on the same reference adds cost with no benefit | Re-run only when new reference scripts are added to `context/script-references/` |
+| Automated fact-checking pass after writing | Catching hallucinations sounds essential | The dossier-anchored approach already mitigates hallucination risk; a fact-checking pass requires another scraping/LLM pass, adds latency, and the checking LLM faces the same hallucination risk as the writing LLM | Anchor Writer to Research.md; human review catches errors that matter for publication |
+| Auto-generated chapter outline for Writer approval before full script | Adds a review checkpoint | Adds a round-trip that may not be needed; the Writer derives structure from the material using STYLE_PROFILE.md guidance; impose this only if full scripts frequently need structural revision | Ship full scripts first; add outline approval step reactively if structural issues emerge |
+| TTS / voice-over generation | Natural next step after script | Out of scope per Architecture.md; no TTS tool in stack; audio is handled in DaVinci Resolve by the editor | Stop at script text; TTS is a Phase 3+ concern |
+| Style extraction from multiple reference scripts averaged | More data sounds better | The existing reference is already an auto-caption transcript (degraded format); averaging multiple degraded transcripts produces more noise, not better signal | Use one clean style profile; add more references only when clean transcripts are available |
+| LLM API wrapper for Writer reasoning | Seems like the "right" way to call Claude programmatically | Architecture.md Rule 1: zero LLM API wrappers. All reasoning handled natively by Claude Code runtime | SKILL.md pattern — Claude Code is the runtime; no SDK code written |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Manual Topic Input (reads project dir from Agent 1.1)
-    |
-    v
-Pass 1: Broad Survey Scrape [DETERMINISTIC]
-    |
-    +---> Subject Overview (500-word synthesis) [HEURISTIC]
-    |
-    +---> Preliminary Timeline
-    |
-    +---> Key Figures (initial pass)
-    |
-    v
-Pass 2: Primary Source Deep-Dive [DETERMINISTIC]
-    |
-    +---> Timeline refinement (dates, corrections, gaps)
-    |
-    +---> Source chain tracing [HEURISTIC]
-    |
-    +---> Direct quote extraction
-    |
-    +---> Contradictions identification [HEURISTIC]
-    |
-    +---> Wikipedia error check [HEURISTIC]
-    |
-    v
-Synthesis Pass [HEURISTIC]
-    |
-    +---> Narrative hooks identification
-    |
-    +---> Scope estimation
-    |
-    +---> Unanswered questions section
-    |
-    +---> Source list with reliability ratings
-    |
-    v
-Output
-    |
-    +---> Research.md → projects/N. [Title]/Research.md
-    |
-    +---> media_inventory.md → projects/N. [Title]/media_inventory.md
+[context/script-references/*.md]
+    └──required by──> [Style Extraction (Skill 1.3)]  [HEURISTIC — one-time]
+                          └──produces──> [context/STYLE_PROFILE.md]
+                                             └──required by──> [The Writer (Agent 1.3)]
+
+[projects/N. Title/research/Research.md]   (output of Agent 1.2)
+    └──required by──> [The Writer (Agent 1.3)]
+
+[context/channel/channel.md]
+    └──required by──> [The Writer (Agent 1.3)]
+    └──required by──> [Style Extraction (Skill 1.3)]   (tone validation context)
+
+[context/channel/writting_style_guide.md]
+    └──required by──> [The Writer (Agent 1.3)]
+
+[The Writer (Agent 1.3)]
+    └──produces──> [projects/N. Title/script.md]
+                       └──feeds──> [Agent 1.4: Visual Orchestrator]  (future milestone)
 ```
-
-**Cross-reference with past topics** can run in parallel with synthesis — it reads a local file, not a remote source.
-
-**Media inventory** is separated from Research.md to serve two consumers without bloating either output.
 
 ### Dependency Notes
 
-- **Pass 2 requires Pass 1:** The broad survey identifies which primary sources exist and are worth targeting. Targeting primary sources without a subject understanding wastes crawl4ai calls on irrelevant archives.
-- **Source chain tracing requires both passes:** Chains can only be traced once both secondary and primary sources have been scraped and compared.
-- **Narrative hooks require synthesis:** Cannot identify what is surprising or pivotal without a full picture of the facts.
-- **Scope estimation requires synthesis:** Cannot assess depth until all sections are assembled.
+- **Style Extraction requires reference scripts:** One reference exists (`Mexico's Most Disturbing Cult.md`). Sufficient to produce an initial STYLE_PROFILE.md. The auto-caption format is degraded — see Implementation Notes.
+- **Writer requires STYLE_PROFILE.md:** Without it, Writer falls back to generic documentary voice, losing the channel's deadpan-neutral register. Hard dependency.
+- **Writer requires Research.md:** Script cannot be generated without a completed research dossier. Sequential dependency — research must complete before writing begins.
+- **STYLE_PROFILE.md is a reusable artifact:** Lives in `context/`, shared across all future videos. Not regenerated per video.
+- **Agent 1.4 is downstream:** The Writer's script is consumed by the Visual Orchestrator (not yet built). The script output format must be stable for that future handoff.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.2)
 
-Minimum viable dossier that a scriptwriter can actually use.
+Minimum needed to produce a usable script from a research dossier.
 
-- [x] Manual topic input — without this, the agent cannot run
-- [x] Pass 1: Broad survey (Wikipedia, news archives, general web) — without this, no baseline knowledge
-- [x] Pass 2: Primary source dive (archive.org, loc.gov, government sources) — without this, the dossier is thin and purely secondary
-- [x] Chronological timeline with source attribution per entry — critical for script structure
-- [x] Key figures section with roles, relationships, quotes — backbone of narration
-- [x] Subject overview (500-word synthesis) — establishing context for the Writer
-- [x] Contradictions section — narrative tension material
-- [x] Unanswered questions section — potential endings and hooks
-- [x] Source list with reliability ratings — lets the Writer calibrate confidence in each claim
-- [x] Output to `projects/N. [Title]/Research.md` — required for pipeline continuity
+- [ ] **Style extraction prompt** — reads reference script(s), outputs `STYLE_PROFILE.md` with: sentence rhythm description, chapter structure pattern, transition phrases (verbatim list), pacing notes (build rate), tone markers, open-ending instruction. [HEURISTIC — no code needed]
+- [ ] **STYLE_PROFILE.md stored in `context/`** — loaded by Writer on every run; human-readable for manual adjustment
+- [ ] **Writer SKILL.md** — defines the four context files to load, output format (numbered chapters, word count target, file path), and the generation prompt
+- [ ] **Script format spec** — chapter numbers and evocative titles, pure narration, no production notes, 3,000–7,000 word target
+- [ ] **HOOK/QUOTE integration instruction** — Writer prompt explicitly instructs use of Research.md callouts as narrative anchors
 
 ### Add After Validation (v1.x)
 
-Features to add once the base dossier proves useful to the Writer.
+Add once a first script has been reviewed and gaps identified.
 
-- [ ] Source chain tracing — add when Writer feedback indicates sourcing is too flat
-- [ ] Direct quote extraction as separate labeled section — add when Writer asks for quote callouts
-- [ ] Narrative hooks identification — add when Writer feedback shows difficulty identifying dramatic turning points
-- [ ] Media inventory as separate file — add when Agent 1.4 (Director) is built and needs the data
-- [ ] Wikipedia error check — add when a video is produced and the "correcting the record" angle proves valuable
+- [ ] **Pacing audit heuristic** — after Writer produces script, a secondary review step checks word count per chapter and flags disproportionate chapters. Trigger: first scripts show consistently unbalanced acts.
+- [ ] **Transition phrase enforcement** — if early scripts drift from channel voice, promote the transition phrase list from STYLE_PROFILE.md to a hard constraint section in the Writer prompt
+- [ ] **Second reference script** — when a clean (non-auto-captioned) transcript is available, re-run style extraction and expand STYLE_PROFILE.md with merged patterns
+- [ ] **Writer CLI pre-check** — thin Python script that verifies `Research.md` exists before invoking Writer, prints clear error if missing. [DETERMINISTIC — low priority, prevents confusing failures]
 
 ### Future Consideration (v2+)
 
-- [ ] Scope estimation — defer until enough Research.md outputs exist to calibrate the heuristic
-- [ ] Cross-reference with past topics — low risk without it; add when the backlog grows large enough that overlap becomes a real concern
+Defer until core is validated.
+
+- [ ] **Chapter outline approval checkpoint** — generate outline first, get user approval, then write full narration. Add only if full scripts frequently need structural revision.
+- [ ] **Style drift detection** — compare script output against STYLE_PROFILE.md metrics. Needs multiple reference scripts to establish meaningful baselines.
+- [ ] **Script versioning** — keep draft history in `projects/N. Title/drafts/`. Worthwhile once multiple videos shipped and iteration patterns emerge.
 
 ---
 
@@ -162,23 +135,17 @@ Features to add once the base dossier proves useful to the Writer.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Manual topic input | HIGH | LOW | P1 |
-| Pass 1: Broad survey scrape | HIGH | MEDIUM | P1 |
-| Pass 2: Primary source dive | HIGH | HIGH | P1 |
-| Chronological timeline + sources | HIGH | MEDIUM | P1 |
-| Key figures + quotes | HIGH | MEDIUM | P1 |
-| Subject overview | HIGH | LOW | P1 |
-| Contradictions section | HIGH | LOW | P1 |
-| Unanswered questions | MEDIUM | LOW | P1 |
-| Source list + reliability ratings | HIGH | MEDIUM | P1 |
-| Output to project dir | HIGH | LOW | P1 |
-| Source chain tracing | HIGH | HIGH | P2 |
-| Direct quote extraction | MEDIUM | LOW | P2 |
-| Narrative hooks identification | HIGH | MEDIUM | P2 |
-| Media inventory (separate file) | MEDIUM | LOW | P2 |
-| Wikipedia error check | MEDIUM | MEDIUM | P2 |
-| Scope estimation | LOW | LOW | P3 |
-| Cross-reference with past topics | LOW | LOW | P3 |
+| Style extraction prompt → STYLE_PROFILE.md | HIGH | LOW (pure heuristic) | P1 |
+| Writer SKILL.md: chapter structure + pure narration | HIGH | LOW (prompt + format spec) | P1 |
+| Writer: factual anchoring to Research.md | HIGH | MEDIUM (prompt engineering) | P1 |
+| Writer: HOOK/QUOTE integration from dossier | HIGH | LOW (prompt instruction) | P1 |
+| Writer: channel tone via STYLE_PROFILE.md | HIGH | LOW (context loading) | P1 |
+| Writer: chapter title generation | MEDIUM | LOW | P1 |
+| STYLE_PROFILE.md: transition phrase library | MEDIUM | LOW | P2 |
+| STYLE_PROFILE.md: pacing notes | MEDIUM | MEDIUM | P2 |
+| STYLE_PROFILE.md: open-ending template | MEDIUM | LOW | P2 |
+| Pacing audit heuristic (post-generation) | LOW | MEDIUM | P3 |
+| Chapter outline approval checkpoint | LOW | LOW | P3 |
 
 **Priority key:**
 - P1: Must have for launch
@@ -187,50 +154,55 @@ Features to add once the base dossier proves useful to the Writer.
 
 ---
 
-## What the Scriptwriter Actually Needs
+## Implementation Notes
 
-Analysis of the reference script ("Mexico's Most Disturbing Cult") reveals what the downstream Writer requires. These are not aspirational — they are structural requirements derived from how the channel's scripts are actually written.
+### Reference Script Format Problem
 
-| Script Pattern | Research Dossier Requirement |
-|----------------|-------------------------------|
-| Events narrated in strict chronological order with precise dates | Timeline with dated entries and sources per entry |
-| Named actors with full names, not "the suspect" or "a local official" | Key figures: full names, roles, relationships |
-| Transition via factual pivots, not opinion ("this would prove to be the beginning of...") | Contradictions and unanswered questions sections to generate clean factual pivots |
-| Correcting mainstream misconceptions ("the internet has been telling the story incorrectly") | Wikipedia error check; primary source prioritization |
-| Quotes from historical figures to anchor scenes | Direct quote extraction with full attribution |
-| Pacing shift from exposition to tension requires knowing where the inflection point is | Narrative hooks identification |
-| Script word count 3,000-7,000 words across 4-7 acts | Scope estimation |
-| Source credibility communicated implicitly ("court records show...") | Source reliability ratings inform how Writer frames each assertion |
+The only existing reference script (`Mexico's Most Disturbing Cult.md`) is a YouTube auto-caption transcript. It has:
+- No sentence-ending punctuation
+- Arbitrary line breaks mid-sentence
+- `[Music]` / `[Applause]` markers interspersed
+- Chapter headers embedded mid-file (`1. Strangers in the Jungle`, `2. Initial Control`)
 
----
+**Consequence for style extraction:** Cannot use punctuation-based sentence boundary detection or quantitative rhythm analysis. The extraction prompt must instead:
+1. Identify chapter boundaries from numbered headers
+2. Read line groupings to infer sentence rhythm qualitatively
+3. Extract transition phrases and connective language verbatim
+4. Characterize pacing as qualitative instruction ("slow historical build for chapters 1–2, escalate in chapters 3–4") not a numeric ratio
 
-## Niche-Specific Considerations
+This is a prompt engineering constraint, not a blocker. The extraction is still achievable from this format. A clean transcript (properly punctuated) would yield higher-confidence style patterns.
 
-This agent must handle multiple documentary sub-niches without hardcoding. Each has distinct primary source types:
+### STYLE_PROFILE.md Scope
 
-| Sub-Niche | Primary Source Types | Key Free Archives |
-|-----------|---------------------|-------------------|
-| Dark history / historical crimes | Court records, police reports, newspaper archives, inquest records | archive.org, Chronicling America (loc.gov), national archives |
-| Cults / psychological control | FBI files (FOIA releases), survivor testimonies, court transcripts | vault.fbi.gov, archive.org, PACER (limited free access) |
-| Unsolved disappearances | Missing persons reports, coroner reports, local news archives | NamUs (national missing persons), local newspaper archives |
-| Institutional corruption | Government reports, whistleblower documents, congressional records | archives.gov, govinfo.gov, ProPublica Documented |
-| Dark web / digital crimes | Court indictments, DOJ press releases, cybersecurity research papers | justice.gov, pacer.gov (indictments), academic preprints |
+The profile should contain only what the Writer can act on. Avoid abstract descriptions. Include:
+- 5–8 example transition phrases extracted verbatim from the reference script
+- Chapter structure pattern: how many chapters, approximate distribution of content across acts
+- Pacing instruction: when to build slowly, when to escalate, when to let a fact land without commentary
+- Vocabulary register: word classes to favor (precise historical nouns, active past-tense verbs) and avoid (rhetorical questions, superlatives, first-person)
+- Open-ending template: how the reference script ends unresolved cases, with example
+- What the voice does NOT do: no "smash that subscribe button", no "join us as we explore", no "shockingly", no rhetorical questions to the audience
 
-The agent must generate appropriate Pass 2 source targets based on the topic's sub-niche, not use a fixed source list. Sub-niche is [HEURISTIC] — Claude infers it from the topic title and Pass 1 findings.
+### Writer Skill Architecture
+
+Per Architecture.md Rule 2, the Writer is [HEURISTIC] — Claude Code does the reasoning. The skill is a SKILL.md that:
+1. Instructs Claude to load the four context files (STYLE_PROFILE.md, Research.md, channel.md, writting_style_guide.md)
+2. Defines the output format (numbered chapters with titles, word count target, file path)
+3. Provides the generation prompt
+
+No Python code needed for the core writing step. A thin CLI pre-check (deterministic) can be added later to verify Research.md exists before invoking, but that is not MVP.
 
 ---
 
 ## Sources
 
-- Architecture.md — Research Dossier Schema (ground truth for output fields)
-- `context/script references/Mexico's Most Disturbing Cult.md` — Reference script analysis for scriptwriter requirements
-- [Research Methodologies for Documentaries (Fiveable)](https://fiveable.me/documentary-production/unit-4/research-methodologies-documentaries/study-guide/P6YntwxZNeRvOXor)
-- [Ken Burns on Documentary Research (MasterClass)](https://www.masterclass.com/articles/learn-about-documentary-filmmaking-with-tips-and-advice-from-ken-burns)
-- [How to Write a Documentary Script (Celtx)](https://blog.celtx.com/how-to-write-a-documentary-script/)
-- [Crawl4AI Documentation (v0.8.x)](https://docs.crawl4ai.com/)
-- [Web scraping for research: Legal considerations (SAGE Journals, 2025)](https://journals.sagepub.com/doi/10.1177/20539517251381686)
-- [Web Scraping for Investigative Journalism (ICIJ)](https://www.icij.org/inside-icij/2018/09/web-scraping-how-to-harvest-data-for-untold-stories/)
+- `context/script-references/Mexico's Most Disturbing Cult.md` — analyzed directly: chapter format, voice patterns, transition phrases, pacing, open-ending treatment
+- `context/channel/channel.md` — channel DNA, tone rules, audience profile, output targets
+- `context/channel/writting_style_guide.md` — six style rules (narration-only, chapters, pacing, sources, silence, open endings)
+- `Architecture.md` — Skill 1.3 and Agent 1.3 spec, HEURISTIC/DETERMINISTIC classification rule, zero-LLM-wrapper rule
+- `.planning/PROJECT.md` — v1.2 milestone definition, existing features, constraints
+- `.claude/skills/researcher/SKILL.md` — Research.md dossier format (Writer's primary input); confirmed HOOK/QUOTE callout structure
+- `projects/1. The Duplessis Orphans.../research/Research.md` — live example of dossier output, confirmed section structure and callout pattern
 
 ---
-*Feature research for: Agent 1.2 — The Researcher (documentary web research agent)*
-*Researched: 2026-03-12*
+*Feature research for: Skill 1.3 (Style Extraction) and Agent 1.3 (The Writer)*
+*Researched: 2026-03-14*

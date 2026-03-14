@@ -62,7 +62,10 @@ Plans:
   3. Every factual claim in the script can be traced to a specific section of Research.md — no fact appears that is not present in the dossier
   4. Research.md HOOK and QUOTE callouts appear as chapter entry points or narration anchors in the generated script — they are not ignored or buried mid-chapter
   5. The generated script reaches 3,000-7,000 words and maintains the channel's calm, deadpan tone throughout — it does not shift to an emotionally heightened register in later chapters
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — Build writer skill (CLI, generation prompt, tests, skill docs)
+- [ ] 12-02-PLAN.md — End-to-end validation (generate Duplessis Orphans script, human review, wire CLAUDE.md)
 
 ## Progress
 
@@ -78,5 +81,5 @@ Plans:
 | 8. Survey Pass (Pass 1) | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
 | 10. Dossier Output | v1.1 | 3/3 | Complete | 2026-03-14 |
-| 11. Style Extraction Skill | 2/2 | Complete    | 2026-03-14 | - |
-| 12. Writer Agent | v1.2 | 0/? | Not started | - |
+| 11. Style Extraction Skill | v1.2 | 2/2 | Complete | 2026-03-14 |
+| 12. Writer Agent | v1.2 | 0/2 | Not started | - |

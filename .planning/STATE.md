@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: The Researcher
 status: active
-stopped_at: Phase 9 context gathered
-last_updated: "2026-03-14T17:44:29.757Z"
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-14T18:13:00.672Z"
 last_activity: 2026-03-12 — url_builder.py + cli.py cmd_survey implemented, crawl4ai validated, DDG confirmed, 33 tests passing
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 3
+  total_plans: 5
+  completed_plans: 5
 ---
 
 ---
@@ -68,6 +68,7 @@ Progress: [██░░░░░░░░] 14%
 *Updated after each plan completion*
 | Phase 08-survey-pass P01 | 3 | 2 tasks | 5 files |
 | Phase 08-survey-pass P02 | 4 | 2 tasks | 3 files |
+| Phase 09-deep-dive-pass P01 | 10 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,9 @@ Recent decisions affecting v1.1:
 - [Phase 08-survey-pass]: asyncio.run() used in cmd_survey to call async _fetch_ddg_with_links — keeps cmd_survey sync
 - [Phase 08-survey-pass]: DDG redirect decode: /l/?uddg=<encoded> parsed via urllib.parse.parse_qs to extract real URLs
 - [Phase 08-survey-pass]: 50% pitfall guard in _strip_wiki_noise prevents destroying short articles
+- [Phase 09-deep-dive-pass]: Budget guard enforces max 15 total source files across both passes
+- [Phase 09-deep-dive-pass]: Sources without verdict key treated as skip in cmd_deepen
+- [Phase 09-deep-dive-pass]: Re-run cleanup: delete pass2_*.json at start of cmd_deepen, never src_*.json
 
 ### Pending Todos
 
@@ -105,7 +109,7 @@ None. Both Phase 7 blockers resolved:
 
 ## Session Continuity
 
-Last session: 2026-03-14T17:44:29.755Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-deep-dive-pass/09-CONTEXT.md
+Last session: 2026-03-14T18:13:00.670Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: None
 Next: Execute Phase 8 (Researcher Pass 1 Expansion)

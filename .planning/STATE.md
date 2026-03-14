@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: The Writer
-status: defining_requirements
-stopped_at: Defining requirements
-last_updated: "2026-03-14T22:35:00Z"
-last_activity: 2026-03-14 — Milestone v1.2 started
+status: roadmap_ready
+stopped_at: Phase 11 not started
+last_updated: "2026-03-14T22:45:00Z"
+last_activity: 2026-03-14 — Roadmap created for v1.2
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -24,10 +24,21 @@ See: .planning/PROJECT.md (updated 2026-03-14)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 11 — Style Extraction Skill (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-14 — Milestone v1.2 started
+Status: Roadmap approved, ready to plan Phase 11
+Last activity: 2026-03-14 — Roadmap created
+
+[----------] 0% (0/2 phases complete)
+
+## Performance Metrics
+
+| Metric | v1.0 | v1.1 | v1.2 |
+|--------|------|------|------|
+| LOC | 7,018 | 1,737 | - |
+| Tests | 175 | 175 | - |
+| Phases | 6 | 4 | 2 |
+| Timeline | 2 days | 3 days | - |
 
 ## Accumulated Context
 
@@ -35,16 +46,26 @@ Last activity: 2026-03-14 — Milestone v1.2 started
 
 All v1.1 decisions archived to `milestones/v1.1-ROADMAP.md`. Key decisions persist in PROJECT.md Key Decisions table.
 
+**v1.2 decisions (from research):**
+- Style extraction is [HEURISTIC] — zero Python code in the style-extraction skill directory
+- Writer CLI is thin stdlib context-loader only — no reasoning code, no LLM calls
+- STYLE_PROFILE.md lives in `context/channel/` as a channel-level artifact (same tier as channel.md)
+- Build order: Phase 11 (style extraction) must produce validated STYLE_PROFILE.md before Phase 12 (writer) can be meaningfully tested
+- Context budget: 8,000 words max at script generation time — curated package only
+- Writer prompt written before CLI — prompt structure determines what context the CLI must load
+- End-to-end validation target: Duplessis Orphans Research.md (completed dossier, no new research needed)
+- STYLE_PROFILE.md must distinguish "Universal Voice Rules" from "Narrative Arc Templates" to prevent cult-arc overfitting
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-None.
+- Single reference script (`Mexico's Most Disturbing Cult.md`) is a cult-topic auto-caption export — STYLE_PROFILE.md coverage will be limited to one narrative arc type until a second reference is added. Mitigated by explicit labeling in the profile format.
 
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: Defining v1.2 requirements
+Stopped at: Roadmap created — ready to run `/gsd:plan-phase 11`
 Resume file: None

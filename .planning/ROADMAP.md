@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 Channel Assistant** — Phases 1-6 (shipped 2026-03-11)
 - ✅ **v1.1 The Researcher** — Phases 7-10 (shipped 2026-03-14)
+- 🔄 **v1.2 The Writer** — Phases 11-12 (active)
 
 ## Phases
 
@@ -29,6 +30,37 @@
 
 </details>
 
+### v1.2 The Writer (Phases 11-12)
+
+- [ ] **Phase 11: Style Extraction Skill** - Extract channel voice from reference scripts into reusable STYLE_PROFILE.md
+- [ ] **Phase 12: Writer Agent** - Generate narrated chapter scripts from research dossiers using validated style context
+
+## Phase Details
+
+### Phase 11: Style Extraction Skill
+**Goal**: Channel voice is captured as a reusable behavioral ruleset — not statistics — that any future Writer invocation can load as stable context
+**Depends on**: Nothing (no code dependency; reference scripts already exist in `context/script-references/`)
+**Requirements**: STYLE-01, STYLE-02, STYLE-03, STYLE-04, STYLE-05
+**Success Criteria** (what must be TRUE):
+  1. Running the style-extraction skill against the reference script produces `context/channel/STYLE_PROFILE.md` with named voice rules illustrated by verbatim examples from the reference
+  2. STYLE_PROFILE.md contains a "Universal Voice Rules" section separable from a topic-specific "Narrative Arc Templates" section — so non-cult topics are not forced into the cult story arc
+  3. STYLE_PROFILE.md includes a transition phrase library drawn verbatim from the reference script — generic connective language ("furthermore", "notably") is not present in a generated test passage that uses only the profile as style guidance
+  4. STYLE_PROFILE.md includes an open-ending template that prevents artificial resolution of unsolved cases
+  5. The skill is invocable via SKILL.md with no Python code — classification is HEURISTIC; zero Python files exist in the style-extraction skill directory
+**Plans**: TBD
+
+### Phase 12: Writer Agent
+**Goal**: A completed, narrated video script exists in the project directory — written in the channel's voice, anchored to Research.md sources, with no hallucinated facts or production notes
+**Depends on**: Phase 11 (STYLE_PROFILE.md must be committed and validated before meaningful script quality can be evaluated)
+**Requirements**: SCRIPT-01, SCRIPT-02, SCRIPT-03, SCRIPT-04, SCRIPT-05, SCRIPT-06, SCRIPT-07
+**Success Criteria** (what must be TRUE):
+  1. Running `python -m writer load "<topic>"` aggregates Research.md + STYLE_PROFILE.md + channel.md and prints them to stdout — Claude then generates the script in the same session with no additional file loading required
+  2. The generated Duplessis Orphans script contains numbered chapters with titles in the reference register (evocative, not generic) and pure narration text — no stage directions, visual cues, or production notes anywhere in the output
+  3. Every factual claim in the script can be traced to a specific section of Research.md — no fact appears that is not present in the dossier
+  4. Research.md HOOK and QUOTE callouts appear as chapter entry points or narration anchors in the generated script — they are not ignored or buried mid-chapter
+  5. The generated script reaches 3,000–7,000 words and maintains the channel's calm, deadpan tone throughout — it does not shift to an emotionally heightened register in later chapters
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -43,3 +75,5 @@
 | 8. Survey Pass (Pass 1) | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
 | 10. Dossier Output | v1.1 | 3/3 | Complete | 2026-03-14 |
+| 11. Style Extraction Skill | v1.2 | 0/? | Not started | - |
+| 12. Writer Agent | v1.2 | 0/? | Not started | - |

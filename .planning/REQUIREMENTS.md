@@ -49,24 +49,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STYLE-01 | — | Pending |
-| STYLE-02 | — | Pending |
-| STYLE-03 | — | Pending |
-| STYLE-04 | — | Pending |
-| STYLE-05 | — | Pending |
-| SCRIPT-01 | — | Pending |
-| SCRIPT-02 | — | Pending |
-| SCRIPT-03 | — | Pending |
-| SCRIPT-04 | — | Pending |
-| SCRIPT-05 | — | Pending |
-| SCRIPT-06 | — | Pending |
-| SCRIPT-07 | — | Pending |
+| STYLE-01 | Phase 11 | Pending |
+| STYLE-02 | Phase 11 | Pending |
+| STYLE-03 | Phase 11 | Pending |
+| STYLE-04 | Phase 11 | Pending |
+| STYLE-05 | Phase 11 | Pending |
+| SCRIPT-01 | Phase 12 | Pending |
+| SCRIPT-02 | Phase 12 | Pending |
+| SCRIPT-03 | Phase 12 | Pending |
+| SCRIPT-04 | Phase 12 | Pending |
+| SCRIPT-05 | Phase 12 | Pending |
+| SCRIPT-06 | Phase 12 | Pending |
+| SCRIPT-07 | Phase 12 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-14*
-*Last updated: 2026-03-14 after initial definition*
+*Last updated: 2026-03-14 after roadmap creation — all 12 requirements mapped*

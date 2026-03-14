@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An agentic documentary video generation pipeline for a YouTube channel focused on dark mysteries content. Claude Code itself is the orchestrator — it spawns sub-agents with skills to complete each phase. Agent 1.1 (Channel Assistant) handles strategy and ideation. Agent 1.2 (The Researcher) performs comprehensive two-pass web research to build factual foundations for scriptwriting.
+An agentic documentary video generation pipeline for a YouTube channel focused on dark mysteries content. Claude Code itself is the orchestrator — it spawns sub-agents with skills to complete each phase. Three agents are now shipped: Agent 1.1 (Channel Assistant) handles strategy and ideation, Agent 1.2 (The Researcher) performs two-pass web research, and Agent 1.3 (The Writer) generates narrated chapter scripts from research dossiers in the channel's extracted voice.
 
 ## Core Value
 
@@ -24,11 +24,12 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 - Structured Research.md dossier with timeline, key figures, contradictions, narrative hooks — v1.1
 - Media URL cataloging (separate media_urls.md grouped by asset category) — v1.1
 - Niche-agnostic research agent with manual topic input and project directory output — v1.1
+- ✓ Style extraction from reference scripts → STYLE_PROFILE.md — v1.2
+- ✓ Script generation from research dossier → numbered chapters with pure narration — v1.2
 
 ### Active
 
-- [ ] Style extraction from reference scripts → STYLE_PROFILE.md
-- [ ] Script generation from research dossier → numbered chapters with pure narration
+(None — next milestone will define new requirements via `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -39,26 +40,23 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 - LLM API wrappers for reasoning — Architecture.md Rule 1
 - PDF extraction (PyMuPDF/OCR) — add reactively when first PDFs encountered
 - Paid source access (PACER, newspaper archives) — free sources only per Architecture.md
+- NLP/spaCy style metrics — heuristic task, LLM reasoning is more effective
+- Inline visual/production notes in script — Agent 1.4 (Visual Orchestrator) owns visual cues
+- Automated fact-checking against external sources — Research.md is source of truth
+- Word count gates or automated quality scoring — defer to human review
 
 ## Context
 
-This is the **Narrative Engineering phase** of the documentary pipeline (see `Architecture.md`). Two agents are now shipped:
-
-**Current state (v1.1 shipped):**
+**Current state (v1.2 shipped):**
 - Agent 1.1 (Channel Assistant): 7,018 LOC Python, 175 tests, full pipeline `scrape → analyze → trends → topics → project init`
 - Agent 1.2 (The Researcher): 1,737 LOC Python + prompts, two-pass research `survey → deepen → write`, validated on real topic
+- Agent 1.3 (The Writer): stdlib-only CLI + generation prompt, style extraction skill, `load → generate → Script.md`
+- STYLE_PROFILE.md: 371-line channel voice behavioral ruleset (5 Universal Voice Rules, arc templates, transitions, open endings)
 - SQLite database with 37 migrated competitor videos from 3 channels
-- Full test suite passing across both agents
+- End-to-end validated: Duplessis Orphans topic from competitor analysis → research dossier → narrated script
+- Full test suite passing across all agents
 
-## Current Milestone: v1.2 The Writer
-
-**Goal:** Extract writing style from reference scripts and generate narrated video scripts from research dossiers.
-
-**Target features:**
-- Style extraction skill (one-time heuristic) from reference scripts in `context/script-references/`
-- Script generation agent that reads Research.md + STYLE_PROFILE.md + channel DNA → numbered chapters with pure narration
-
-**Channel profile:** Dark history, true crime, unsolved mysteries. 20-50 min documentaries. Neutral, cinematic tone. Target audience: 22-38, intellectually curious. See `context/channel/channel.md`.
+**Channel profile:** Dark history, true crime, unsolved mysteries. 20-50 min documentaries. Neutral, cinematic tone. Target audience: 22-38, intellectually curious.
 
 ## Constraints
 
@@ -72,21 +70,26 @@ This is the **Narrative Engineering phase** of the documentary pipeline (see `Ar
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| SQLite over JSON for competitor DB | Queryable, handles growth, stdlib support | Good |
-| yt-dlp subprocess over Python API | More stable, debuggable, consistent JSON output | Good |
-| stdlib-only dependencies for channel-assistant | Zero install friction, no version conflicts | Good |
-| Context-loader CLI pattern | CLI prints structured data, Claude does all reasoning | Good |
-| Anchored scoring rubrics in prompt files | Consistent scoring across runs without code gates | Good |
-| 5 topics per run | Focused shortlist, no decision fatigue | Good |
-| Heuristic/deterministic separation | Matches Architecture.md Rule 2 perfectly | Good |
-| TDD red-green for all deterministic code | 175+ tests caught regressions early | Good |
-| crawl4ai with domain-isolated browser contexts | Prevents cross-domain contamination in scraping | Good |
-| Two-pass research (survey → deep dive) | Broad coverage first, then targeted depth | Good |
-| JSON source manifest between passes | Machine-readable, schema-locked, Claude evaluates | Good |
-| Structured credibility signals (no scalar scores) | Richer than numbers, matches Architecture.md dossier schema | Good |
-| Narrative-first dossier with HOOK/QUOTE callouts | Scriptwriter-optimized output, not raw research dump | Good |
-| Writer handoff: factual only, no editorial guidance | Agent 1.3 owns narrative decisions, not Agent 1.2 | Good |
-| Budget guard: max 15 total source files | Prevents context bloat across both passes | Good |
+| SQLite over JSON for competitor DB | Queryable, handles growth, stdlib support | ✓ Good |
+| yt-dlp subprocess over Python API | More stable, debuggable, consistent JSON output | ✓ Good |
+| stdlib-only dependencies for channel-assistant | Zero install friction, no version conflicts | ✓ Good |
+| Context-loader CLI pattern | CLI prints structured data, Claude does all reasoning | ✓ Good |
+| Anchored scoring rubrics in prompt files | Consistent scoring across runs without code gates | ✓ Good |
+| 5 topics per run | Focused shortlist, no decision fatigue | ✓ Good |
+| Heuristic/deterministic separation | Matches Architecture.md Rule 2 perfectly | ✓ Good |
+| TDD red-green for all deterministic code | 175+ tests caught regressions early | ✓ Good |
+| crawl4ai with domain-isolated browser contexts | Prevents cross-domain contamination in scraping | ✓ Good |
+| Two-pass research (survey → deep dive) | Broad coverage first, then targeted depth | ✓ Good |
+| JSON source manifest between passes | Machine-readable, schema-locked, Claude evaluates | ✓ Good |
+| Structured credibility signals (no scalar scores) | Richer than numbers, matches Architecture.md dossier schema | ✓ Good |
+| Narrative-first dossier with HOOK/QUOTE callouts | Scriptwriter-optimized output, not raw research dump | ✓ Good |
+| Writer handoff: factual only, no editorial guidance | Agent 1.3 owns narrative decisions, not Agent 1.2 | ✓ Good |
+| Budget guard: max 15 total source files | Prevents context bloat across both passes | ✓ Good |
+| Style extraction as [HEURISTIC] skill | Zero Python code, LLM reasoning more effective than NLP metrics | ✓ Good |
+| Two-pass style extraction (reconstruct → extract) | Auto-caption reconstruction preserves narrator rhythm before analysis | ✓ Good |
+| STYLE_PROFILE.md separates universal rules from arc templates | Prevents cult-arc overfitting on non-cult topics | ✓ Good |
+| Writer CLI is stdlib-only context-loader | No LLM calls in code, Claude does all reasoning at generation time | ✓ Good |
+| 9-section generation prompt | Self-contained prompt with all constraints, no implicit knowledge needed | ✓ Good |
 
 ---
-*Last updated: 2026-03-14 after v1.2 milestone start*
+*Last updated: 2026-03-15 after v1.2 milestone*

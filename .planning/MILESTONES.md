@@ -1,5 +1,22 @@
 # Milestones
 
+## v1.2 The Writer (Shipped: 2026-03-15)
+
+**Phases completed:** 2 phases, 4 plans, 8 tasks
+**Timeline:** 6 days (2026-03-09 → 2026-03-15) | **Files changed:** 30 (+3,651 / -57)
+
+**Key accomplishments:**
+1. Zero-code style extraction skill — reconstructs auto-caption scripts and extracts behavioral voice rules into STYLE_PROFILE.md (371 lines)
+2. STYLE_PROFILE.md with 5 Universal Voice Rules, Narrative Arc Templates with applicability labels, 16 verbatim transition phrases, Open Ending Template
+3. Writer CLI context-loader (stdlib-only) — aggregates Research.md + STYLE_PROFILE.md + channel.md for script generation
+4. 9-section generation prompt with hook formula, HOOK/QUOTE rules, all 5 voice rules, and Open Ending Template
+5. End-to-end validated — Duplessis Orphans documentary script (7 chapters, 3,006 words) generated and human-approved
+6. Full pipeline wired — CLAUDE.md routing tables updated for style-extraction and writer skills
+
+**Tech debt:** 4 non-blocking items (stale writting_style_guide.md reference, CLAUDE.md routing overstatement, hook sentence-count inconsistency, script line count below plan spec). See `milestones/v1.2-MILESTONE-AUDIT.md`.
+
+---
+
 ## v1.1 The Researcher (Shipped: 2026-03-14)
 
 **Phases completed:** 4 phases, 8 plans, 4 tasks

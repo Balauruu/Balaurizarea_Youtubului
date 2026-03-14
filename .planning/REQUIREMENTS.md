@@ -22,20 +22,20 @@ Requirements for Agent 1.2 — The Researcher. Each maps to roadmap phases.
 
 ### Dossier Output
 
-- [ ] **DOSS-01**: Agent produces a Research.md with subject overview (~500 words), chronological timeline, and key figures (names, roles, quotes)
-- [ ] **DOSS-02**: Research.md includes a contradictions section identifying conflicting accounts across sources
-- [ ] **DOSS-03**: Research.md includes unanswered questions that create narrative tension
-- [ ] **DOSS-04**: Research.md uses structured credibility signals (source_type, corroborated_by, access_quality) — no scalar scores
-- [ ] **DOSS-05**: Research.md is capped at ~2,000 words of curated scriptwriter-facing content
-- [ ] **DOSS-06**: Agent extracts direct quotes as labeled callouts for scene anchoring
-- [ ] **DOSS-07**: Agent identifies 3-5 narrative hooks (high-impact story beats) explicitly labeled for the Writer
-- [ ] **DOSS-08**: Agent flags where mainstream coverage contradicts primary sources (correcting-the-record opportunities)
+- [x] **DOSS-01**: Agent produces a Research.md with subject overview (~500 words), chronological timeline, and key figures (names, roles, quotes)
+- [x] **DOSS-02**: Research.md includes a contradictions section identifying conflicting accounts across sources
+- [x] **DOSS-03**: Research.md includes unanswered questions that create narrative tension
+- [x] **DOSS-04**: Research.md uses structured credibility signals (source_type, corroborated_by, access_quality) — no scalar scores
+- [x] **DOSS-05**: Research.md is capped at ~2,000 words of curated scriptwriter-facing content
+- [x] **DOSS-06**: Agent extracts direct quotes as labeled callouts for scene anchoring
+- [x] **DOSS-07**: Agent identifies 3-5 narrative hooks (high-impact story beats) explicitly labeled for the Writer
+- [x] **DOSS-08**: Agent flags where mainstream coverage contradicts primary sources (correcting-the-record opportunities)
 - [ ] **DOSS-09**: Agent writes Research.md to `projects/N. [Title]/research/`
 
 ### Media Catalog
 
-- [ ] **MEDIA-01**: Agent produces a separate `media_urls.md` cataloging media URLs found during research
-- [ ] **MEDIA-02**: media_urls.md includes URL, description, and source type — kept separate from Research.md
+- [x] **MEDIA-01**: Agent produces a separate `media_urls.md` cataloging media URLs found during research
+- [x] **MEDIA-02**: media_urls.md includes URL, description, and source type — kept separate from Research.md
 
 ## v2 Requirements
 
@@ -73,17 +73,17 @@ Deferred to future release. Tracked but not in current roadmap.
 | RSRCH-02 | Phase 8 | Complete |
 | RSRCH-04 | Phase 8 | Complete |
 | RSRCH-03 | Phase 9 | Complete |
-| DOSS-01 | Phase 10 | Pending |
-| DOSS-02 | Phase 10 | Pending |
-| DOSS-03 | Phase 10 | Pending |
-| DOSS-04 | Phase 10 | Pending |
-| DOSS-05 | Phase 10 | Pending |
-| DOSS-06 | Phase 10 | Pending |
-| DOSS-07 | Phase 10 | Pending |
-| DOSS-08 | Phase 10 | Pending |
+| DOSS-01 | Phase 10 | Complete |
+| DOSS-02 | Phase 10 | Complete |
+| DOSS-03 | Phase 10 | Complete |
+| DOSS-04 | Phase 10 | Complete |
+| DOSS-05 | Phase 10 | Complete |
+| DOSS-06 | Phase 10 | Complete |
+| DOSS-07 | Phase 10 | Complete |
+| DOSS-08 | Phase 10 | Complete |
 | DOSS-09 | Phase 10 | Pending |
-| MEDIA-01 | Phase 10 | Pending |
-| MEDIA-02 | Phase 10 | Pending |
+| MEDIA-01 | Phase 10 | Complete |
+| MEDIA-02 | Phase 10 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 18 total

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: The Researcher
 status: active
-stopped_at: Phase 10 context gathered
-last_updated: "2026-03-14T18:37:24.743Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-14T18:56:04.520Z"
 last_activity: 2026-03-12 — url_builder.py + cli.py cmd_survey implemented, crawl4ai validated, DDG confirmed, 33 tests passing
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 8
+  completed_plans: 7
 ---
 
 ---
@@ -69,6 +69,8 @@ Progress: [██░░░░░░░░] 14%
 | Phase 08-survey-pass P01 | 3 | 2 tasks | 5 files |
 | Phase 08-survey-pass P02 | 4 | 2 tasks | 3 files |
 | Phase 09-deep-dive-pass P01 | 10 | 2 tasks | 3 files |
+| Phase 10-dossier-output P02 | 2 | 2 tasks | 2 files |
+| Phase 10 P01 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -96,6 +98,10 @@ Recent decisions affecting v1.1:
 - [Phase 09-deep-dive-pass]: Budget guard enforces max 15 total source files across both passes
 - [Phase 09-deep-dive-pass]: Sources without verdict key treated as skip in cmd_deepen
 - [Phase 09-deep-dive-pass]: Re-run cleanup: delete pass2_*.json at start of cmd_deepen, never src_*.json
+- [Phase 10-dossier-output]: synthesis.md encodes 9-section narrative-first dossier format with HOOK/QUOTE callouts, ~2k word cap, structured credibility signals (no scalar scores)
+- [Phase 10-dossier-output]: Writer handoff is factual with implicit narrative signals only — no editorial guidance, no chapter suggestions, no tone guidance
+- [Phase 10-dossier-output]: media_urls.md groups match Architecture.md asset folder categories (archival_footage/archival_photos/documents/broll) for direct Agent 2.1 consumption
+- [Phase 10]: Failed/empty sources listed in Skipped section at top of synthesis_input.md, not silently dropped
 
 ### Pending Todos
 
@@ -109,7 +115,7 @@ None. Both Phase 7 blockers resolved:
 
 ## Session Continuity
 
-Last session: 2026-03-14T18:37:24.741Z
-Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-dossier-output/10-CONTEXT.md
+Last session: 2026-03-14T18:56:04.519Z
+Stopped at: Completed 10-01-PLAN.md
+Resume file: None
 Next: Execute Phase 8 (Researcher Pass 1 Expansion)

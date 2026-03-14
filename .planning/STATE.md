@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: The Researcher
 status: active
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-14T17:22:56.239Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-14T17:28:44.600Z"
 last_activity: 2026-03-12 — url_builder.py + cli.py cmd_survey implemented, crawl4ai validated, DDG confirmed, 33 tests passing
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 ---
@@ -67,6 +67,7 @@ Progress: [██░░░░░░░░] 14%
 
 *Updated after each plan completion*
 | Phase 08-survey-pass P01 | 3 | 2 tasks | 5 files |
+| Phase 08-survey-pass P02 | 4 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Recent decisions affecting v1.1:
 - [Phase 07]: Integration test isolation: _clear_crawl4ai_mock() removes test_fetcher mock before real crawl4ai calls when running full suite
 - [Phase 08-survey-pass]: reddit.com moved from TIER_3 to TIER_2 — useful research source, lower anti-bot risk than pure social media
 - [Phase 08-survey-pass]: build_survey_urls returns [wikipedia_url] only — DDG expansion handled separately in cmd_survey
+- [Phase 08-survey-pass]: asyncio.run() used in cmd_survey to call async _fetch_ddg_with_links — keeps cmd_survey sync
+- [Phase 08-survey-pass]: DDG redirect decode: /l/?uddg=<encoded> parsed via urllib.parse.parse_qs to extract real URLs
+- [Phase 08-survey-pass]: 50% pitfall guard in _strip_wiki_noise prevents destroying short articles
 
 ### Pending Todos
 
@@ -101,7 +105,7 @@ None. Both Phase 7 blockers resolved:
 
 ## Session Continuity
 
-Last session: 2026-03-14T17:22:56.237Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-14T17:28:44.598Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
 Next: Execute Phase 8 (Researcher Pass 1 Expansion)

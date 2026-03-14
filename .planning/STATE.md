@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: The Writer
-status: roadmap_ready
-stopped_at: "Checkpoint: 12-02 Task 2 human-verify pending"
-last_updated: "2026-03-14T22:37:16.031Z"
-last_activity: 2026-03-14 — Roadmap created
+status: complete
+stopped_at: "Completed 12-02-PLAN.md — Phase 12 fully complete, human-approved"
+last_updated: "2026-03-15T00:00:00Z"
+last_activity: 2026-03-15 — Phase 12 complete, script approved
 progress:
   total_phases: 2
   completed_phases: 2
@@ -17,15 +17,15 @@ progress:
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: The Writer
-status: roadmap_ready
-stopped_at: Phase 11 not started
-last_updated: "2026-03-14T22:45:00Z"
-last_activity: 2026-03-14 — Roadmap created for v1.2
+status: complete
+stopped_at: "Completed 12-02-PLAN.md — Phase 12 fully complete, human-approved"
+last_updated: "2026-03-15T00:00:00Z"
+last_activity: 2026-03-15 — Phase 12 complete, script approved
 progress:
   total_phases: 2
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -39,12 +39,12 @@ See: .planning/PROJECT.md (updated 2026-03-14)
 
 ## Current Position
 
-Phase: 11 — Style Extraction Skill (not started)
-Plan: —
-Status: Roadmap approved, ready to plan Phase 11
-Last activity: 2026-03-14 — Roadmap created
+Phase: 12 — Writer Agent (complete)
+Plan: 02 of 02
+Status: Phase 12 complete — all plans executed and human-approved
+Last activity: 2026-03-15 — Script generated, approved, phase complete
 
-[----------] 0% (0/2 phases complete)
+[##########] 100% (2/2 phases complete)
 
 ## Performance Metrics
 
@@ -83,6 +83,9 @@ All v1.1 decisions archived to `milestones/v1.1-ROADMAP.md`. Key decisions persi
 - [Phase 12-writer-agent]: pytest.ini updated to include writer scripts in pythonpath
 - [Phase 12-02]: Script.md is gitignored (projects/ is pipeline output) — commit covers only CLAUDE.md routing update
 - [Phase 12-02]: Open Ending Template applied — Church never apologized, waiver blocks litigation, registries missing
+- [Phase 12-02]: 7 chapters selected (within 4-7 soft guardrail) based on research timeline arc
+- [Phase 12-02]: 4 HOOKs selected: subsidy loophole (ch1), unremovable diagnosis (ch2), bodies/registry (ch3), waiver (ch5)
+- [Phase 12-02]: Human approved script at checkpoint — Phase 12 milestone complete
 
 ### Pending Todos
 
@@ -95,5 +98,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-14T22:37:09.935Z
-Stopped at: Checkpoint: 12-02 Task 2 human-verify pending
+Stopped at: Completed 12-02-PLAN.md — Phase 12 fully complete
 Resume file: None

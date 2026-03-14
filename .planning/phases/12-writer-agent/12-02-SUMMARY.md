@@ -105,16 +105,13 @@ Generated narrated documentary script at `projects/1. The Duplessis Orphans Queb
 ## Status
 
 Task 1: COMPLETE (c41f02f)
-Task 2: AWAITING HUMAN VERIFY — checkpoint:human-verify (blocking gate)
-
-The script has been generated and is ready for review at:
-`projects/1. The Duplessis Orphans Quebec's Stolen Children/Script.md`
+Task 2: COMPLETE — human approved script at checkpoint:human-verify
 
 ---
 
-## Self-Check: PARTIAL
+## Self-Check: PASSED
 
 - `projects/1. The Duplessis Orphans Quebec's Stolen Children/Script.md` — EXISTS (gitignored, not committed)
 - `CLAUDE.md` — routing table updated — VERIFIED
 - Commit `c41f02f` — FOUND
-- Task 2 checkpoint not yet passed — human verification pending
+- Task 2 checkpoint — APPROVED by human

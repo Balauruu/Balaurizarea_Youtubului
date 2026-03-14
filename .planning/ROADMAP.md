@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 Channel Assistant** — Phases 1-6 (shipped 2026-03-11)
 - ✅ **v1.1 The Researcher** — Phases 7-10 (shipped 2026-03-14)
-- 🔄 **v1.2 The Writer** — Phases 11-12 (active)
+- ✅ **v1.2 The Writer** — Phases 11-12 (shipped 2026-03-15)
 
 ## Phases
 
@@ -82,4 +82,4 @@ Plans:
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
 | 10. Dossier Output | v1.1 | 3/3 | Complete | 2026-03-14 |
 | 11. Style Extraction Skill | v1.2 | 2/2 | Complete | 2026-03-14 |
-| 12. Writer Agent | 2/2 | Complete   | 2026-03-14 | - |
+| 12. Writer Agent | v1.2 | 2/2 | Complete | 2026-03-15 |

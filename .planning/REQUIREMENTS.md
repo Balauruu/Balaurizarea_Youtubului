@@ -30,7 +30,7 @@ Requirements for Agent 1.2 — The Researcher. Each maps to roadmap phases.
 - [x] **DOSS-06**: Agent extracts direct quotes as labeled callouts for scene anchoring
 - [x] **DOSS-07**: Agent identifies 3-5 narrative hooks (high-impact story beats) explicitly labeled for the Writer
 - [x] **DOSS-08**: Agent flags where mainstream coverage contradicts primary sources (correcting-the-record opportunities)
-- [ ] **DOSS-09**: Agent writes Research.md to `projects/N. [Title]/research/`
+- [x] **DOSS-09**: Agent writes Research.md to `projects/N. [Title]/research/`
 
 ### Media Catalog
 
@@ -81,7 +81,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | DOSS-06 | Phase 10 | Complete |
 | DOSS-07 | Phase 10 | Complete |
 | DOSS-08 | Phase 10 | Complete |
-| DOSS-09 | Phase 10 | Pending |
+| DOSS-09 | Phase 10 | Complete |
 | MEDIA-01 | Phase 10 | Complete |
 | MEDIA-02 | Phase 10 | Complete |
 

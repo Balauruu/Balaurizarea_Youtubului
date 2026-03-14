@@ -49,7 +49,7 @@ Direct speech from an authority figure or witness. **No attribution in the first
 
 ### Part 2: Compressed Overview
 
-Location, year, what began, what it became. **Two sentences maximum.** No adjectives of scale (no "horrifying", "shocking", "massive"). The mechanism is enough — let the facts carry weight.
+Location, year, what began, what it became. **Four sentences maximum.** No adjectives of scale (no "horrifying", "shocking", "massive"). The mechanism is enough — let the facts carry weight.
 
 > "In 1961, outsiders would arrive in the Mexican village of Yaba Bua, and over the next two years, the lies these people told would snowball into sacrifices to forgotten gods and the eventual massacre of the village by the authorities."
 

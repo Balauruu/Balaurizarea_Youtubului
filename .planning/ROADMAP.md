@@ -32,7 +32,7 @@
 
 ### v1.2 The Writer (Phases 11-12)
 
-- [ ] **Phase 11: Style Extraction Skill** - Extract channel voice from reference scripts into reusable STYLE_PROFILE.md
+- [x] **Phase 11: Style Extraction Skill** - Extract channel voice from reference scripts into reusable STYLE_PROFILE.md (completed 2026-03-14)
 - [ ] **Phase 12: Writer Agent** - Generate narrated chapter scripts from research dossiers using validated style context
 
 ## Phase Details
@@ -47,7 +47,7 @@
   3. STYLE_PROFILE.md includes a transition phrase library drawn verbatim from the reference script — generic connective language ("furthermore", "notably") is not present in a generated test passage that uses only the profile as style guidance
   4. STYLE_PROFILE.md includes an open-ending template that prevents artificial resolution of unsolved cases
   5. The skill is invocable via SKILL.md with no Python code — classification is HEURISTIC; zero Python files exist in the style-extraction skill directory
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 11-01-PLAN.md — Create style-extraction skill infrastructure (SKILL.md, CONTEXT.md, extraction prompt)
 - [ ] 11-02-PLAN.md — Invoke skill to produce STYLE_PROFILE.md, human review, wire into project
@@ -78,5 +78,5 @@ Plans:
 | 8. Survey Pass (Pass 1) | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
 | 10. Dossier Output | v1.1 | 3/3 | Complete | 2026-03-14 |
-| 11. Style Extraction Skill | 1/2 | In Progress|  | - |
+| 11. Style Extraction Skill | 2/2 | Complete   | 2026-03-14 | - |
 | 12. Writer Agent | v1.2 | 0/? | Not started | - |

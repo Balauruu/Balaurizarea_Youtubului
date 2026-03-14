@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: The Writer
 status: roadmap_ready
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-14T21:33:06.023Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-03-14T21:47:24.714Z"
 last_activity: 2026-03-14 — Roadmap created
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 ---
@@ -55,6 +55,7 @@ Last activity: 2026-03-14 — Roadmap created
 | Phases | 6 | 4 | 2 |
 | Timeline | 2 days | 3 days | - |
 | Phase 11 P01 | 3 | 2 tasks | 3 files |
+| Phase 11-style-extraction-skill P02 | 45 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ All v1.1 decisions archived to `milestones/v1.1-ROADMAP.md`. Key decisions persi
 - [Phase 11]: [HEURISTIC] classification enforced — zero Python files in style-extraction skill directory
 - [Phase 11]: Two-pass structure: reconstruction pass preserves narrator phrasing before extraction pass
 - [Phase 11]: 4 mandatory STYLE_PROFILE.md sections guard against cult-arc overfitting
+- [Phase 11-style-extraction-skill]: STYLE_PROFILE.md separates Universal Voice Rules from Narrative Arc Templates — 5 rules apply to all topics, arc templates are opt-in by topic type
+- [Phase 11-style-extraction-skill]: writting_style_guide.md was untracked; deleted via rm — no git history loss
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:33:06.021Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-03-14T21:47:24.713Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None

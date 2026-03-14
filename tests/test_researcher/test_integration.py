@@ -183,3 +183,64 @@ def test_ddg_library_fallback() -> None:
     print(f"\nDDGS library fallback: {len(results)} results")
     for r in results[:3]:
         print(f"  - {r['title']}: {r['href']}")
+
+
+# ---------------------------------------------------------------------------
+# Phase 8 test — DDG link extraction via extract_links=True
+# ---------------------------------------------------------------------------
+
+@pytest.mark.integration
+def test_ddg_links_extraction() -> None:
+    """Validate that DDG HTML page returns extractable external links.
+
+    Uses extract_links=True in CrawlerRunConfig to capture links from
+    the DDG search results page. Asserts that result.links["external"]
+    has >= 5 entries and at least 3 are non-DDG absolute https:// URLs.
+    """
+    _clear_crawl4ai_mock()
+    import asyncio
+    from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
+
+    async def _fetch():
+        browser_conf = BrowserConfig(
+            browser_type="chromium",
+            headless=True,
+            use_persistent_context=False,
+            verbose=False,
+        )
+        run_conf = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, extract_links=True)
+        async with AsyncWebCrawler(config=browser_conf) as crawler:
+            result = await crawler.arun(
+                url="https://html.duckduckgo.com/html/?q=Jonestown+Massacre",
+                config=run_conf,
+            )
+        return result
+
+    result = asyncio.run(_fetch())
+
+    if not result.success:
+        pytest.skip(f"DDG HTML fetch failed (likely anti-bot): {result.error_message}")
+
+    links = result.links if hasattr(result, "links") else {}
+    external = links.get("external", [])
+
+    assert len(external) >= 5, (
+        f"Expected >= 5 external links from DDG results page, got {len(external)}"
+    )
+
+    non_ddg_https = [
+        link.get("href", "")
+        for link in external
+        if link.get("href", "").startswith("https://")
+        and "duckduckgo.com" not in link.get("href", "")
+    ]
+
+    assert len(non_ddg_https) >= 3, (
+        f"Expected >= 3 non-DDG https:// hrefs, got {len(non_ddg_https)}. "
+        f"All external hrefs: {[l.get('href') for l in external[:10]]}"
+    )
+
+    print(f"\nDDG link extraction: {len(external)} external links found")
+    print("First 5 non-DDG https:// URLs:")
+    for href in non_ddg_https[:5]:
+        print(f"  - {href}")

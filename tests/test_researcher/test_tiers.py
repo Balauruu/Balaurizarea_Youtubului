@@ -61,3 +61,23 @@ def test_classify_domain_loc_is_tier1():
 
 def test_classify_domain_twitter_is_tier3():
     assert classify_domain("https://twitter.com/user") == 3
+
+
+# ---------------------------------------------------------------------------
+# Phase 8 tests — Reddit reclassification (Tier 3 → Tier 2)
+# ---------------------------------------------------------------------------
+
+def test_reddit_tier2():
+    assert classify_domain("https://reddit.com/r/history") == 2
+
+
+def test_old_reddit_tier2():
+    assert classify_domain("https://old.reddit.com/r/history") == 2
+
+
+def test_reddit_not_in_tier3():
+    assert "reddit.com" not in TIER_3_DOMAINS
+
+
+def test_old_reddit_not_in_tier3():
+    assert "old.reddit.com" not in TIER_3_DOMAINS

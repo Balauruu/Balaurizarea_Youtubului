@@ -98,3 +98,28 @@ def test_make_ddg_url_special_chars() -> None:
     """make_ddg_url properly encodes special characters."""
     result = make_ddg_url("cult & murder")
     assert result == "https://html.duckduckgo.com/html/?q=cult+%26+murder"
+
+
+# ---------------------------------------------------------------------------
+# Phase 8 tests — build_survey_urls refactor (Wikipedia-only return)
+# ---------------------------------------------------------------------------
+
+def test_build_survey_urls_wikipedia_only() -> None:
+    """build_survey_urls returns a list of exactly one URL (Wikipedia only)."""
+    from researcher.url_builder import build_survey_urls
+    result = build_survey_urls("Jonestown")
+    assert len(result) == 1
+
+
+def test_build_survey_urls_no_ddg() -> None:
+    """build_survey_urls result contains no DuckDuckGo URL."""
+    from researcher.url_builder import build_survey_urls
+    result = build_survey_urls("Jonestown")
+    assert not any("duckduckgo.com" in url for url in result)
+
+
+def test_build_survey_urls_wikipedia_url_format() -> None:
+    """build_survey_urls result[0] is a valid Wikipedia URL."""
+    from researcher.url_builder import build_survey_urls
+    result = build_survey_urls("Jonestown")
+    assert result[0].startswith("https://en.wikipedia.org/wiki/")

@@ -16,9 +16,9 @@ Requirements for Agent 1.2 — The Researcher. Each maps to roadmap phases.
 ### Research Pipeline
 
 - [x] **RSRCH-01**: Agent accepts a manual topic input and locates the corresponding project directory
-- [ ] **RSRCH-02**: Pass 1 scrapes 10-15 broad sources (Wikipedia, DuckDuckGo, news archives) and outputs a JSON source manifest
+- [x] **RSRCH-02**: Pass 1 scrapes 10-15 broad sources (Wikipedia, DuckDuckGo, news archives) and outputs a JSON source manifest
 - [ ] **RSRCH-03**: Pass 2 reads the source manifest and fetches 5-10 targeted primary sources (archive.org, .gov, academic)
-- [ ] **RSRCH-04**: Scraped content is stored in `.claude/scratch/researcher/` — never held in conversation context
+- [x] **RSRCH-04**: Scraped content is stored in `.claude/scratch/researcher/` — never held in conversation context
 
 ### Dossier Output
 
@@ -70,8 +70,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | SCRP-02 | Phase 7 | Complete |
 | SCRP-03 | Phase 7 | Complete |
 | RSRCH-01 | Phase 7 | Complete |
-| RSRCH-02 | Phase 8 | Pending |
-| RSRCH-04 | Phase 8 | Pending |
+| RSRCH-02 | Phase 8 | Complete |
+| RSRCH-04 | Phase 8 | Complete |
 | RSRCH-03 | Phase 9 | Pending |
 | DOSS-01 | Phase 10 | Pending |
 | DOSS-02 | Phase 10 | Pending |

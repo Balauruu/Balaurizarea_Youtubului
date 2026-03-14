@@ -23,17 +23,6 @@ logger = logging.getLogger(__name__)
 MIN_CONTENT_CHARS: int = 200
 
 
-def _get_browser_conf():
-    """Return a BrowserConfig instance. Deferred import for testability."""
-    from crawl4ai import BrowserConfig  # noqa: PLC0415
-    return BrowserConfig(
-        browser_type="chromium",
-        headless=True,
-        use_persistent_context=False,  # no cookie/session persistence
-        verbose=False,
-    )
-
-
 async def _fetch_once(url: str) -> tuple[bool, str, str]:
     """Single fetch attempt using a fresh browser context.
 

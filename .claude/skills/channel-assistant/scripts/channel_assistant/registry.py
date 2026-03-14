@@ -12,12 +12,18 @@ class Registry:
         self.path = Path(path)
 
     def load(self) -> list[dict]:
-        """Read and parse the competitors JSON file."""
+        """Read and parse the competitors JSON file.
+
+        Returns an empty list if the file does not exist yet.
+        """
+        if not self.path.exists():
+            return []
         data = json.loads(self.path.read_text(encoding="utf-8"))
         return data.get("channels", [])
 
     def save(self, channels: list[dict]) -> None:
         """Write channels to the JSON file with indentation."""
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         data = {"channels": channels}
         self.path.write_text(
             json.dumps(data, indent=2, ensure_ascii=False) + "\n",

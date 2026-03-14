@@ -17,9 +17,19 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_autocomplete_jsonp(suggestions: list[str]) -> bytes:
-    """Build a JSONP autocomplete response matching the real endpoint format."""
-    data = ["keyword", suggestions]
+def _make_autocomplete_jsonp(suggestions: list[str], nested: bool = False) -> bytes:
+    """Build a JSONP autocomplete response matching the real endpoint format.
+
+    Args:
+        suggestions: List of suggestion strings.
+        nested: If True, wrap each suggestion as [text, 0, [512]] to match
+                the real Google API format. If False, use plain strings.
+    """
+    if nested:
+        items = [[s, 0, [512]] for s in suggestions]
+    else:
+        items = suggestions
+    data = ["keyword", items]
     return f"window.google.ac.h({json.dumps(data)})".encode("utf-8")
 
 
@@ -146,6 +156,25 @@ class TestScrapeAutocomplete:
                    return_value=mock_response):
             result = scrape_autocomplete("dark cults")
 
+        assert all(isinstance(s, str) for s in result)
+
+    def test_handles_nested_list_format_from_real_api(self):
+        """scrape_autocomplete extracts text from nested [text, 0, [512]] items."""
+        from channel_assistant.trend_scanner import scrape_autocomplete
+
+        suggestions = ["cult documentary", "cult documentary 2025"]
+        mock_response = MagicMock()
+        mock_response.read.return_value = _make_autocomplete_jsonp(
+            suggestions, nested=True
+        )
+        mock_response.__enter__ = lambda s: s
+        mock_response.__exit__ = MagicMock(return_value=False)
+
+        with patch("channel_assistant.trend_scanner.urllib.request.urlopen",
+                   return_value=mock_response):
+            result = scrape_autocomplete("cult documentary")
+
+        assert result == suggestions
         assert all(isinstance(s, str) for s in result)
 
 

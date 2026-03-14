@@ -105,7 +105,14 @@ def scrape_autocomplete(keyword: str) -> list[str]:
         suggestions = data[1]
         if not isinstance(suggestions, list):
             return []
-        return [s for s in suggestions if isinstance(s, str)]
+        # Google returns nested lists: [text, 0, [512]] or plain strings
+        result = []
+        for item in suggestions:
+            if isinstance(item, str):
+                result.append(item)
+            elif isinstance(item, list) and item and isinstance(item[0], str):
+                result.append(item[0])
+        return result
     except (json.JSONDecodeError, IndexError, TypeError):
         return []
 
@@ -137,6 +144,9 @@ def scrape_search_results(keyword: str, max_results: int = 20) -> list[dict]:
         List of dicts with keys: video_id, title, channel, published_text,
         views_text. Returns empty list on any error or missing data.
     """
+    if AsyncWebCrawler is None:
+        return []
+
     try:
         html = _run_async(_fetch_search_html(keyword, max_results))
     except Exception:

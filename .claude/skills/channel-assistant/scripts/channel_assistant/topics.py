@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
-# Internal helpers
+# Helpers (shared with cli.py)
 # ---------------------------------------------------------------------------
 
 
@@ -216,14 +216,10 @@ def write_topic_briefs(briefs: list[dict], output_path: Path) -> None:
 
 
 def format_chat_cards(briefs: list[dict]) -> str:
-    """Return a compact multi-line string with numbered topic cards.
+    """Return a markdown-formatted string with numbered topic cards for chat display.
 
-    Format per card::
-
-        [N] Title -- hook (1 line)
-            O:X C:X S:X V:X = N/20 | ~Xmin | Pillar
-            [UNDERSERVED CLUSTER: ...] (optional)
-            [Similar to: Past Title] (optional)
+    Produces clean, readable markdown that Claude should output directly in conversation.
+    Each card shows: title, score bar, hook, pillar, runtime, and tags.
     """
     cards: list[str] = []
 
@@ -234,24 +230,40 @@ def format_chat_cards(briefs: list[dict]) -> str:
         s = scores["shock_factor"]
         v = scores["verifiability"]
         total = o + c + s + v
-        score_line = f"O:{o} C:{c} S:{s} V:{v} = {total}/20"
+
+        # Visual score bar: ASCII-safe filled/empty blocks
+        filled = total
+        empty = 20 - total
+        bar = "#" * filled + "-" * empty
 
         runtime = brief["estimated_runtime_min"]
         pillar = brief["pillar"]
 
         card_lines = [
-            f"[{i}] {brief['title']} -- {brief['hook']}",
-            f"    {score_line} | ~{runtime}min | {pillar}",
+            f"### [{i}] {brief['title']}",
+            "",
+            f"> {brief['hook']}",
+            "",
+            f"**Score:** {bar} **{total}/20** "
+            f"(O:{o} C:{c} S:{s} V:{v})",
+            f"**Pillar:** {pillar} | **Runtime:** ~{runtime} min",
         ]
 
         # Optional tags (e.g., UNDERSERVED CLUSTER)
-        for tag in brief.get("tags", []):
-            card_lines.append(f"    [{tag}]")
+        tags = brief.get("tags", [])
+        if tags:
+            card_lines.append(f"**Tags:** {', '.join(tags)}")
 
         # Duplicate warning
         if brief.get("duplicate_of"):
-            card_lines.append(f"    [Similar to: {brief['duplicate_of']}]")
+            card_lines.append(f"**Similar to:** *{brief['duplicate_of']}*")
+
+        card_lines.append("")
+        card_lines.append("---")
 
         cards.append("\n".join(card_lines))
 
-    return "\n\n".join(cards)
+    footer = f"\n**{len(briefs)} topics generated.** Full briefs with timelines and justifications: `context/topics/topic_briefs.md`\n"
+    footer += "\nReply with a topic number (e.g. **1**) to start a project."
+
+    return "\n\n".join(cards) + "\n\n" + footer

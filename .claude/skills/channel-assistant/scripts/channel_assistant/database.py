@@ -102,39 +102,43 @@ class Database:
         finally:
             conn.close()
 
+    _UPSERT_VIDEO_SQL = """
+        INSERT INTO videos
+            (video_id, channel_id, title, url, views, upload_date,
+             description, duration, tags, likes, scraped_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(video_id) DO UPDATE SET
+            views = excluded.views,
+            likes = excluded.likes,
+            title = excluded.title,
+            description = excluded.description,
+            tags = excluded.tags,
+            scraped_at = excluded.scraped_at
+    """
+
+    @staticmethod
+    def _video_to_row(video: Video) -> tuple:
+        """Convert a Video to a parameter tuple for upsert."""
+        tags_json = json.dumps(video.tags) if video.tags is not None else None
+        return (
+            video.video_id,
+            video.channel_id,
+            video.title,
+            video.url,
+            video.views,
+            video.upload_date,
+            video.description,
+            video.duration,
+            tags_json,
+            video.likes,
+            video.scraped_at,
+        )
+
     def upsert_video(self, video: Video) -> None:
         """Insert or update a video record."""
-        tags_json = json.dumps(video.tags) if video.tags is not None else None
         conn = self.connect()
         try:
-            conn.execute(
-                """
-                INSERT INTO videos
-                    (video_id, channel_id, title, url, views, upload_date,
-                     description, duration, tags, likes, scraped_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(video_id) DO UPDATE SET
-                    views = excluded.views,
-                    likes = excluded.likes,
-                    title = excluded.title,
-                    description = excluded.description,
-                    tags = excluded.tags,
-                    scraped_at = excluded.scraped_at
-                """,
-                (
-                    video.video_id,
-                    video.channel_id,
-                    video.title,
-                    video.url,
-                    video.views,
-                    video.upload_date,
-                    video.description,
-                    video.duration,
-                    tags_json,
-                    video.likes,
-                    video.scraped_at,
-                ),
-            )
+            conn.execute(self._UPSERT_VIDEO_SQL, self._video_to_row(video))
             conn.commit()
         finally:
             conn.close()
@@ -143,38 +147,10 @@ class Database:
         """Batch upsert videos in a single transaction."""
         conn = self.connect()
         try:
-            for video in videos:
-                tags_json = (
-                    json.dumps(video.tags) if video.tags is not None else None
-                )
-                conn.execute(
-                    """
-                    INSERT INTO videos
-                        (video_id, channel_id, title, url, views, upload_date,
-                         description, duration, tags, likes, scraped_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(video_id) DO UPDATE SET
-                        views = excluded.views,
-                        likes = excluded.likes,
-                        title = excluded.title,
-                        description = excluded.description,
-                        tags = excluded.tags,
-                        scraped_at = excluded.scraped_at
-                    """,
-                    (
-                        video.video_id,
-                        video.channel_id,
-                        video.title,
-                        video.url,
-                        video.views,
-                        video.upload_date,
-                        video.description,
-                        video.duration,
-                        tags_json,
-                        video.likes,
-                        video.scraped_at,
-                    ),
-                )
+            conn.executemany(
+                self._UPSERT_VIDEO_SQL,
+                [self._video_to_row(v) for v in videos],
+            )
             conn.commit()
         finally:
             conn.close()

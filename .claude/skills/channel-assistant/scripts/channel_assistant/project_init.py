@@ -249,6 +249,17 @@ def load_project_inputs(root: Path, topic_number: int) -> dict:
             brief_markdown = text[section_start:section_end].strip()
             break
 
+    if not brief_markdown:
+        available = [
+            int(re.match(r"^## (\d+)\.", text[m.start():text.find("\n", m.start())]).group(1))
+            for m in sections
+            if re.match(r"^## (\d+)\.", text[m.start():text.find("\n", m.start())])
+        ]
+        raise ValueError(
+            f"Topic #{topic_number} not found in {briefs_path}. "
+            f"Available: {available}"
+        )
+
     # -----------------------------------------------------------------------
     # Extract Title Patterns section from analysis.md
     # -----------------------------------------------------------------------

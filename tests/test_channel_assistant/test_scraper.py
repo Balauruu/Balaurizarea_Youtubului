@@ -12,8 +12,6 @@ from channel_assistant.scraper import (
     scrape_channel,
     scrape_all_channels,
     scrape_single_channel,
-    VIDEO_FIELD_MAP,
-    CHANNEL_FIELD_MAP,
 )
 from channel_assistant.models import Channel, Video
 from channel_assistant.database import Database

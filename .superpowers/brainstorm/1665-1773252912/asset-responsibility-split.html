@@ -1,0 +1,127 @@
+<h2>Asset Responsibility Split</h2>
+<p class="subtitle">Based on VISUAL_STYLE_GUIDE.md analysis — who handles what?</p>
+
+<div class="section">
+  <h3>Pipeline Acquires (Scraping) — ~32% of video</h3>
+  <p class="subtitle">Automated web scraping from public domain / archive sources</p>
+  <table style="width:100%; border-collapse:collapse; margin:1em 0;">
+    <tr style="border-bottom:1px solid #444;">
+      <th style="text-align:left; padding:8px; color:#aaa;">Asset Type</th>
+      <th style="text-align:left; padding:8px; color:#aaa;">Style Guide Block</th>
+      <th style="text-align:right; padding:8px; color:#aaa;">Weight</th>
+    </tr>
+    <tr style="border-bottom:1px solid #333;">
+      <td style="padding:8px;">Archival Video</td>
+      <td style="padding:8px; color:#888;">Archival Footage</td>
+      <td style="padding:8px; text-align:right; color:#e74c3c;">14%</td>
+    </tr>
+    <tr style="border-bottom:1px solid #333;">
+      <td style="padding:8px;">Historical Photos</td>
+      <td style="padding:8px; color:#888;">Historical Photograph</td>
+      <td style="padding:8px; text-align:right; color:#e74c3c;">11%</td>
+    </tr>
+    <tr style="border-bottom:1px solid #333;">
+      <td style="padding:8px;">Newspaper Clippings</td>
+      <td style="padding:8px; color:#888;">Newspaper Clipping</td>
+      <td style="padding:8px; text-align:right;">2.7%</td>
+    </tr>
+    <tr style="border-bottom:1px solid #333;">
+      <td style="padding:8px;">Landscape/B-Roll Footage</td>
+      <td style="padding:8px; color:#888;">Landscape Establishing Shot</td>
+      <td style="padding:8px; text-align:right;">2.4%</td>
+    </tr>
+    <tr style="border-bottom:1px solid #333;">
+      <td style="padding:8px;">Document Scans</td>
+      <td style="padding:8px; color:#888;">Document Scan</td>
+      <td style="padding:8px; text-align:right;">1.2%</td>
+    </tr>
+    <tr style="border-bottom:1px solid #333;">
+      <td style="padding:8px;">Screen Captures</td>
+      <td style="padding:8px; color:#888;">Digital Screen Capture</td>
+      <td style="padding:8px; text-align:right;">0.8%</td>
+    </tr>
+    <tr style="border-bottom:1px solid #333; background:#1a1a2e;">
+      <td style="padding:8px; font-style:italic; color:#f39c12;">Old Cartoon B-Roll</td>
+      <td style="padding:8px; color:#888; font-style:italic;">Not in style guide (new category)</td>
+      <td style="padding:8px; text-align:right; color:#f39c12;">TBD</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Pipeline Generates — ~33% of video</h3>
+  <div style="display:flex; gap:1.5em;">
+    <div style="flex:1; background:#1a1a2e; padding:1em; border-radius:8px; border-left:3px solid #9b59b6;">
+      <h4 style="color:#9b59b6; margin-top:0;">ComfyUI (Z-image turbo)</h4>
+      <p style="color:#aaa; font-size:0.9em;">Generates vector figures & assets</p>
+      <ul style="color:#ccc; font-size:0.9em;">
+        <li>Silhouette figures</li>
+        <li>Icons (symbolic, glitch)</li>
+        <li>Ritual illustration elements</li>
+        <li>Concept diagram elements</li>
+        <li>Abstract textures</li>
+      </ul>
+    </div>
+    <div style="flex:0 0 40px; display:flex; align-items:center; justify-content:center; color:#666; font-size:2em;">→</div>
+    <div style="flex:1; background:#1a1a2e; padding:1em; border-radius:8px; border-left:3px solid #3498db;">
+      <h4 style="color:#3498db; margin-top:0;">Remotion (Animations)</h4>
+      <p style="color:#aaa; font-size:0.9em;">Animates vectors into video</p>
+      <ul style="color:#ccc; font-size:0.9em;">
+        <li>Silhouette Figure animations (13%)</li>
+        <li>Location Maps (4%)</li>
+        <li>Concept Diagrams (3%)</li>
+        <li>Ritual Illustrations (3%)</li>
+        <li>Symbolic Icons (1.6%)</li>
+        <li>Glitch Stingers (5.5%)</li>
+        <li>Static Noise (1%)</li>
+        <li>Abstract Textures (0.7%)</li>
+        <li>Glitch Icons (0.5%)</li>
+        <li>Data Moshing (0.5%)</li>
+        <li>Character Profile Cards (0.4%)</li>
+        <li>Retro Code Screens (0.3%)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>You Handle Manually (DaVinci Resolve) — ~20% of video</h3>
+  <div style="display:flex; gap:1em; flex-wrap:wrap;">
+    <div style="flex:1; min-width:200px; background:#1a1a2e; padding:1em; border-radius:8px; border-left:3px solid #e74c3c;">
+      <h4 style="color:#e74c3c; margin-top:0;">Text Elements</h4>
+      <ul style="color:#ccc; font-size:0.9em;">
+        <li>Quote Cards (10%)</li>
+        <li>Testimony Attribution (4%)</li>
+        <li>Keyword Stingers (3%)</li>
+        <li>Date Cards (2.3%)</li>
+        <li>Warning Cards (0.3%)</li>
+      </ul>
+    </div>
+    <div style="flex:1; min-width:200px; background:#1a1a2e; padding:1em; border-radius:8px; border-left:3px solid #e67e22;">
+      <h4 style="color:#e67e22; margin-top:0;">Evidence Text Blocks</h4>
+      <ul style="color:#ccc; font-size:0.9em;">
+        <li>Wiki/Encyclopedia Blocks (4%)</li>
+        <li>Credential Cards (2%)</li>
+      </ul>
+    </div>
+    <div style="flex:1; min-width:200px; background:#1a1a2e; padding:1em; border-radius:8px; border-left:3px solid #2ecc71;">
+      <h4 style="color:#2ecc71; margin-top:0;">Post-Production</h4>
+      <ul style="color:#ccc; font-size:0.9em;">
+        <li>Color grading</li>
+        <li>Backgrounds</li>
+        <li>Effects & overlays</li>
+        <li>Film grain, vignettes</li>
+        <li>CRT/VHS effects</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="background:#2a1a1a; padding:1em; border-radius:8px; border:1px solid #e74c3c44;">
+  <h3 style="color:#e74c3c; margin-top:0;">⚠ Open Questions</h3>
+  <ol style="color:#ccc;">
+    <li><strong>Old cartoon b-roll</strong> — not in current style guide. Fits under "acquired" but needs its own category and sourcing strategy (public domain animation archives?)</li>
+    <li><strong>Text elements</strong> — are ALL text overlays manual? Or should the pipeline pre-render some (quote cards with content already filled in)?</li>
+    <li><strong>Evidence docs</strong> — newspaper clippings and document scans require scraping, but wiki text blocks are text-on-screen. Should wiki blocks be pipeline-generated or manual?</li>
+  </ol>
+</div>

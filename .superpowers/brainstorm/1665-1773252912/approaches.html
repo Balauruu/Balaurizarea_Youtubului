@@ -1,0 +1,138 @@
+<h2>Asset Pipeline Architecture — 3 Approaches</h2>
+<p class="subtitle">How Agent 1.4 (Visual Orchestrator) hands off to Phase 2, and how Phase 2 agents coordinate</p>
+
+<div class="section">
+  <div style="background:#1a2a1a; padding:1.2em; border-radius:8px; border:2px solid #2ecc71;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="color:#2ecc71; margin:0;">A) Sequential Pipeline</h3>
+      <span style="background:#2ecc71; color:#000; padding:4px 12px; border-radius:12px; font-size:0.8em; font-weight:bold;">RECOMMENDED</span>
+    </div>
+    <p style="color:#aaa; margin:0.5em 0;">Shot list drives everything — agents run in sequence</p>
+
+    <div style="background:#111; padding:1em; border-radius:6px; margin:1em 0; font-family:monospace; font-size:0.85em; color:#ccc; line-height:1.8;">
+      <span style="color:#e74c3c;">Agent 1.4</span> writes shotlist.json (narrative needs, not strict types)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+      <span style="color:#3498db;">Agent 2.1</span> Bulk Acquisition — scrapes all sources for topic-relevant media<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓ writes to assets/ (unnumbered, by type folder)<br>
+      <span style="color:#3498db;">Agent 2.1b</span> Gap Analysis — maps acquired assets against shotlist, identifies gaps<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓ updates manifest.json with mappings + gap list<br>
+      <span style="color:#9b59b6;">Agent 2.2</span> Vector Generation — generates ComfyUI prompts for needed vectors<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓ vectors/ folder<br>
+      <span style="color:#9b59b6;">Agent 2.3</span> Remotion Animations — renders motion graphics (maps, silhouettes, diagrams)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓ animations/ folder<br>
+      <span style="color:#f39c12;">Agent 2.4</span> Asset Manager — numbers everything, moves unmatched to _pool/, final manifest
+    </div>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Simple mental model — each agent has one job</li>
+          <li>Gap analysis naturally handles the "loose coupling" you wanted</li>
+          <li>Each step can be checkpointed and resumed</li>
+          <li>Easy to debug — if assets are wrong, you know which agent failed</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Slower — no parallelism between acquisition and generation</li>
+          <li>Gap analysis is a separate step (more complexity)</li>
+          <li>Vector generation waits for all acquisition to finish</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div style="background:#1a1a2e; padding:1.2em; border-radius:8px; border:1px solid #3498db;">
+    <h3 style="color:#3498db; margin:0;">B) Parallel Tracks</h3>
+    <p style="color:#aaa; margin:0.5em 0;">Acquisition and generation run simultaneously from the shot list</p>
+
+    <div style="background:#111; padding:1em; border-radius:6px; margin:1em 0; font-family:monospace; font-size:0.85em; color:#ccc; line-height:1.8;">
+      <span style="color:#e74c3c;">Agent 1.4</span> writes shotlist.json (narrative needs)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓ splits into two tracks<br>
+      ┌──────────────────────────────────────┐<br>
+      │ <span style="color:#3498db;">Track 1: Acquisition</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ <span style="color:#9b59b6;">Track 2: Generation</span><br>
+      │ 2.1 Bulk scrape by topic&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ 2.2 Vector prompts from shotlist<br>
+      │ 2.1b Map against shotlist&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ 2.3 Remotion renders from shotlist<br>
+      └──────────────────────────────────────┘<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓ both complete<br>
+      <span style="color:#f39c12;">Agent 2.4</span> Asset Manager — merges, numbers, final manifest
+    </div>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Faster — acquisition and generation happen simultaneously</li>
+          <li>Generation doesn't wait for scraping</li>
+          <li>Natural split: acquired vs generated are independent</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>No gap-aware generation — vectors/animations can't fill acquisition gaps</li>
+          <li>Harder to coordinate — parallel agents need shared state</li>
+          <li>Asset Manager has more work merging two independent outputs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div style="background:#2a1a1a; padding:1.2em; border-radius:8px; border:1px solid #e67e22;">
+    <h3 style="color:#e67e22; margin:0;">C) Hybrid (Parallel + Gap-Aware)</h3>
+    <p style="color:#aaa; margin:0.5em 0;">Parallel tracks but with a gap-analysis feedback loop</p>
+
+    <div style="background:#111; padding:1em; border-radius:6px; margin:1em 0; font-family:monospace; font-size:0.85em; color:#ccc; line-height:1.8;">
+      <span style="color:#e74c3c;">Agent 1.4</span> writes shotlist.json (narrative needs)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓ splits into two tracks<br>
+      ┌──────────────────────────────────────┐<br>
+      │ <span style="color:#3498db;">Track 1: Acquisition</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ <span style="color:#9b59b6;">Track 2: Generation (known items)</span><br>
+      │ 2.1 Bulk scrape by topic&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ 2.2/2.3 Maps, diagrams, silhouettes<br>
+      │ 2.1b Gap analysis&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ (things we KNOW we need regardless)<br>
+      └──────────────────────────────────────┘<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓ gap analysis identifies unfilled shots<br>
+      <span style="color:#9b59b6;">Track 2b: Gap-fill generation</span> — additional vectors/animations for gaps<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+      <span style="color:#f39c12;">Agent 2.4</span> Asset Manager — merges, numbers, final manifest
+    </div>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Fastest — parallelism where possible</li>
+          <li>Gap-aware — generation can fill what acquisition missed</li>
+          <li>Known animations (maps, silhouettes) start immediately</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Most complex orchestration — feedback loop adds coordination</li>
+          <li>Three distinct phases instead of one linear flow</li>
+          <li>Harder to build and debug</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="background:#1a1a1a; padding:1.2em; border-radius:8px; border:1px solid #555;">
+  <h3 style="color:#fff; margin:0;">My Recommendation: Approach A</h3>
+  <p style="color:#ccc; margin-top:0.5em;">
+    The sequential pipeline is the right choice because:
+  </p>
+  <ul style="color:#ccc;">
+    <li><strong>Simplicity wins</strong> — this is already the most complex phase of your pipeline. Adding parallel coordination makes debugging much harder.</li>
+    <li><strong>Speed isn't the bottleneck</strong> — the scraping/downloading is I/O bound, and the generation steps (ComfyUI prompts + Remotion renders) are relatively fast. The real time cost is scraping, which runs regardless.</li>
+    <li><strong>Gap analysis is the key feature</strong> — the whole point of bulk-first is to know what you have before deciding what to generate. Approach A makes this natural.</li>
+    <li><strong>Checkpointing is trivial</strong> — if scraping fails halfway, you resume from where you left off. No parallel state to reconcile.</li>
+    <li><strong>You can upgrade later</strong> — if speed becomes a problem, A can be parallelized into C without changing the agent interfaces. The manifest.json contract stays the same.</li>
+  </ul>
+</div>

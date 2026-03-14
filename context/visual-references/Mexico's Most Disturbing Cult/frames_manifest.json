@@ -2,7 +2,7 @@
   "frames": [
     {
       "frame_id": 1,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0000.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0000.jpg",
       "timestamp": "00:00",
       "scene_duration": 3.6036,
       "represents_count": 1,
@@ -10,71 +10,71 @@
     },
     {
       "frame_id": 2,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0002.jpg",
-      "timestamp": "00:04",
-      "scene_duration": 0.7006999999999994,
-      "represents_count": 1,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0004.jpg",
+      "timestamp": "00:05",
+      "scene_duration": 0.9342666666666668,
+      "represents_count": 2,
       "narration": ""
     },
     {
       "frame_id": 3,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0004.jpg",
-      "timestamp": "00:05",
-      "scene_duration": 0.9342666666666668,
-      "represents_count": 1,
-      "narration": ""
-    },
-    {
-      "frame_id": 4,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0007.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0007.jpg",
       "timestamp": "00:08",
       "scene_duration": 1.7017000000000007,
       "represents_count": 2,
       "narration": ""
     },
     {
-      "frame_id": 5,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0009.jpg",
+      "frame_id": 4,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0009.jpg",
       "timestamp": "00:14",
       "scene_duration": 5.572233333333331,
       "represents_count": 1,
       "narration": "with in all my\nyears in 1961 Outsiders would arrive in"
     },
     {
-      "frame_id": 6,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0010.jpg",
+      "frame_id": 5,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0010.jpg",
       "timestamp": "00:19",
       "scene_duration": 6.673333333333336,
       "represents_count": 1,
       "narration": "the Mexican Village of yba bua and over\nthe next 2 years the lies these people"
     },
     {
-      "frame_id": 7,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0011.jpg",
+      "frame_id": 6,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0011.jpg",
       "timestamp": "00:26",
       "scene_duration": 2.302299999999999,
       "represents_count": 1,
       "narration": "forgotten gods and the eventual Massacre\nof the village by the authorities the"
     },
     {
-      "frame_id": 8,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0012.jpg",
+      "frame_id": 7,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0012.jpg",
       "timestamp": "00:28",
       "scene_duration": 4.070733333333337,
       "represents_count": 1,
       "narration": "of the village by the authorities the\ninternet has been telling the story"
     },
     {
-      "frame_id": 9,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0013.jpg",
+      "frame_id": 8,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0013.jpg",
       "timestamp": "00:32",
       "scene_duration": 4.571233333333332,
       "represents_count": 1,
       "narration": "incorrectly since the turn of the\ncentury this is the true story of yagua"
     },
     {
+      "frame_id": 9,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0014.jpg",
+      "timestamp": "00:37",
+      "scene_duration": 1.1010999999999953,
+      "represents_count": 1,
+      "narration": "and the Bloody cult which led to its\ndestruction"
+    },
+    {
       "frame_id": 10,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0015.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0015.jpg",
       "timestamp": "00:38",
       "scene_duration": 17.48413333333334,
       "represents_count": 1,
@@ -82,7 +82,7 @@
     },
     {
       "frame_id": 11,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0018.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0018.jpg",
       "timestamp": "01:04",
       "scene_duration": 11.344666666666669,
       "represents_count": 1,
@@ -90,7 +90,7 @@
     },
     {
       "frame_id": 12,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0019.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0019.jpg",
       "timestamp": "01:16",
       "scene_duration": 0.7674333333333294,
       "represents_count": 1,
@@ -98,7 +98,7 @@
     },
     {
       "frame_id": 13,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0021.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0021.jpg",
       "timestamp": "01:29",
       "scene_duration": 5.572233333333344,
       "represents_count": 1,
@@ -106,7 +106,7 @@
     },
     {
       "frame_id": 14,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0022.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0022.jpg",
       "timestamp": "01:34",
       "scene_duration": 8.842166666666657,
       "represents_count": 1,
@@ -114,7 +114,7 @@
     },
     {
       "frame_id": 15,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0024.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0024.jpg",
       "timestamp": "02:06",
       "scene_duration": 9.80980000000001,
       "represents_count": 1,
@@ -122,7 +122,7 @@
     },
     {
       "frame_id": 16,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0025.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0025.jpg",
       "timestamp": "02:16",
       "scene_duration": 1.76843333333332,
       "represents_count": 1,
@@ -130,7 +130,7 @@
     },
     {
       "frame_id": 17,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0026.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0026.jpg",
       "timestamp": "02:18",
       "scene_duration": 5.0049999999999955,
       "represents_count": 1,
@@ -138,7 +138,7 @@
     },
     {
       "frame_id": 18,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0027.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0027.jpg",
       "timestamp": "02:23",
       "scene_duration": 4.004000000000019,
       "represents_count": 1,
@@ -146,7 +146,7 @@
     },
     {
       "frame_id": 19,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0028.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0028.jpg",
       "timestamp": "02:27",
       "scene_duration": 4.304299999999984,
       "represents_count": 1,
@@ -154,7 +154,7 @@
     },
     {
       "frame_id": 20,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0029.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0029.jpg",
       "timestamp": "02:31",
       "scene_duration": 4.904899999999998,
       "represents_count": 1,
@@ -162,7 +162,7 @@
     },
     {
       "frame_id": 21,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0030.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0030.jpg",
       "timestamp": "02:36",
       "scene_duration": 6.940266666666673,
       "represents_count": 1,
@@ -170,7 +170,7 @@
     },
     {
       "frame_id": 22,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0031.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0031.jpg",
       "timestamp": "02:43",
       "scene_duration": 4.671333333333337,
       "represents_count": 1,
@@ -178,7 +178,7 @@
     },
     {
       "frame_id": 23,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0032.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0032.jpg",
       "timestamp": "02:48",
       "scene_duration": 2.369033333333334,
       "represents_count": 1,
@@ -186,7 +186,7 @@
     },
     {
       "frame_id": 24,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0033.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0033.jpg",
       "timestamp": "02:50",
       "scene_duration": 4.738066666666668,
       "represents_count": 1,
@@ -194,7 +194,7 @@
     },
     {
       "frame_id": 25,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0034.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0034.jpg",
       "timestamp": "02:55",
       "scene_duration": 2.8361666666666565,
       "represents_count": 1,
@@ -202,7 +202,7 @@
     },
     {
       "frame_id": 26,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0035.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0035.jpg",
       "timestamp": "02:58",
       "scene_duration": 3.937266666666659,
       "represents_count": 1,
@@ -210,7 +210,7 @@
     },
     {
       "frame_id": 27,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0036.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0036.jpg",
       "timestamp": "03:02",
       "scene_duration": 12.579233333333349,
       "represents_count": 1,
@@ -218,7 +218,7 @@
     },
     {
       "frame_id": 28,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0037.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0037.jpg",
       "timestamp": "03:14",
       "scene_duration": 8.541866666666664,
       "represents_count": 1,
@@ -226,7 +226,7 @@
     },
     {
       "frame_id": 29,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0038.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0038.jpg",
       "timestamp": "03:23",
       "scene_duration": 2.9028999999999883,
       "represents_count": 1,
@@ -234,15 +234,15 @@
     },
     {
       "frame_id": 30,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0039.jpg",
-      "timestamp": "03:26",
-      "scene_duration": 5.005000000000024,
-      "represents_count": 1,
-      "narration": "away emboldened by the success of their\nscam they traveled into tulipas to the"
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0141.jpg",
+      "timestamp": "17:15",
+      "scene_duration": 5.205200000000104,
+      "represents_count": 2,
+      "narration": "indeed it was initially very difficult\nto track down its actual location but"
     },
     {
       "frame_id": 31,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0040.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0040.jpg",
       "timestamp": "03:31",
       "scene_duration": 3.937266666666659,
       "represents_count": 1,
@@ -250,7 +250,7 @@
     },
     {
       "frame_id": 32,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0041.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0041.jpg",
       "timestamp": "03:35",
       "scene_duration": 3.1698333333333437,
       "represents_count": 1,
@@ -258,7 +258,7 @@
     },
     {
       "frame_id": 33,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0042.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0042.jpg",
       "timestamp": "03:38",
       "scene_duration": 9.14246666666665,
       "represents_count": 1,
@@ -266,7 +266,7 @@
     },
     {
       "frame_id": 34,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0043.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0043.jpg",
       "timestamp": "03:47",
       "scene_duration": 17.117099999999994,
       "represents_count": 1,
@@ -274,7 +274,7 @@
     },
     {
       "frame_id": 35,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0046.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0046.jpg",
       "timestamp": "04:11",
       "scene_duration": 8.441766666666666,
       "represents_count": 1,
@@ -282,7 +282,7 @@
     },
     {
       "frame_id": 36,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0048.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0048.jpg",
       "timestamp": "04:29",
       "scene_duration": 12.545866666666655,
       "represents_count": 1,
@@ -290,7 +290,7 @@
     },
     {
       "frame_id": 37,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0049.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0049.jpg",
       "timestamp": "04:41",
       "scene_duration": 5.872533333333365,
       "represents_count": 1,
@@ -298,7 +298,7 @@
     },
     {
       "frame_id": 38,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0050.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0050.jpg",
       "timestamp": "04:47",
       "scene_duration": 0.5004999999999882,
       "represents_count": 1,
@@ -306,23 +306,23 @@
     },
     {
       "frame_id": 39,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0054.jpg",
-      "timestamp": "05:05",
-      "scene_duration": 2.669333333333327,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0053.jpg",
+      "timestamp": "05:01",
+      "scene_duration": 3.3366666666667015,
       "represents_count": 1,
-      "narration": "power to Grant Visions but in reality it\nwas laced with marijuana they convinced"
+      "narration": "they claimed had the super superatural\npower to Grant Visions but in reality it"
     },
     {
       "frame_id": 40,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0055.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0055.jpg",
       "timestamp": "05:07",
       "scene_duration": 0.4337666666666564,
-      "represents_count": 1,
+      "represents_count": 2,
       "narration": "was laced with marijuana they convinced\nthe villagers to drink this potion now"
     },
     {
       "frame_id": 41,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0057.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0057.jpg",
       "timestamp": "05:08",
       "scene_duration": 3.2699333333333698,
       "represents_count": 1,
@@ -330,7 +330,7 @@
     },
     {
       "frame_id": 42,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0058.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0058.jpg",
       "timestamp": "05:11",
       "scene_duration": 8.108099999999979,
       "represents_count": 1,
@@ -338,7 +338,7 @@
     },
     {
       "frame_id": 43,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0061.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0061.jpg",
       "timestamp": "05:24",
       "scene_duration": 7.1404666666666685,
       "represents_count": 1,
@@ -346,614 +346,638 @@
     },
     {
       "frame_id": 44,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0064.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0063.jpg",
+      "timestamp": "05:35",
+      "scene_duration": 1.8351666666666802,
+      "represents_count": 1,
+      "narration": "first ritual the addition of animal\nblood the ingredients of the drugged"
+    },
+    {
+      "frame_id": 45,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0064.jpg",
       "timestamp": "05:36",
       "scene_duration": 13.013000000000034,
       "represents_count": 1,
       "narration": "first ritual the addition of animal\nblood the ingredients of the drugged"
     },
     {
-      "frame_id": 45,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0066.jpg",
+      "frame_id": 46,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0066.jpg",
       "timestamp": "05:51",
       "scene_duration": 2.96963333333332,
       "represents_count": 2,
       "narration": "priestesses two groups began to form in\nyab bua those who believed Melena and"
     },
     {
-      "frame_id": 46,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0067.jpg",
+      "frame_id": 47,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0067.jpg",
       "timestamp": "05:54",
       "scene_duration": 2.6359666666666612,
       "represents_count": 1,
       "narration": "alar and those villagers who still had\ntheir doubts in the spring of 1962 the"
     },
     {
-      "frame_id": 47,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0069.jpg",
+      "frame_id": 48,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0069.jpg",
       "timestamp": "06:04",
       "scene_duration": 5.038366666666661,
       "represents_count": 1,
       "narration": "from the\nnon-believers they chose the brothers"
     },
     {
-      "frame_id": 48,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0070.jpg",
+      "frame_id": 49,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0070.jpg",
       "timestamp": "06:09",
       "scene_duration": 3.4033999999999764,
       "represents_count": 1,
       "narration": "Santos and katano Hernandez who had\ngrown up in yab bua like all of those in"
     },
     {
-      "frame_id": 49,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0071.jpg",
+      "frame_id": 50,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0071.jpg",
       "timestamp": "06:12",
       "scene_duration": 3.1030999999999835,
       "represents_count": 1,
       "narration": "grown up in yab bua like all of those in\nthe farming Community the brothers"
     },
     {
-      "frame_id": 50,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0074.jpg",
+      "frame_id": 51,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0074.jpg",
       "timestamp": "06:17",
       "scene_duration": 10.276933333333318,
       "represents_count": 1,
       "narration": "fields surrounding the village with\nlittle else to do the brothers had"
     },
     {
-      "frame_id": 51,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0075.jpg",
+      "frame_id": 52,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0075.jpg",
       "timestamp": "06:27",
       "scene_duration": 3.1030999999999835,
       "represents_count": 1,
       "narration": "potion and deeply believed the twins\nlies and in their fabricated power the"
     },
     {
-      "frame_id": 52,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0076.jpg",
+      "frame_id": 53,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0076.jpg",
       "timestamp": "06:30",
       "scene_duration": 18.918900000000008,
       "represents_count": 1,
       "narration": "herand brothers were cruel and enjoyed\nexerting their newly found authority"
     },
     {
-      "frame_id": 53,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0077.jpg",
+      "frame_id": 54,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0077.jpg",
       "timestamp": "06:49",
       "scene_duration": 12.645966666666709,
       "represents_count": 1,
       "narration": "thatched roof supported by four wooden\npillars the villagers would make the"
     },
     {
-      "frame_id": 54,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0078.jpg",
+      "frame_id": 55,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0078.jpg",
       "timestamp": "07:02",
       "scene_duration": 5.772433333333311,
       "represents_count": 1,
       "narration": "provided\nby the Hernandez Brothers however a"
     },
     {
-      "frame_id": 55,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0079.jpg",
+      "frame_id": 56,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0079.jpg",
       "timestamp": "07:07",
       "scene_duration": 4.371033333333344,
       "represents_count": 1,
       "narration": "between the Twins and their newly\nordained Santos and katano while the"
     },
     {
-      "frame_id": 56,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0080.jpg",
+      "frame_id": 57,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0080.jpg",
       "timestamp": "07:12",
       "scene_duration": 5.238566666666657,
       "represents_count": 1,
       "narration": "soless twin's goal was to draw out the\nscam for as long as possible but"
     },
     {
-      "frame_id": 57,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0082.jpg",
+      "frame_id": 58,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0082.jpg",
       "timestamp": "07:18",
       "scene_duration": 2.5358666666666636,
       "represents_count": 1,
       "narration": "increase the following and influence of\nthe fledgling cult the twins couldn't be"
     },
     {
-      "frame_id": 58,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0083.jpg",
+      "frame_id": 59,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0083.jpg",
       "timestamp": "07:20",
       "scene_duration": 5.705700000000036,
       "represents_count": 1,
       "narration": "the fledgling cult the twins couldn't be\nseen as limiting the growth of the cult"
     },
     {
-      "frame_id": 59,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0086.jpg",
+      "frame_id": 60,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0086.jpg",
       "timestamp": "07:51",
       "scene_duration": 10.57723333333331,
       "represents_count": 1,
       "narration": "the forest up the mountain path to the\ncavern there Magdalena elizar Santos and"
     },
     {
-      "frame_id": 60,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0087.jpg",
+      "frame_id": 61,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0087.jpg",
       "timestamp": "08:02",
       "scene_duration": 11.478133333333346,
       "represents_count": 1,
       "narration": "roof of their makeshift Temple G in the\nbody paint and feathers of ancient"
     },
     {
-      "frame_id": 61,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0088.jpg",
+      "frame_id": 62,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0088.jpg",
       "timestamp": "08:13",
       "scene_duration": 7.007000000000005,
       "represents_count": 1,
       "narration": "over the course of many\nrituals kyano stepped to the front of"
     },
     {
-      "frame_id": 62,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0089.jpg",
+      "frame_id": 63,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0089.jpg",
       "timestamp": "08:20",
       "scene_duration": 6.006000000000029,
       "represents_count": 1,
       "narration": "for a volunteer someone to offer\nthemselves as a willing sacrifice to the"
     },
     {
-      "frame_id": 63,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0090.jpg",
+      "frame_id": 64,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0090.jpg",
       "timestamp": "08:26",
       "scene_duration": 3.036366666666652,
       "represents_count": 1,
       "narration": "old gods katano promised that whoever\nthey sacrificed would Ascend to the"
     },
     {
-      "frame_id": 64,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0092.jpg",
+      "frame_id": 65,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0092.jpg",
       "timestamp": "08:30",
       "scene_duration": 9.175833333333344,
       "represents_count": 1,
       "narration": "realm of gods to live with them for\neternity"
     },
     {
-      "frame_id": 65,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0094.jpg",
+      "frame_id": 66,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0094.jpg",
       "timestamp": "08:40",
       "scene_duration": 12.846166666666704,
       "represents_count": 1,
       "narration": "villagers offered themselves willingly\nat the very first sacrifice so powerful"
     },
     {
-      "frame_id": 66,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0095.jpg",
+      "frame_id": 67,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0095.jpg",
       "timestamp": "08:53",
       "scene_duration": 8.308300000000031,
       "represents_count": 1,
       "narration": "ala katano guided the unfortunate farmer\nto The Altar and instructed them to lie"
     },
     {
-      "frame_id": 67,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0096.jpg",
+      "frame_id": 68,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0096.jpg",
       "timestamp": "09:01",
       "scene_duration": 1.935266666666621,
       "represents_count": 1,
       "narration": "made quick and gruesome work of the\nindiv individual Santas and katano"
     },
     {
-      "frame_id": 68,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0097.jpg",
+      "frame_id": 69,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0097.jpg",
       "timestamp": "09:03",
       "scene_duration": 2.969633333333377,
       "represents_count": 1,
       "narration": "indiv individual Santas and katano\nsliced open the body and removed the"
     },
     {
-      "frame_id": 69,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0101.jpg",
+      "frame_id": 70,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0101.jpg",
       "timestamp": "09:18",
       "scene_duration": 2.8695333333333792,
       "represents_count": 1,
       "narration": "heart after their murderous fervor\nsubsided katano and Santos collected the"
     },
     {
-      "frame_id": 70,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0102.jpg",
+      "frame_id": 71,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0102.jpg",
       "timestamp": "09:21",
       "scene_duration": 5.505499999999984,
       "represents_count": 1,
       "narration": "subsided katano and Santos collected the\nvictim's blood from a top the altar to"
     },
     {
-      "frame_id": 71,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0103.jpg",
+      "frame_id": 72,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0103.jpg",
       "timestamp": "09:26",
       "scene_duration": 5.038366666666661,
       "represents_count": 1,
       "narration": "used in the twins\npotion the potion was once again passed"
     },
     {
-      "frame_id": 72,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0104.jpg",
+      "frame_id": 73,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0104.jpg",
       "timestamp": "09:31",
       "scene_duration": 0.9676333333333105,
       "represents_count": 1,
       "narration": "round\nfinally the sacrifices corpse was"
     },
     {
-      "frame_id": 73,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0105.jpg",
+      "frame_id": 74,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0105.jpg",
       "timestamp": "09:32",
       "scene_duration": 1.8351666666666233,
       "represents_count": 1,
       "narration": "finally the sacrifices corpse was\ncarried to the corner of the cave and"
     },
     {
-      "frame_id": 74,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0106.jpg",
+      "frame_id": 75,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0106.jpg",
       "timestamp": "09:34",
       "scene_duration": 11.811800000000062,
       "represents_count": 1,
       "narration": "carried to the corner of the cave and\nset a"
     },
     {
-      "frame_id": 75,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0107.jpg",
+      "frame_id": 76,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0107.jpg",
       "timestamp": "09:46",
       "scene_duration": 3.970633333333353,
       "represents_count": 1,
       "narration": "cannibalism and if they had any doubts\nor reservations none were willing to"
     },
     {
-      "frame_id": 76,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0109.jpg",
+      "frame_id": 77,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0109.jpg",
       "timestamp": "10:05",
       "scene_duration": 3.9039000000000215,
       "represents_count": 2,
       "narration": "series of events in which without fail\nevery month for a year a willing"
     },
     {
-      "frame_id": 77,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0111.jpg",
+      "frame_id": 78,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0111.jpg",
       "timestamp": "10:10",
       "scene_duration": 6.072733333333304,
       "represents_count": 1,
       "narration": "sacrifice stepped forth from the crowd\nand towards that Bloody altar the Solace"
     },
     {
-      "frame_id": 78,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0112.jpg",
+      "frame_id": 79,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0112.jpg",
       "timestamp": "10:16",
       "scene_duration": 50.25020000000006,
       "represents_count": 1,
       "narration": "told soon to owe the lives of at least\n15"
     },
     {
-      "frame_id": 79,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0113.jpg",
+      "frame_id": 80,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0113.jpg",
       "timestamp": "11:06",
       "scene_duration": 3.9706333333332395,
       "represents_count": 1,
       "narration": "her right before the daysis and\nconfronted Selena desperately trying to"
     },
     {
-      "frame_id": 80,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0114.jpg",
+      "frame_id": 81,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0114.jpg",
       "timestamp": "11:10",
       "scene_duration": 33.90053333333333,
       "represents_count": 1,
       "narration": "her right before the daysis and\nconfronted Selena desperately trying to"
     },
     {
-      "frame_id": 81,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0115.jpg",
+      "frame_id": 82,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0115.jpg",
       "timestamp": "11:44",
       "scene_duration": 3.770433333333358,
       "represents_count": 1,
       "narration": "Santos had dragged Selena's body at top\nThe Altar and removed her heart enraged"
     },
     {
-      "frame_id": 82,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0116.jpg",
+      "frame_id": 83,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0116.jpg",
       "timestamp": "11:48",
       "scene_duration": 2.0020000000000664,
       "represents_count": 1,
       "narration": "The Altar and removed her heart enraged\nand grief stricken Hector fought briefly"
     },
     {
-      "frame_id": 83,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0117.jpg",
+      "frame_id": 84,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0117.jpg",
       "timestamp": "11:50",
       "scene_duration": 2.0019999999999527,
       "represents_count": 1,
       "narration": "and grief stricken Hector fought briefly\nwith some of the villagers trying to"
     },
     {
-      "frame_id": 84,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0118.jpg",
+      "frame_id": 85,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0118.jpg",
       "timestamp": "11:52",
       "scene_duration": 7.6409666666667135,
       "represents_count": 1,
       "narration": "with some of the villagers trying to\nreach and kill the herand brothers he"
     },
     {
-      "frame_id": 85,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0119.jpg",
+      "frame_id": 86,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0119.jpg",
       "timestamp": "11:59",
       "scene_duration": 25.125099999999975,
       "represents_count": 1,
       "narration": "quickly realized it was to no avail\nSelena was well and truly dead Hector"
     },
     {
-      "frame_id": 86,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0120.jpg",
+      "frame_id": 87,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0120.jpg",
       "timestamp": "12:24",
       "scene_duration": 2.1020999999999503,
       "represents_count": 1,
       "narration": "with Police Inspector abalo G Gomez\ninspector Gomez asked Hector to recall"
     },
     {
-      "frame_id": 87,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0121.jpg",
+      "frame_id": 88,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0121.jpg",
       "timestamp": "12:26",
       "scene_duration": 3.536866666666697,
       "represents_count": 1,
       "narration": "with Police Inspector abalo G Gomez\ninspector Gomez asked Hector to recall"
     },
     {
-      "frame_id": 88,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0122.jpg",
+      "frame_id": 89,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0122.jpg",
       "timestamp": "12:30",
       "scene_duration": 8.875533333333351,
       "represents_count": 1,
       "narration": "as many names of the cultist as possible\nand wrote them down down he instructed"
     },
     {
-      "frame_id": 89,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0156.jpg",
+      "frame_id": 90,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0156.jpg",
       "timestamp": "19:22",
       "scene_duration": 46.51313333333337,
       "represents_count": 2,
       "narration": "century ecology\nquote Santos and katano convinced"
     },
     {
-      "frame_id": 90,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0126.jpg",
+      "frame_id": 91,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0125.jpg",
+      "timestamp": "13:45",
+      "scene_duration": 37.47076666666658,
+      "represents_count": 1,
+      "narration": "Martinez's head off killing him\ninstantly before kyano could make it"
+    },
+    {
+      "frame_id": 92,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0126.jpg",
       "timestamp": "14:22",
       "scene_duration": 5.372033333333434,
       "represents_count": 1,
       "narration": "alive when we went in they were all on\nthe floor dead Santos with them caught"
     },
     {
-      "frame_id": 91,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0127.jpg",
+      "frame_id": 93,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0127.jpg",
       "timestamp": "14:28",
       "scene_duration": 3.6369666666665807,
       "represents_count": 1,
       "narration": "in the crossfire a boy called Sebastian\nGuerrero 14 was shot dead by the end of"
     },
     {
-      "frame_id": 92,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0128.jpg",
+      "frame_id": 94,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0128.jpg",
       "timestamp": "14:31",
       "scene_duration": 3.0697333333333745,
       "represents_count": 1,
       "narration": "Guerrero 14 was shot dead by the end of\nthe day had taken 40 prisoners and"
     },
     {
-      "frame_id": 93,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0129.jpg",
+      "frame_id": 95,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0129.jpg",
       "timestamp": "14:34",
       "scene_duration": 12.445766666666714,
       "represents_count": 1,
       "narration": "captured Magdalena and alar\nSoles in the cave above the village the"
     },
     {
-      "frame_id": 94,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0131.jpg",
+      "frame_id": 96,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0131.jpg",
       "timestamp": "14:58",
       "scene_duration": 24.75806666666665,
       "represents_count": 1,
       "narration": "to deal within all my years after this\nnothing can surprise me upon questioning"
     },
     {
-      "frame_id": 95,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0133.jpg",
+      "frame_id": 97,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0133.jpg",
       "timestamp": "15:30",
       "scene_duration": 6.639966666666737,
       "represents_count": 1,
       "narration": "left of the cult\n[Music]"
     },
     {
-      "frame_id": 96,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0134.jpg",
+      "frame_id": 98,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0134.jpg",
       "timestamp": "15:37",
       "scene_duration": 11.745066666666617,
       "represents_count": 1,
       "narration": "completely different from those of the\nfinal product the more research I did"
     },
     {
-      "frame_id": 97,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0135.jpg",
+      "frame_id": 99,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0135.jpg",
       "timestamp": "15:48",
       "scene_duration": 30.597233333333406,
       "represents_count": 1,
       "narration": "from the ground truth that the two are\nnow becoming almost indistinguishable"
     },
     {
-      "frame_id": 98,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0136.jpg",
+      "frame_id": 100,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0136.jpg",
       "timestamp": "16:19",
       "scene_duration": 13.84716666666668,
       "represents_count": 1,
       "narration": "organized Visionary and hedonistic\ncharacteristics I think you can see"
     },
     {
-      "frame_id": 99,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0137.jpg",
+      "frame_id": 101,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0137.jpg",
       "timestamp": "16:33",
       "scene_duration": 10.91089999999997,
       "represents_count": 1,
       "narration": "Hernandez brother brothers katano and\nSantos these same sources fixate"
     },
     {
-      "frame_id": 100,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0138.jpg",
+      "frame_id": 102,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0138.jpg",
       "timestamp": "16:44",
       "scene_duration": 7.207199999999943,
       "represents_count": 1,
       "narration": "hyperfixate on magdalen's sexuality I'll\nremind you that she was just 16 when the"
     },
     {
-      "frame_id": 101,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0140.jpg",
+      "frame_id": 103,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0139.jpg",
+      "timestamp": "16:51",
+      "scene_duration": 12.47913333333338,
+      "represents_count": 1,
+      "narration": "was a prostitute from Monteray and when\nthe herandez brothers began to lose"
+    },
+    {
+      "frame_id": 104,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0140.jpg",
       "timestamp": "17:03",
       "scene_duration": 11.745066666666617,
       "represents_count": 1,
       "narration": "148 km away from yab bua and across\nstate"
     },
     {
-      "frame_id": 102,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0141.jpg",
-      "timestamp": "17:15",
-      "scene_duration": 5.205200000000104,
-      "represents_count": 1,
-      "narration": "indeed it was initially very difficult\nto track down its actual location but"
-    },
-    {
-      "frame_id": 103,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0142.jpg",
+      "frame_id": 105,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0142.jpg",
       "timestamp": "17:20",
       "scene_duration": 27.427400000000034,
       "represents_count": 1,
       "narration": "in\ntulipas looking at the edit history of"
     },
     {
-      "frame_id": 104,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0144.jpg",
+      "frame_id": 106,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0144.jpg",
       "timestamp": "17:49",
       "scene_duration": 8.742066666666688,
       "represents_count": 1,
       "narration": "2003 both these sources retell the\nincorrect version of the tale but allow"
     },
     {
-      "frame_id": 105,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0145.jpg",
+      "frame_id": 107,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0145.jpg",
       "timestamp": "17:58",
       "scene_duration": 17.18383333333327,
       "represents_count": 1,
       "narration": "version the absolute earliest Source I\ncould find was a new newspaper clipping"
     },
     {
-      "frame_id": 106,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0146.jpg",
+      "frame_id": 108,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0146.jpg",
       "timestamp": "18:15",
       "scene_duration": 6.606600000000071,
       "represents_count": 1,
       "narration": "The Cult were eventually found guilty of\nmurder and the cult was started by the"
     },
     {
-      "frame_id": 107,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0147.jpg",
+      "frame_id": 109,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0147.jpg",
       "timestamp": "18:21",
       "scene_duration": 22.789433333333363,
       "represents_count": 1,
       "narration": "there is no mention here of the supposed\nsexual aspect of the cult one year later"
     },
     {
-      "frame_id": 108,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0148.jpg",
+      "frame_id": 110,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0148.jpg",
       "timestamp": "18:44",
       "scene_duration": 0.43376666666654273,
       "represents_count": 1,
       "narration": "lost control of this\ncult bill star would then write up and"
     },
     {
-      "frame_id": 109,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0149.jpg",
-      "timestamp": "18:45",
-      "scene_duration": 0.8341666666667606,
-      "represents_count": 1,
-      "narration": "lost control of this\ncult bill star would then write up and"
-    },
-    {
-      "frame_id": 110,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0150.jpg",
-      "timestamp": "18:45",
-      "scene_duration": 0.8341666666667606,
-      "represents_count": 1,
-      "narration": "lost control of this\ncult bill star would then write up and"
-    },
-    {
       "frame_id": 111,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0151.jpg",
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0149.jpg",
+      "timestamp": "18:45",
+      "scene_duration": 0.8341666666667606,
+      "represents_count": 1,
+      "narration": "lost control of this\ncult bill star would then write up and"
+    },
+    {
+      "frame_id": 112,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0150.jpg",
+      "timestamp": "18:45",
+      "scene_duration": 0.8341666666667606,
+      "represents_count": 1,
+      "narration": "lost control of this\ncult bill star would then write up and"
+    },
+    {
+      "frame_id": 113,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0151.jpg",
       "timestamp": "18:46",
       "scene_duration": 0.8341666666665333,
       "represents_count": 1,
       "narration": "cult bill star would then write up and\nsend this story to Curtis and Mary"
     },
     {
-      "frame_id": 112,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0152.jpg",
+      "frame_id": 114,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0152.jpg",
       "timestamp": "18:47",
       "scene_duration": 0.8341666666667606,
       "represents_count": 1,
       "narration": "cult bill star would then write up and\nsend this story to Curtis and Mary"
     },
     {
-      "frame_id": 113,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0154.jpg",
+      "frame_id": 115,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0154.jpg",
       "timestamp": "19:06",
       "scene_duration": 7.273933333333389,
       "represents_count": 1,
       "narration": "Stars\ntale whilst it's difficult to say for"
     },
     {
-      "frame_id": 114,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0155.jpg",
+      "frame_id": 116,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0155.jpg",
       "timestamp": "19:14",
       "scene_duration": 8.141466666666474,
       "represents_count": 1,
       "narration": "matter after months of research I can\nsay it's the most trustworthy Source"
     },
     {
-      "frame_id": 115,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0158.jpg",
+      "frame_id": 117,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0157.jpg",
+      "timestamp": "20:08",
+      "scene_duration": 0.9342666666666446,
+      "represents_count": 1,
+      "narration": ""
+    },
+    {
+      "frame_id": 118,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0158.jpg",
       "timestamp": "20:09",
       "scene_duration": 1.1344666666666399,
       "represents_count": 1,
       "narration": ""
     },
     {
-      "frame_id": 116,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0160.jpg",
+      "frame_id": 119,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0160.jpg",
       "timestamp": "20:12",
       "scene_duration": 7.60759999999982,
       "represents_count": 1,
       "narration": "nonsense until next time\n[Music]"
     },
     {
-      "frame_id": 117,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0161.jpg",
+      "frame_id": 120,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0161.jpg",
       "timestamp": "20:20",
       "scene_duration": 5.972633333333533,
       "represents_count": 1,
       "narration": "nonsense until next time\n[Music]"
     },
     {
-      "frame_id": 118,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0163.jpg",
+      "frame_id": 121,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0163.jpg",
       "timestamp": "20:28",
       "scene_duration": 0.1668333333332157,
       "represents_count": 1,
       "narration": "nonsense until next time\n[Music]"
     },
     {
-      "frame_id": 119,
-      "frame_path": "context/visual-references/Mexico's Most Disturbing Cult\\frames\\frame_0072.jpg",
+      "frame_id": 122,
+      "frame_path": "context\\visual-references\\Mexico's Most Disturbing Cult\\frames\\frame_0072.jpg",
       "timestamp": "06:15",
       "scene_duration": 0.767433333333372,
-      "represents_count": 42,
+      "represents_count": 36,
       "narration": "toiled endlessly day in day out in the\nfields surrounding the village with"
     }
   ],
   "video_duration": 1228.5273,
   "total_scenes_detected": 164,
-  "unique_frames_after_dedup": 119
+  "unique_frames_after_dedup": 122
 }

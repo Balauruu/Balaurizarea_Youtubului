@@ -3,10 +3,12 @@
 Subcommands:
     survey  — Pass 1: resolve output dir, fetch initial URLs, write src_*.json files.
     deepen  — Pass 2: fetch targeted primary sources from evaluated manifest.
+    write   — Pass 3: aggregate sources into synthesis_input.md.
 
 Usage:
     PYTHONPATH=.claude/skills/researcher/scripts python -m researcher survey "Jonestown Massacre"
     PYTHONPATH=.claude/skills/researcher/scripts python -m researcher deepen "Jonestown Massacre"
+    PYTHONPATH=.claude/skills/researcher/scripts python -m researcher write "Jonestown Massacre"
 """
 import argparse
 import asyncio
@@ -18,6 +20,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from researcher.fetcher import fetch_with_retry
+from researcher.tiers import TIER_3_DOMAINS, classify_domain
 from researcher.url_builder import (
     _get_project_root,
     build_survey_urls,
@@ -34,18 +37,11 @@ _WIKI_NOISE_HEADINGS: frozenset[str] = frozenset({
 })
 
 
-def _strip_wiki_noise(markdown: str) -> str:
-    """Remove Wikipedia boilerplate sections from the end of markdown content.
+def _strip_trailing_sections(markdown: str) -> str:
+    """Remove boilerplate trailing sections (references, see also, etc.) from markdown.
 
-    Removes everything from the first occurrence of a noise heading to the end
-    of the document. If stripping would remove more than 50% of the content,
-    returns the original markdown unchanged (pitfall guard).
-
-    Args:
-        markdown: Markdown string to clean.
-
-    Returns:
-        Cleaned markdown string.
+    Cuts from the first noise heading to end of document.
+    Returns original if stripping would remove >50% of content.
     """
     if not markdown:
         return markdown
@@ -64,7 +60,6 @@ def _strip_wiki_noise(markdown: str) -> str:
 
     stripped_content = "\n".join(lines[:cut_line])
 
-    # Pitfall guard: if stripped < 50% of original word count, skip stripping
     original_words = len(markdown.split())
     stripped_words = len(stripped_content.split())
     if original_words > 0 and stripped_words < (original_words * 0.5):
@@ -74,14 +69,7 @@ def _strip_wiki_noise(markdown: str) -> str:
 
 
 async def _fetch_ddg_with_links(url: str) -> dict:
-    """Fetch a DDG HTML page and extract all links using crawl4ai.
-
-    Args:
-        url: DuckDuckGo HTML endpoint URL.
-
-    Returns:
-        dict with keys: success (bool), links (dict), content (str), error (str).
-    """
+    """Fetch a DDG HTML page and extract all links using crawl4ai."""
     from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode  # noqa: PLC0415
     browser_conf = BrowserConfig(
         browser_type="chromium",
@@ -103,36 +91,21 @@ async def _fetch_ddg_with_links(url: str) -> dict:
 def _parse_ddg_result_urls(ddg_result: dict, max_urls: int = 12) -> list[str]:
     """Extract non-DDG external HTTPS URLs from a DDG crawl result.
 
-    Filters out Tier 3 social domains and any duckduckgo.com URLs.
+    Filters out Tier 3 social domains and duckduckgo.com URLs.
     Handles DDG redirect URLs in format "/l/?uddg=<encoded>".
-
-    Args:
-        ddg_result: Result dict from _fetch_ddg_with_links.
-        max_urls: Maximum number of URLs to return.
-
-    Returns:
-        List of external URL strings (up to max_urls).
     """
-    from researcher.tiers import classify_domain, TIER_3_DOMAINS  # noqa: PLC0415
-
     external_links = ddg_result.get("links", {}).get("external", [])
     if not external_links:
-        # Some crawl4ai versions may return a list rather than list-of-dicts
         external_links = []
 
     collected: list[str] = []
 
     for link in external_links:
-        # link may be a dict with "href" key or a plain string
-        if isinstance(link, dict):
-            href = link.get("href", "")
-        else:
-            href = str(link)
-
+        href = link.get("href", "") if isinstance(link, dict) else str(link)
         if not href:
             continue
 
-        # Handle DDG redirect URLs: /l/?uddg=<encoded_url>
+        # Handle DDG redirect URLs
         if not href.startswith("https://"):
             try:
                 parsed = urlparse(href)
@@ -145,11 +118,9 @@ def _parse_ddg_result_urls(ddg_result: dict, max_urls: int = 12) -> list[str]:
             except Exception:
                 continue
 
-        # Skip DDG itself
         if "duckduckgo.com" in href:
             continue
 
-        # Skip Tier 3 social domains
         domain = urlparse(href).hostname or ""
         domain = domain.removeprefix("www.")
         if domain in TIER_3_DOMAINS:
@@ -163,19 +134,8 @@ def _parse_ddg_result_urls(ddg_result: dict, max_urls: int = 12) -> list[str]:
 
 
 def _print_summary_table(sources: list[dict]) -> None:
-    """Print a formatted summary table of survey sources to stdout.
-
-    Args:
-        sources: List of source entry dicts (each has index, domain, tier,
-                 word_count, fetch_status).
-    """
-    col_widths = {
-        "#": 4,
-        "Domain": 35,
-        "Tier": 6,
-        "Words": 8,
-        "Status": 10,
-    }
+    """Print a formatted summary table of sources to stdout."""
+    col_widths = {"#": 4, "Domain": 35, "Tier": 6, "Words": 8, "Status": 10}
 
     header = (
         f"{'#':<{col_widths['#']}}"
@@ -195,7 +155,6 @@ def _print_summary_table(sources: list[dict]) -> None:
     skipped = 0
 
     for src in sources:
-        idx = src.get("index", "")
         domain = src.get("domain", "")[:col_widths["Domain"] - 1]
         tier = src.get("tier", "")
         words = src.get("word_count", 0)
@@ -210,51 +169,106 @@ def _print_summary_table(sources: list[dict]) -> None:
             failed += 1
 
         print(
-            f"{str(idx):<{col_widths['#']}}"
+            f"{str(src.get('index', '')):<{col_widths['#']}}"
             f"{domain:<{col_widths['Domain']}}"
             f"{str(tier):<{col_widths['Tier']}}"
             f"{str(words):<{col_widths['Words']}}"
             f"{status:<{col_widths['Status']}}"
         )
 
-    total = len(sources)
     print(separator)
-    print(f"Total: {total} — {succeeded} succeeded, {failed} failed, {skipped} skipped")
+    print(f"Total: {len(sources)} — {succeeded} succeeded, {failed} failed, {skipped} skipped")
     print()
 
 
-def cmd_survey(topic: str) -> None:
-    """Run a survey pass for a topic.
+def _fetch_and_save(
+    urls: list[str],
+    output_dir: Path,
+    prefix: str,
+    pass_label: str,
+) -> list[dict]:
+    """Fetch a list of URLs, save each as JSON, return manifest entries.
 
-    Steps:
-      a. Resolve project root.
-      b. Resolve output directory (project research/ or standalone scratch).
-      c. Clean previous src_*.json and source_manifest.json from output dir.
-      d. Fetch Wikipedia URL.
-      e. Fetch DDG HTML page and extract result URLs.
-      f. Fetch all URLs, write result to src_NNN.json with domain field.
-      g. Print summary table.
-      h. Write source_manifest.json (lightweight index, no content field).
-      i. Print manifest path.
+    Shared logic used by both cmd_survey and cmd_deepen.
 
     Args:
-        topic: Topic string to research (e.g. "Jonestown Massacre").
+        urls: URLs to fetch.
+        output_dir: Directory to write JSON files into.
+        prefix: Filename prefix (e.g. "src" or "pass2").
+        pass_label: Label for progress display (e.g. "pass2").
+
+    Returns:
+        List of lightweight manifest entries (no content field).
     """
+    sources: list[dict] = []
+
+    for idx, url in enumerate(urls, start=1):
+        print(f"  [{pass_label} {idx}/{len(urls)}] Fetching {url} ...", end=" ", flush=True)
+        result = fetch_with_retry(url)
+
+        status = result["fetch_status"]
+        content = _strip_trailing_sections(result["content"] or "")
+        word_count = len(content.split()) if content else 0
+
+        domain = urlparse(url).hostname or ""
+        domain = domain.removeprefix("www.")
+        tier = classify_domain(url)
+
+        if status == "ok":
+            print(f"ok ({word_count} words)")
+        elif status == "skipped_tier3":
+            print("skipped (tier 3)")
+        else:
+            print(f"failed — {result['error']}")
+
+        # Write full source file
+        filename = f"{prefix}_{idx:03d}.json"
+        src_data = {
+            "index": idx,
+            "url": url,
+            "domain": domain,
+            "tier": tier,
+            "word_count": word_count,
+            "fetch_status": status,
+            "error": result["error"],
+            "content": content,
+        }
+        (output_dir / filename).write_text(
+            json.dumps(src_data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+        # Lightweight manifest entry (no content)
+        sources.append({
+            "index": idx,
+            "filename": filename,
+            "url": url,
+            "domain": domain,
+            "tier": tier,
+            "word_count": word_count,
+            "fetch_status": status,
+        })
+
+    return sources
+
+
+def cmd_survey(topic: str) -> None:
+    """Pass 1: fetch Wikipedia + DDG results for a topic."""
     root = _get_project_root()
     output_dir = resolve_output_dir(root, topic)
     print(f"Output directory: {output_dir}")
 
-    # Clean previous run artifacts from output dir
+    # Clean previous run artifacts
     for old_file in output_dir.glob("src_*.json"):
         old_file.unlink()
     manifest_path = output_dir / "source_manifest.json"
     if manifest_path.exists():
         manifest_path.unlink()
 
-    # Step 1: Get Wikipedia URL
+    # Get Wikipedia URL
     wikipedia_url = build_survey_urls(topic)[0]
 
-    # Step 2: Fetch DDG HTML and extract result URLs
+    # Fetch DDG HTML and extract result URLs
     ddg_urls: list[str] = []
     try:
         ddg_result = asyncio.run(_fetch_ddg_with_links(make_ddg_url(topic)))
@@ -272,62 +286,9 @@ def cmd_survey(topic: str) -> None:
         except Exception as exc:  # noqa: BLE001
             logger.warning("ddgs fallback failed: %s", exc)
 
-    # Step 3: Build final URL list (Wikipedia first, then DDG results)
-    # DDG HTML page itself is NEVER added to all_urls
     all_urls = [wikipedia_url] + ddg_urls
+    sources = _fetch_and_save(all_urls, output_dir, "src", "survey")
 
-    sources = []
-
-    for idx, url in enumerate(all_urls, start=1):
-        print(f"  [{idx}/{len(all_urls)}] Fetching {url} ...", end=" ", flush=True)
-        result = fetch_with_retry(url)
-
-        status = result["fetch_status"]
-        content = result["content"] or ""
-
-        # Apply noise stripping to all content
-        content = _strip_wiki_noise(content)
-        word_count = len(content.split()) if content else 0
-
-        domain = urlparse(url).hostname or ""
-        domain = domain.removeprefix("www.")
-
-        if status == "ok":
-            print(f"ok ({word_count} words)")
-        elif status == "skipped_tier3":
-            print("skipped (tier 3)")
-        else:
-            print(f"failed — {result['error']}")
-
-        # Write full source file (includes content, domain)
-        src_filename = f"src_{idx:03d}.json"
-        src_data = {
-            "index": idx,
-            "url": url,
-            "domain": domain,
-            "tier": _get_tier_from_url(url),
-            "word_count": word_count,
-            "fetch_status": status,
-            "error": result["error"],
-            "content": content,
-        }
-        (output_dir / src_filename).write_text(
-            json.dumps(src_data, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-
-        # Lightweight entry for manifest (no content field)
-        sources.append({
-            "index": idx,
-            "filename": src_filename,
-            "url": url,
-            "domain": domain,
-            "tier": src_data["tier"],
-            "word_count": word_count,
-            "fetch_status": status,
-        })
-
-    # Print summary table before manifest line
     _print_summary_table(sources)
 
     # Write source manifest
@@ -344,28 +305,8 @@ def cmd_survey(topic: str) -> None:
     print(f"Manifest: {manifest_path}")
 
 
-def _get_tier_from_url(url: str) -> int:
-    """Return tier for a URL using tiers.classify_domain."""
-    from researcher.tiers import classify_domain  # noqa: PLC0415
-    return classify_domain(url)
-
-
 def _collect_deep_dive_urls(manifest_path: Path) -> list[str]:
-    """Read source_manifest.json and return deduplicated, filtered deep-dive URLs.
-
-    Only collects URLs from sources with verdict == "recommended".
-    Sources with missing verdict are treated as skip.
-    Tier 3 URLs are filtered out.
-    Order preserved as they appear in the manifest.
-
-    Args:
-        manifest_path: Path to source_manifest.json.
-
-    Returns:
-        Deduplicated list of URL strings to fetch.
-    """
-    from researcher.tiers import classify_domain  # noqa: PLC0415
-
+    """Read source_manifest.json and return deduplicated deep-dive URLs from recommended sources."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     seen: set[str] = set()
     result: list[str] = []
@@ -385,16 +326,7 @@ def _collect_deep_dive_urls(manifest_path: Path) -> list[str]:
 
 
 def _get_fetched_urls(output_dir: Path) -> set[str]:
-    """Return the set of URLs already fetched in Pass 1 (src_*.json files).
-
-    Silently skips files that fail to parse.
-
-    Args:
-        output_dir: Directory containing src_*.json files.
-
-    Returns:
-        Set of URL strings already fetched.
-    """
+    """Return URLs already fetched in Pass 1 (src_*.json files)."""
     fetched: set[str] = set()
     for src_file in output_dir.glob("src_*.json"):
         try:
@@ -408,24 +340,7 @@ def _get_fetched_urls(output_dir: Path) -> set[str]:
 
 
 def cmd_deepen(topic: str) -> None:
-    """Pass 2: fetch targeted primary sources from evaluated source manifest.
-
-    Steps:
-      a. Resolve output directory.
-      b. Verify source_manifest.json exists.
-      c. Delete existing pass2_*.json files (clean re-run).
-      d. Collect deep-dive URLs from recommended sources only.
-      e. Filter out URLs already fetched in Pass 1.
-      f. Apply budget guard: total src + pass2 files must not exceed 15.
-      g. Exit cleanly if no fetchable URLs remain.
-      h. Fetch each URL, write pass2_NNN.json files.
-      i. Print summary table.
-      j. Update source_manifest.json with pass2_sources key.
-      k. Print manifest path.
-
-    Args:
-        topic: Topic string (same as used for survey).
-    """
+    """Pass 2: fetch targeted primary sources from evaluated manifest."""
     root = _get_project_root()
     output_dir = resolve_output_dir(root, topic)
 
@@ -438,14 +353,11 @@ def cmd_deepen(topic: str) -> None:
     for old_file in output_dir.glob("pass2_*.json"):
         old_file.unlink()
 
-    # Collect deep-dive URLs from recommended sources
     deep_dive_urls = _collect_deep_dive_urls(manifest_path)
-
-    # Filter URLs already fetched in Pass 1
     fetched_urls = _get_fetched_urls(output_dir)
     deep_dive_urls = [u for u in deep_dive_urls if u not in fetched_urls]
 
-    # Budget guard: total files across both passes must not exceed 15
+    # Budget guard: max 15 total files across both passes
     pass1_count = len(list(output_dir.glob("src_*.json")))
     pass2_budget = 15 - pass1_count
 
@@ -453,74 +365,22 @@ def cmd_deepen(topic: str) -> None:
         print(f"Budget exhausted: {pass1_count} src_*.json files already exist (max 15 total). Skipping Pass 2.")
         return
 
-    # Clean exit if nothing to fetch
     if not deep_dive_urls:
         print("No deep-dive URLs found in manifest -- skip Pass 2 or re-evaluate sources")
         return
 
-    # Log and truncate if over budget
     if len(deep_dive_urls) > pass2_budget:
         skipped_due_to_budget = deep_dive_urls[pass2_budget:]
         deep_dive_urls = deep_dive_urls[:pass2_budget]
-        print(f"Budget: {pass2_budget} slots available. Skipping {len(skipped_due_to_budget)} URL(s) due to budget:")
+        print(f"Budget: {pass2_budget} slots available. Skipping {len(skipped_due_to_budget)} URL(s):")
         for url in skipped_due_to_budget:
             print(f"  [budget-skip] {url}")
 
-    pass2_sources = []
+    pass2_sources = _fetch_and_save(deep_dive_urls, output_dir, "pass2", "pass2")
 
-    for idx, url in enumerate(deep_dive_urls, start=1):
-        print(f"  [pass2 {idx}/{len(deep_dive_urls)}] Fetching {url} ...", end=" ", flush=True)
-        result = fetch_with_retry(url)
-
-        status = result["fetch_status"]
-        content = result["content"] or ""
-
-        # Apply noise stripping to all content
-        content = _strip_wiki_noise(content)
-        word_count = len(content.split()) if content else 0
-
-        domain = urlparse(url).hostname or ""
-        domain = domain.removeprefix("www.")
-
-        if status == "ok":
-            print(f"ok ({word_count} words)")
-        elif status == "skipped_tier3":
-            print("skipped (tier 3)")
-        else:
-            print(f"failed — {result['error']}")
-
-        # Write full pass2 source file (includes content)
-        pass2_filename = f"pass2_{idx:03d}.json"
-        pass2_data = {
-            "index": idx,
-            "url": url,
-            "domain": domain,
-            "tier": _get_tier_from_url(url),
-            "word_count": word_count,
-            "fetch_status": status,
-            "error": result["error"],
-            "content": content,
-        }
-        (output_dir / pass2_filename).write_text(
-            json.dumps(pass2_data, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-
-        # Lightweight entry for manifest (no content field)
-        pass2_sources.append({
-            "index": idx,
-            "filename": pass2_filename,
-            "url": url,
-            "domain": domain,
-            "tier": pass2_data["tier"],
-            "word_count": word_count,
-            "fetch_status": status,
-        })
-
-    # Print summary table
     _print_summary_table(pass2_sources)
 
-    # Update manifest with pass2_sources key
+    # Update manifest with pass2_sources
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["pass2_sources"] = pass2_sources
     manifest_path.write_text(
@@ -532,23 +392,7 @@ def cmd_deepen(topic: str) -> None:
 
 
 def cmd_write(topic: str) -> None:
-    """Aggregate all scraped source files into synthesis_input.md.
-
-    Steps:
-      a. Resolve project root and output directory.
-      b. Load all src_*.json and pass2_*.json from output directory.
-      c. If no files found, print message and raise ValueError.
-      d. Build synthesis_input.md markdown string from all sources.
-      e. Write synthesis_input.md to output directory.
-      f. Print summary: source counts, file path, prompt path.
-      g. Print synthesis instruction for Claude.
-
-    Args:
-        topic: Topic string (same as used for survey/deepen).
-
-    Raises:
-        ValueError: When no source files are found in the output directory.
-    """
+    """Pass 3: aggregate all source files into synthesis_input.md."""
     root = _get_project_root()
     output_dir = resolve_output_dir(root, topic)
 
@@ -581,53 +425,24 @@ def main() -> None:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # survey subcommand
-    survey_parser = subparsers.add_parser(
-        "survey",
-        help="Pass 1: fetch initial sources for a topic",
-    )
-    survey_parser.add_argument(
-        "topic",
-        help="Topic string (e.g. 'Jonestown Massacre')",
-    )
+    survey_parser = subparsers.add_parser("survey", help="Pass 1: fetch initial sources for a topic")
+    survey_parser.add_argument("topic", help="Topic string (e.g. 'Jonestown Massacre')")
 
-    # deepen subcommand
-    deepen_parser = subparsers.add_parser(
-        "deepen",
-        help="Pass 2: fetch targeted primary sources from evaluated manifest",
-    )
-    deepen_parser.add_argument(
-        "topic",
-        help="Topic string (same as used for survey)",
-    )
+    deepen_parser = subparsers.add_parser("deepen", help="Pass 2: fetch targeted primary sources")
+    deepen_parser.add_argument("topic", help="Topic string (same as used for survey)")
 
-    # write subcommand
-    write_parser = subparsers.add_parser(
-        "write",
-        help="Aggregate scraped sources into synthesis_input.md for Claude synthesis",
-    )
-    write_parser.add_argument(
-        "topic",
-        help="Topic string (same as used for survey/deepen)",
-    )
+    write_parser = subparsers.add_parser("write", help="Pass 3: aggregate sources into synthesis_input.md")
+    write_parser.add_argument("topic", help="Topic string (same as used for survey/deepen)")
 
     args = parser.parse_args()
 
-    if args.command == "survey":
-        try:
+    try:
+        if args.command == "survey":
             cmd_survey(args.topic)
-        except ValueError as exc:
-            print(f"Error: {exc}", file=sys.stderr)
-            sys.exit(1)
-    elif args.command == "deepen":
-        try:
+        elif args.command == "deepen":
             cmd_deepen(args.topic)
-        except ValueError as exc:
-            print(f"Error: {exc}", file=sys.stderr)
-            sys.exit(1)
-    elif args.command == "write":
-        try:
+        elif args.command == "write":
             cmd_write(args.topic)
-        except ValueError as exc:
-            print(f"Error: {exc}", file=sys.stderr)
-            sys.exit(1)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)

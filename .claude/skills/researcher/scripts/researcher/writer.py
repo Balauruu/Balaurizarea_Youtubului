@@ -106,18 +106,6 @@ def build_synthesis_input(
             lines.append(f"- [{pass_label}] {url} — {reason}")
         lines.append("")
 
-    # Synthesis instructions
-    lines.append("---")
-    lines.append("")
-    lines.append("## Instructions")
-    lines.append("")
-    lines.append(
-        "Read the synthesis prompt at "
-        "`.claude/skills/researcher/prompts/synthesis.md` and produce:"
-    )
-    lines.append(f"1. `{output_dir}/Research.md` — Researcher dossier (~2,000 words)")
-    lines.append(f"2. `{output_dir}/media_urls.md` — Catalogued media URLs by asset type")
-    lines.append("")
     lines.append("---")
     lines.append("")
 

@@ -1,130 +1,165 @@
+---
+name: channel-assistant
+description: Competitor intelligence, topic ideation, and project initialization for the dark mysteries YouTube channel. Use this skill when the user wants to add/scrape/analyze competitor channels, generate scored topic briefs, scan YouTube trends and content gaps, or initialize a new video project directory. Also use when the user mentions competitors, topic ideas, trend scanning, content gaps, starting a new video project, or asks "what should I make a video about". Even if the user just says "give me topics" or "analyze competitors" — this skill handles it.
+---
+
 # channel-assistant
 
-## Description
+## How It Works
 
-Competitor intelligence and topic ideation for the dark mysteries YouTube channel. Manages a competitor channel registry, scrapes video metadata via yt-dlp into a SQLite database, and provides query/analysis capabilities for topic selection.
+This skill provides Python CLI tools for [DETERMINISTIC] data work (scraping, database queries, stats). Claude handles all [HEURISTIC] reasoning (topic generation, scoring, gap analysis) natively — no LLM API calls in the code.
 
-## Instructions
+## Workflows
 
-1. This skill relies on native Python script execution. Do not make LLM API calls inside the execution.
-2. Use the `Bash` or shell execution tool to run subcommands.
-3. The competitor registry is stored at `context/competitors/competitors.json` (single source of truth).
-4. The SQLite database is stored at `data/channel_assistant.db` (committed to git -- scraping is slow/rate-limited).
+### Full Refresh (new topic cycle)
 
-## Subcommands
+Run this when starting fresh or when competitor data is stale. Each step builds on the previous.
+
+```
+1. scrape          → refresh all competitor video data from YouTube
+2. analyze         → compute stats + outliers + trend scan + write analysis.md
+3. [HEURISTIC]     → Claude completes Topic Clusters + Title Patterns in analysis.md
+4. topics          → load context for topic generation
+5. [HEURISTIC]     → Claude generates 5 scored briefs, writes topic_briefs.md
+6. [DISPLAY]       → Claude outputs formatted markdown cards directly in chat
+7. User selects    → picks a topic number from chat
+8. [HEURISTIC]     → Claude generates title variants + description
+9. [DETERMINISTIC] → init_project() creates project directory + metadata.md
+```
+
+### Quick Topic Generation (data already fresh)
+
+Skip scraping if competitor data is recent (< 7 days old — analyze warns if stale).
+
+```
+1. analyze --no-trends  → stats + outliers only (fast, no HTTP calls)
+2. topics               → load context → Claude generates briefs
+```
+
+### Add New Competitor
+
+```
+1. add <url>    → register channel in competitors.json
+2. scrape       → fetch all video data for new + existing channels
+```
+
+## Commands
+
+All commands require PYTHONPATH set to the scripts directory:
+
+```bash
+PYTHONPATH=.claude/skills/channel-assistant/scripts python -m channel_assistant.cli <command> [args]
+```
 
 ### `add <url>`
 
-Register a new competitor channel. Validates the URL/handle, adds to `competitors.json`. Does NOT auto-scrape.
+Register a new competitor channel. Resolves channel name via yt-dlp, adds to `competitors.json`.
 
 ```bash
 python -m channel_assistant.cli add "https://www.youtube.com/@ChannelHandle"
 ```
 
-### `scrape`
+### `scrape [name]`
 
-Scrape all registered competitor channels. Fetches all video metadata via yt-dlp and stores in SQLite. Uses 3-8 second jittered delays between channels. Retries up to 2 times per channel on failure, falls back to cached data.
-
-```bash
-python -m channel_assistant.cli scrape
-```
-
-Output format:
-```
-Scraping 3 channels...
-* Barely Sociable: 47 videos (12 new)
-x Unnamed TV: yt-dlp timeout (2 retries)
-  -> Using cached data (23 videos from 2026-03-05)
-* Fredrik Knudsen: 39 videos (0 new)
-
-Done. 1 channel failed (cached data used).
-```
-
-### `scrape <name>`
-
-Scrape a specific channel by name (case-insensitive partial match).
+Scrape video metadata via yt-dlp. Omit name to scrape all channels. Uses 3-8s jittered delays, retries up to 2 times, falls back to cached data on failure.
 
 ```bash
-python -m channel_assistant.cli scrape "barely"
+python -m channel_assistant.cli scrape            # all channels
+python -m channel_assistant.cli scrape "barely"   # single channel (partial match)
 ```
 
-### `status`
+### `analyze [--no-trends]`
 
-Show summary table of all tracked channels with video counts and scrape status.
+Full competitor analysis pipeline in one command:
+1. Prints channel status table (video counts, scrape dates)
+2. Computes per-channel stats and outlier detection (2x median threshold)
+3. Writes `context/competitors/analysis.md` with stats + outliers + placeholder sections
+4. Writes `.claude/scratch/video_data_for_analysis.md` for Claude heuristic reasoning
+5. Runs trend scanning: autocomplete suggestions, YouTube search results, 30-day competitor convergence
+
+Use `--no-trends` to skip step 5 (useful when you only need stats, or when offline).
 
 ```bash
-python -m channel_assistant.cli status
+python -m channel_assistant.cli analyze             # full analysis + trends
+python -m channel_assistant.cli analyze --no-trends  # stats only, no HTTP calls
 ```
 
-Output format:
-```
-Channel            Videos  Last Scraped   Latest Upload
------------------------------------------------------
-Barely Sociable     47      2026-03-11     2026-02-15
-Unnamed TV          23      2026-03-05     2026-01-20
-Fredrik Knudsen     39      2026-03-11     2025-12-01
-```
-
-### `analyze`
-
-Run competitor analysis: channel stats, outlier detection, topic clustering, title patterns. Generates `context/competitors/analysis.md` and writes serialized video data to `.claude/scratch/video_data_for_analysis.md` for Claude heuristic reasoning.
-
-```bash
-python -m channel_assistant.cli analyze
-```
+After analyze completes, Claude should:
+- Read `.claude/scratch/video_data_for_analysis.md`
+- Complete the Topic Clusters and Title Patterns sections in `analysis.md`
+- If trends were scanned, use the trends analysis prompt to score content gaps and frame convergence alerts
+- Write trend results via `update_analysis_with_trends()` from `channel_assistant.trend_scanner`
 
 ### `topics`
 
-Load context for topic generation: competitor analysis, channel DNA, past topics, trend data. Prints structured context to stdout for Claude to generate scored topic briefs. After context is printed, Claude performs the [HEURISTIC] generation, scoring, and deduplication steps using `check_duplicates()`.
+Loads all context needed for topic generation and prints it to stdout. Claude then performs the [HEURISTIC] generation using the topic generation prompt.
 
 ```bash
 python -m channel_assistant.cli topics
 ```
 
-### `trends`
+After running, Claude should:
+1. Read the generation prompt: `.claude/skills/channel-assistant/prompts/topic_generation.md`
+2. Generate 5 scored topic briefs using the loaded context
+3. Run dedup: `check_duplicates(title, past_topics, threshold=0.85)` for each brief
+4. Write briefs via `write_topic_briefs()` from `channel_assistant.topics`
+5. Call `format_chat_cards(briefs)` and **output the returned markdown directly in the chat response** — do NOT print it via bash or show raw Python dicts
+6. When user selects topic N: call `load_project_inputs(root, N)`, read project_init prompt, generate metadata, call `init_project()`
 
-Scan YouTube for trending topics and content gaps. Scrapes autocomplete suggestions and recent search results for niche keywords, detects cross-channel convergence, updates `analysis.md` with trend sections.
+**IMPORTANT: All user-facing output must be formatted markdown displayed in chat, never raw data structures or bash stdout.**
 
-```bash
-python -m channel_assistant.cli trends
-```
+## Display Rules
+
+All user-facing output from this skill must be **formatted markdown displayed directly in chat**. Never show raw Python data structures, JSON dumps, or unformatted bash stdout to the user.
+
+- **Topic cards:** Use `format_chat_cards(briefs)` and paste the markdown into your response
+- **Analyze results:** Summarize key findings in a brief markdown table (channels, video counts, outlier highlights)
+- **Scrape results:** Report as a clean summary line (e.g. "Scraped 3 channels, 245 videos total")
+- **Errors:** Report as clear sentences, not tracebacks
+
+When a command prints structured data to stdout (for Claude to reason over), do NOT show that raw output to the user. Instead, summarize it in readable markdown.
+
+## Prompts
+
+| Prompt | Used By | Purpose |
+|--------|---------|---------|
+| `prompts/topic_generation.md` | `topics` command | Scoring rubric, generation instructions, output format |
+| `prompts/trends_analysis.md` | `analyze` command | Content gap scoring, convergence framing |
+| `prompts/project_init.md` | After topic selection | Title variant generation, description writing |
 
 ## File Locations
 
 | File | Purpose |
 |------|---------|
 | `context/competitors/competitors.json` | Competitor channel registry |
+| `context/competitors/analysis.md` | Full analysis report (stats + outliers + trends) |
+| `context/topics/topic_briefs.md` | Generated topic briefs |
 | `data/channel_assistant.db` | SQLite database (channels + videos tables) |
-| `.claude/skills/channel-assistant/scripts/channel_assistant/` | Python modules |
+| `.claude/scratch/video_data_for_analysis.md` | Serialized video data for heuristic analysis |
 
 ## Key Modules
 
-| Module | Exports | Purpose |
-|--------|---------|---------|
-| `models.py` | `Channel`, `Video` | Dataclasses for channel and video metadata |
-| `registry.py` | `Registry` | Read/write/validate competitors.json |
-| `database.py` | `Database` | SQLite schema creation, upserts, queries |
-| `cli.py` | (entry point) | Argparse CLI with subcommands |
-| `analyzer.py` | `compute_channel_stats`, `detect_outliers`, `format_stats_table`, `serialize_videos_for_analysis` | Channel statistics and outlier detection |
-| `topics.py` | `load_topic_inputs`, `check_duplicates`, `write_topic_briefs`, `format_chat_cards` | Topic generation helpers and dedup |
-| `trend_scanner.py` | `scrape_autocomplete`, `scrape_search_results`, `get_recent_competitor_videos`, `derive_keywords` | YouTube trend scanning |
-| `project_init.py` | `load_project_inputs`, `init_project` | Project directory creation and metadata |
+| Module | Purpose |
+|--------|---------|
+| `cli.py` | Entry point — 4 subcommands |
+| `models.py` | `Channel`, `Video` dataclasses |
+| `registry.py` | Read/write/validate competitors.json |
+| `database.py` | SQLite schema, upserts, queries |
+| `scraper.py` | yt-dlp channel scraping with retry + fallback |
+| `analyzer.py` | Channel stats, outlier detection, formatting |
+| `topics.py` | Topic loading, dedup checking, brief writing |
+| `trend_scanner.py` | Autocomplete, search scraping, keyword derivation |
+| `project_init.py` | Project directory creation and metadata |
 
 ## Schema Notes
 
 - **Channel fields:** name, youtube_id, handle, url, subscribers, total_views (nullable), description (nullable), scraped_at
 - **Video fields:** video_id, channel_id, title, url, views, upload_date, description, duration, tags (JSON array), likes, scraped_at
-- `total_views` and `description` on channels are nullable -- yt-dlp does not provide these from the videos endpoint
-- Tags are stored as JSON strings in SQLite and deserialized to Python lists on read
-- Upserts are idempotent: re-scraping updates existing records without creating duplicates
+- Tags stored as JSON strings in SQLite, deserialized to Python lists on read
+- Upserts are idempotent: re-scraping updates existing records without duplicates
 
 ## Dependencies
 
 - Python 3.14+ (stdlib only: sqlite3, json, argparse, pathlib, subprocess, random, datetime)
 - yt-dlp (installed in environment)
-
-## Entry Point
-
-```bash
-python -m channel_assistant.cli <subcommand> [args]
-```
+- crawl4ai (optional — trend search results require it, autocomplete works without it)

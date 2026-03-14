@@ -24,27 +24,6 @@ class ScrapeError(Exception):
     """Raised when yt-dlp scraping fails after all retries."""
 
 
-# Field mapping from yt-dlp JSON output to our schema
-VIDEO_FIELD_MAP = {
-    "id": "video_id",
-    "title": "title",
-    "webpage_url": "url",
-    "view_count": "views",
-    "upload_date": "upload_date",  # YYYYMMDD -> YYYY-MM-DD
-    "description": "description",
-    "duration": "duration",  # int seconds
-    "tags": "tags",  # list[str]
-    "like_count": "likes",  # int
-}
-
-CHANNEL_FIELD_MAP = {
-    "channel": "name",
-    "channel_id": "youtube_id",
-    "uploader_id": "handle",
-    "channel_url": "url",
-    "channel_follower_count": "subscribers",
-}
-
 
 def _format_upload_date(date_str: str | None) -> str | None:
     """Convert YYYYMMDD to YYYY-MM-DD format."""

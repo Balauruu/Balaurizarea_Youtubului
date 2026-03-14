@@ -47,7 +47,10 @@
   3. STYLE_PROFILE.md includes a transition phrase library drawn verbatim from the reference script — generic connective language ("furthermore", "notably") is not present in a generated test passage that uses only the profile as style guidance
   4. STYLE_PROFILE.md includes an open-ending template that prevents artificial resolution of unsolved cases
   5. The skill is invocable via SKILL.md with no Python code — classification is HEURISTIC; zero Python files exist in the style-extraction skill directory
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 11-01-PLAN.md — Create style-extraction skill infrastructure (SKILL.md, CONTEXT.md, extraction prompt)
+- [ ] 11-02-PLAN.md — Invoke skill to produce STYLE_PROFILE.md, human review, wire into project
 
 ### Phase 12: Writer Agent
 **Goal**: A completed, narrated video script exists in the project directory — written in the channel's voice, anchored to Research.md sources, with no hallucinated facts or production notes
@@ -58,7 +61,7 @@
   2. The generated Duplessis Orphans script contains numbered chapters with titles in the reference register (evocative, not generic) and pure narration text — no stage directions, visual cues, or production notes anywhere in the output
   3. Every factual claim in the script can be traced to a specific section of Research.md — no fact appears that is not present in the dossier
   4. Research.md HOOK and QUOTE callouts appear as chapter entry points or narration anchors in the generated script — they are not ignored or buried mid-chapter
-  5. The generated script reaches 3,000–7,000 words and maintains the channel's calm, deadpan tone throughout — it does not shift to an emotionally heightened register in later chapters
+  5. The generated script reaches 3,000-7,000 words and maintains the channel's calm, deadpan tone throughout — it does not shift to an emotionally heightened register in later chapters
 **Plans**: TBD
 
 ## Progress
@@ -75,5 +78,5 @@
 | 8. Survey Pass (Pass 1) | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 9. Deep-Dive Pass (Pass 2) | v1.1 | 1/1 | Complete | 2026-03-14 |
 | 10. Dossier Output | v1.1 | 3/3 | Complete | 2026-03-14 |
-| 11. Style Extraction Skill | v1.2 | 0/? | Not started | - |
+| 11. Style Extraction Skill | v1.2 | 0/2 | Not started | - |
 | 12. Writer Agent | v1.2 | 0/? | Not started | - |

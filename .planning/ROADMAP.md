@@ -108,5 +108,5 @@ Plans:
 | 11. Style Extraction Skill | v1.2 | 2/2 | Complete | 2026-03-14 |
 | 12. Writer Agent | v1.2 | 2/2 | Complete | 2026-03-15 |
 | 13. Stage Contract | 1/1 | Complete    | 2026-03-15 | - |
-| 14. Generation Prompt | 1/1 | Complete   | 2026-03-15 | - |
+| 14. Generation Prompt | 1/1 | Complete    | 2026-03-15 | - |
 | 15. Skill Entry Point | v1.3 | 0/1 | Not started | - |

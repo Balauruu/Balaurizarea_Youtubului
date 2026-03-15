@@ -55,7 +55,7 @@ This milestone is complete only when all are true:
 - [x] **S01: Visual Orchestrator Skill** `risk:medium` `depends:[]`
   > After this: feed Script.md + VISUAL_STYLE_GUIDE.md → get valid shotlist.json with building block type assignments and text overlay entries
 
-- [ ] **S02: Media Acquisition Skill** `risk:high` `depends:[S01]`
+- [x] **S02: Media Acquisition Skill** `risk:high` `depends:[S01]`
   > After this: feed shotlist.json → bulk download assets from 10+ free sources, get manifest.json with shot mappings + gap list
 
 - [ ] **S03: Graphics Generator Skill** `risk:high` `depends:[S01]`

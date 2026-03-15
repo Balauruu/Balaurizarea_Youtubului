@@ -1,0 +1,97 @@
+---
+id: T01
+parent: S02
+milestone: M002
+provides:
+  - manifest.json schema validator with full contract enforcement
+  - CLI with load (context aggregation) and status (gap analysis) subcommands
+  - media_urls.md parser extracting URL, description, source, and category
+  - CONTEXT.md stage contract and SKILL.md usage guide
+key_files:
+  - .claude/skills/media-acquisition/scripts/media_acquisition/schema.py
+  - .claude/skills/media-acquisition/scripts/media_acquisition/cli.py
+  - .claude/skills/media-acquisition/CONTEXT.md
+  - .claude/skills/media-acquisition/SKILL.md
+  - tests/test_media_acquisition/test_schema.py
+  - tests/test_media_acquisition/test_cli.py
+key_decisions:
+  - "manifest.json schema finalized: 6 top-level keys (project, generated, updated, assets, gaps, source_summary)"
+  - "Per-asset required fields: filename, folder, source, source_url, description, license, mapped_shots, acquired_by"
+  - "Gap lifecycle statuses: pending_generation, filled, unfilled (matching R010)"
+  - "Valid folders: archival_photos, archival_footage, documents, broll, vectors, animations"
+  - "Duplicated _get_project_root() / resolve_project_dir() from visual-orchestrator (same pattern, fourth duplication noted)"
+patterns_established:
+  - Media acquisition CLI follows exact same context-loader pattern as visual-orchestrator (D002)
+  - Schema validation returns list[str] errors with asset/gap context labels for grep-friendly output
+  - Tests use shared valid_manifest fixture, each test modifies minimally to trigger one error class
+observability_surfaces:
+  - "python -m media_acquisition status <topic> — structured gap/coverage summary to stdout"
+  - "CLI stderr messages with full file paths for missing inputs"
+  - "pytest tests/test_media_acquisition/ -v — 43 tests verifying schema + CLI contract"
+duration: 20m
+verification_result: passed
+completed_at: 2026-03-15
+blocker_discovered: false
+---
+
+# T01: Skill scaffold with manifest schema contract, load/status CLI, and tests
+
+**Media acquisition skill scaffold with manifest.json schema validator (6 required top-level keys, per-asset/gap validation, folder/status enums, shot ID format), CLI with load + status subcommands, media_urls.md parser, and 43 passing tests.**
+
+## What Happened
+
+Built the media acquisition skill under `.claude/skills/media-acquisition/` following the visual-orchestrator's context-loader pattern (D002).
+
+**schema.py** — Manifest.json validator enforcing: 6 required top-level keys, 8 required per-asset fields, 4 required per-gap fields, folder name enum (6 valid), gap status enum (3 valid: pending_generation/filled/unfilled), shot ID format (S001-S999), mapped_shots array with valid IDs, non-empty source_url, non-empty project name.
+
+**cli.py** — Two subcommands:
+- `load` reads shotlist.json + media_urls.md + channel.md and prints labeled sections with project/assets/manifest paths
+- `status` reads manifest.json and prints asset count, shot coverage, gap breakdown by status, coverage percentage, and per-source download summary
+
+**parse_media_urls()** — Extracts URL, description, source, and category from the markdown bullet format used by the researcher skill. Categories derived from ## headings.
+
+**CONTEXT.md + SKILL.md** — Stage contract documenting inputs/process/checkpoints/outputs + usage guide with CLI examples and manifest.json contract reference.
+
+Created a minimal shotlist.json for the Duplessis Orphans project so the `load` CLI verification runs end-to-end.
+
+## Verification
+
+- `pytest tests/test_media_acquisition/ -v` — **43 passed in 0.16s**
+  - test_schema.py: 29 tests (valid manifests, missing top-level keys, asset field validation, gap field validation, lifecycle statuses)
+  - test_cli.py: 14 tests (resolve_project_dir, load stdout, missing file errors, status summary, media_urls parsing)
+- `python -m media_acquisition load "Duplessis Orphans"` — exits 0, prints shotlist + media_urls + channel context ✓
+- `python -m media_acquisition status "Duplessis Orphans"` — exits 1 with "No manifest found" message (expected, no acquisition run yet) ✓
+
+### Slice-level verification status (T01 is task 1 of 3+):
+- ✅ `pytest tests/test_media_acquisition/ -v` — all pass
+- ✅ `load "Duplessis Orphans"` — exits 0, prints context
+- ✅ `status "Duplessis Orphans"` — exits 1 with "no manifest" (correct pre-acquisition state)
+- ✅ Schema validator catches invalid states (missing fields, bad status values, invalid shot IDs)
+- ⬜ `acquire` command — not yet implemented (T02+)
+
+## Diagnostics
+
+- `python -m media_acquisition status "<topic>"` — gap count, coverage percentage, per-source summary
+- CLI stderr messages include full file paths for missing inputs
+- Schema validator errors include asset filename or gap shot_id context for grep
+
+## Deviations
+
+Created `projects/1. The Duplessis Orphans.../shotlist.json` with a minimal valid fixture so the `load` CLI verification runs end-to-end. This file would normally be generated by the visual-orchestrator skill at runtime.
+
+## Known Issues
+
+- `_get_project_root()` and `resolve_project_dir()` are now duplicated across 4 skills. Should extract to a shared util if a 5th needs them.
+
+## Files Created/Modified
+
+- `.claude/skills/media-acquisition/scripts/media_acquisition/__init__.py` — Package init
+- `.claude/skills/media-acquisition/scripts/media_acquisition/__main__.py` — Entry point
+- `.claude/skills/media-acquisition/scripts/media_acquisition/schema.py` — manifest.json validator
+- `.claude/skills/media-acquisition/scripts/media_acquisition/cli.py` — CLI with load/status subcommands + parse_media_urls
+- `.claude/skills/media-acquisition/CONTEXT.md` — Stage contract
+- `.claude/skills/media-acquisition/SKILL.md` — Usage guide
+- `tests/test_media_acquisition/__init__.py` — Test package init
+- `tests/test_media_acquisition/test_schema.py` — 29 schema validation tests
+- `tests/test_media_acquisition/test_cli.py` — 14 CLI tests
+- `projects/1. The Duplessis Orphans.../shotlist.json` — Minimal fixture for CLI verification

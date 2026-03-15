@@ -29,13 +29,13 @@ This file is the explicit capability and coverage contract for the project.
 ### R003 — Multi-source media acquisition
 - Class: core-capability
 - Status: active
-- Description: Bulk scrape and download free/public domain media from 10+ sources including archive.org (Python lib), LOC JSON API, Wikimedia Commons API, Pexels API, Pixabay API, Smithsonian Open Access API, DPLA, Europeana, YouTube CC (yt-dlp), and web scraping via crawl4ai
+- Description: Bulk scrape and download free/public domain media from 7+ sources including archive.org (Python lib), Wikimedia Commons API, Pexels API, Pixabay API, Smithsonian Open Access API, YouTube CC (yt-dlp), and direct URL downloads
 - Why it matters: More sources = better coverage of visual needs, fewer gaps for the generator to fill
 - Source: user
 - Primary owning slice: M002/S02
 - Supporting slices: none
-- Validation: unmapped
-- Notes: Source policy: all media must be free (public domain, CC0, or Creative Commons). Rate limiting per source required.
+- Validation: contract-tested (102 mocked tests, live API validation in S06)
+- Notes: Source policy: all media must be free (public domain, CC0, or Creative Commons). Rate limiting per source required. DPLA/Europeana/LOC dropped due to API instability (D014).
 
 ### R004 — Asset-to-shot matching with gap identification
 - Class: core-capability
@@ -45,8 +45,8 @@ This file is the explicit capability and coverage contract for the project.
 - Source: user
 - Primary owning slice: M002/S02
 - Supporting slices: none
-- Validation: unmapped
-- Notes: Matching is [HEURISTIC] — Claude evaluates visual relevance
+- Validation: contract-tested (gap identification logic tested with mocks, live validation in S06)
+- Notes: Matching is [HEURISTIC] — Claude evaluates visual relevance. Gap identification only flags acquisition-relevant types (archival_photo, archival_video, document_scan).
 
 ### R005 — Code-generated flat graphics
 - Class: core-capability
@@ -302,8 +302,8 @@ This file is the explicit capability and coverage contract for the project.
 |---|---|---|---|---|---|
 | R001 | core-capability | validated | M002/S01 | none | validated |
 | R002 | core-capability | validated | M002/S01 | none | validated |
-| R003 | core-capability | active | M002/S02 | none | unmapped |
-| R004 | core-capability | active | M002/S02 | none | unmapped |
+| R003 | core-capability | active | M002/S02 | none | contract-tested |
+| R004 | core-capability | active | M002/S02 | none | contract-tested |
 | R005 | core-capability | active | M002/S03 | none | unmapped |
 | R006 | core-capability | active | M002/S03 | none | unmapped |
 | R007 | core-capability | active | M002/S04 | none | unmapped |

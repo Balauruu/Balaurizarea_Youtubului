@@ -20,14 +20,15 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 - End-to-end validated: Duplessis Orphans topic from competitor analysis → research dossier → narrated script
 - Full test suite passing across all agents (252/253, 1 external dep issue)
 
-**M002 in progress (S01-S05 complete):**
+**M002 complete (all 6 slices done):**
 - Visual Orchestrator skill: context-loader CLI + shotlist.json schema validator, 20 tests
 - Media Acquisition skill: 7 source adapters, manifest.json schema contract, acquire/load/status CLI, 102 tests
 - Graphics Generator skill: 7 Pillow renderers + ComfyUI REST client with 4 workflow templates, load/generate/status CLI, 69 tests
 - Animation skill: Remotion Node.js project (4 map variants) + Python CLI with load/render/status, 22 tests
 - Asset Manager skill: organize/load/status CLI, sequential numbering by shotlist order, _pool/ for unmapped, gap finalization, 28 tests
-- shotlist.json → manifest.json → organized numbered assets pipeline contract established
-- S06 (end-to-end integration) remaining
+- End-to-end integration: 73-shot shotlist → 21 organized numbered assets with valid manifest on Duplessis Orphans project
+- shotlist.json → manifest.json → organized numbered assets pipeline contract proven with 6 integration tests
+- Full test suite: 496 tests (490 unit + 6 integration)
 
 **Channel profile:** Dark history, true crime, unsolved mysteries. 20-50 min documentaries. Neutral, cinematic tone. Target audience: 22-38, intellectually curious.
 
@@ -50,4 +51,4 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 ## Milestone Sequence
 
 - [x] M001: Migration — Full narrative pipeline from competitor analysis through narrated script (3 agents, 253 tests)
-- [ ] M002: Asset Pipeline — Script-to-organized-asset-folder pipeline (5 new skills: visual orchestrator, media acquisition, graphics generator, animation, asset manager)
+- [x] M002: Asset Pipeline — Script-to-organized-asset-folder pipeline (5 new skills, 496 tests, end-to-end proven on Duplessis Orphans)

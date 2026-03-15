@@ -67,7 +67,7 @@ This milestone is complete only when all are true:
 - [x] **S05: Asset Manager Skill** `risk:low` `depends:[S02,S03,S04]`
   > After this: feed populated assets/ → numbered files in type folders, consolidated manifest, _pool/ for unmatched
 
-- [ ] **S06: End-to-End Integration** `risk:medium` `depends:[S01,S02,S03,S04,S05]`
+- [x] **S06: End-to-End Integration** `risk:medium` `depends:[S01,S02,S03,S04,S05]`
   > After this: full pipeline on Duplessis Orphans project proves Script.md → organized numbered asset folder with manifest
 
 ## Boundary Map

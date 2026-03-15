@@ -109,7 +109,7 @@ Assign `shotlist_type` using these rules. Every building block maps to exactly o
 
 **5. Abstract content routed to archival**
 - WRONG: `"building_block": "Archival Footage", "visual_need": "Footage of the psychological effects of prolonged isolation"` — no such footage exists
-- RIGHT: `"building_block": "Concept Diagram", "shotlist_type": "animation", "visual_need": "Animated diagram showing psychological cascade from isolation to cognitive decline"`
+- RIGHT: `"building_block": "Diagram", "shotlist_type": "animation", "visual_need": "Animated diagram showing psychological cascade from isolation to cognitive decline"`
 
 **6. Narration transcribed verbatim**
 - WRONG: `"narrative_context": "Halcott had worked at the institute for eleven years before the first complaint was filed, and by then the institutional mechanisms that should have caught his behavior had been systematically disabled by a culture of deference to senior staff."`

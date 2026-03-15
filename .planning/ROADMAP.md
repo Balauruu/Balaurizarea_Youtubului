@@ -76,7 +76,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 14-01-PLAN.md � Write generation.md with schema, building blocks, type routing, granularity rules, anti-patterns, and worked example
+- [ ] 14-01-PLAN.md — Write generation.md with schema, building blocks, type routing, granularity rules, anti-patterns, and worked example
 
 ### Phase 15: Skill Entry Point
 **Goal**: The skill is discoverable and invocable — SKILL.md provides a 3-step invocation workflow and CLAUDE.md routes visual planning tasks to the skill.
@@ -86,10 +86,10 @@ Plans:
   1. SKILL.md exists at `.claude/skills/visual-orchestrator/SKILL.md` with 3-step invocation: (1) resolve project directory and identify/disambiguate VISUAL_STYLE_GUIDE, (2) read Script.md and guide, (3) generate and write shotlist.json
   2. SKILL.md explicitly handles the case where multiple VISUAL_STYLE_GUIDE.md files exist in context/visual-references/ — asks user which to apply rather than guessing
   3. CLAUDE.md task routing table includes a "Create shot list" row pointing to visual-orchestrator and CONTEXT.md; "What to Load" table includes a visual planning row specifying visual-references/ and the project script as inputs
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 15-01: Write SKILL.md and update CLAUDE.md routing
+- [ ] 15-01-PLAN.md — Write SKILL.md and update CLAUDE.md routing
 
 ## Progress
 

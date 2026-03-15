@@ -83,46 +83,46 @@ This file is the explicit capability and coverage contract for the project.
 
 ### R008 — Sequential asset numbering and manifest consolidation
 - Class: core-capability
-- Status: active
+- Status: validated
 - Description: Assign sequential prefixes (001_, 002_, ...) based on order of appearance in shotlist.json. Assets mapped to multiple shots get the number of their first appearance.
 - Why it matters: Numbered assets can be quickly assembled into a DaVinci timeline in order
 - Source: user
 - Primary owning slice: M002/S05
 - Supporting slices: none
-- Validation: unmapped
+- Validation: contract-tested (19 organize tests covering numbering, multi-shot, same-shot, cross-folder, idempotency)
 - Notes: Follows Architecture.md numbering convention
 
 ### R009 — Unmatched assets sorted to _pool/
 - Class: core-capability
-- Status: active
+- Status: validated
 - Description: Assets acquired but not mapped to any shot are moved to _pool/ directory, kept for manual editorial use
 - Why it matters: No acquired media is wasted — editor can browse unmatched assets for creative decisions
 - Source: user
 - Primary owning slice: M002/S05
 - Supporting slices: none
-- Validation: unmapped
-- Notes: _pool/ assets are unnumbered
+- Validation: contract-tested (pool move + manifest removal tests)
+- Notes: _pool/ assets are unnumbered, removed from manifest
 
 ### R010 — Gap lifecycle tracking
 - Class: integration
-- Status: active
+- Status: validated
 - Description: Track gap status through lifecycle: pending_generation → filled (by graphics/animation agents) → unfilled (terminal state set by asset manager)
 - Why it matters: Clear gap lifecycle means the editor knows exactly what the pipeline couldn't provide
 - Source: inferred
 - Primary owning slice: M002/S05
 - Supporting slices: M002/S02, M002/S03, M002/S04
-- Validation: unmapped
+- Validation: contract-tested (gap finalization tests prove pending_generation → unfilled)
 - Notes: Status tracked in manifest.json gaps section
 
 ### R011 — Raw assets delivered without pre-styling
 - Class: constraint
-- Status: active
+- Status: validated
 - Description: All assets delivered raw — no film grain, sepia toning, CRT scanlines, or other post-production effects applied by the pipeline
 - Why it matters: Editor controls the final look in DaVinci Resolve; pre-styled assets fight the grading process
 - Source: user
 - Primary owning slice: M002/S05
 - Supporting slices: none
-- Validation: unmapped
+- Validation: validated (organize only renames files — no content modification code exists)
 - Notes: VISUAL_STYLE_GUIDE production specs describe the final look, not how assets should be delivered
 
 ## Validated
@@ -307,10 +307,10 @@ This file is the explicit capability and coverage contract for the project.
 | R005 | core-capability | active | M002/S03 | none | contract-tested |
 | R006 | core-capability | active | M002/S03 | none | contract-tested |
 | R007 | core-capability | active | M002/S04 | none | contract-tested |
-| R008 | core-capability | active | M002/S05 | none | unmapped |
-| R009 | core-capability | active | M002/S05 | none | unmapped |
-| R010 | integration | active | M002/S05 | M002/S02,S03,S04 | unmapped |
-| R011 | constraint | active | M002/S05 | none | unmapped |
+| R008 | core-capability | validated | M002/S05 | none | contract-tested |
+| R009 | core-capability | validated | M002/S05 | none | contract-tested |
+| R010 | integration | validated | M002/S05 | M002/S02,S03,S04 | contract-tested |
+| R011 | constraint | validated | M002/S05 | none | validated |
 | R012 | core-capability | validated | M001/S01 | M001/S06 | validated |
 | R013 | core-capability | validated | M001/S02 | none | validated |
 | R014 | core-capability | validated | M001/S03 | none | validated |
@@ -329,7 +329,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Coverage Summary
 
-- Active requirements: 9
-- Mapped to slices: 9
-- Validated: 12
+- Active requirements: 5
+- Mapped to slices: 5
+- Validated: 16
 - Unmapped active requirements: 0

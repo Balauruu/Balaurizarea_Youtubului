@@ -20,12 +20,14 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 - End-to-end validated: Duplessis Orphans topic from competitor analysis → research dossier → narrated script
 - Full test suite passing across all agents (252/253, 1 external dep issue)
 
-**M002 in progress (S01-S04 complete):**
+**M002 in progress (S01-S05 complete):**
 - Visual Orchestrator skill: context-loader CLI + shotlist.json schema validator, 20 tests
 - Media Acquisition skill: 7 source adapters, manifest.json schema contract, acquire/load/status CLI, 102 tests
 - Graphics Generator skill: 7 Pillow renderers + ComfyUI REST client with 4 workflow templates, load/generate/status CLI, 69 tests
 - Animation skill: Remotion Node.js project (4 map variants) + Python CLI with load/render/status, 22 tests
-- shotlist.json → manifest.json pipeline contract established for downstream S05 skill
+- Asset Manager skill: organize/load/status CLI, sequential numbering by shotlist order, _pool/ for unmapped, gap finalization, 28 tests
+- shotlist.json → manifest.json → organized numbered assets pipeline contract established
+- S06 (end-to-end integration) remaining
 
 **Channel profile:** Dark history, true crime, unsolved mysteries. 20-50 min documentaries. Neutral, cinematic tone. Target audience: 22-38, intellectually curious.
 

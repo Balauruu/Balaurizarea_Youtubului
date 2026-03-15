@@ -64,7 +64,7 @@ This milestone is complete only when all are true:
 - [x] **S04: Remotion Animation Skill** `risk:medium` `depends:[S01]`
   > After this: feed map/diagram shot entries from shotlist → rendered .mp4 animation clips via Remotion
 
-- [ ] **S05: Asset Manager Skill** `risk:low` `depends:[S02,S03,S04]`
+- [x] **S05: Asset Manager Skill** `risk:low` `depends:[S02,S03,S04]`
   > After this: feed populated assets/ → numbered files in type folders, consolidated manifest, _pool/ for unmatched
 
 - [ ] **S06: End-to-End Integration** `risk:medium` `depends:[S01,S02,S03,S04,S05]`

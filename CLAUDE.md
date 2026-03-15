@@ -38,6 +38,7 @@ Channel-automation V3/
 │   │   ├── channel-assistant/    # Agent 1.1: Topics, competitors, project init
 │   │   ├── researcher/           # Agent 1.2: Two-pass research pipeline
 │   │   ├── writer/               # Agent 1.3: Research dossier → narrated script
+│   │   ├── visual-orchestrator/      # Agent 1.4: Script → structured shot list
 │   │   ├── visual-style-extractor/  # Frame analysis → visual patterns
 │   │   └── crawl4ai-scraper/     # Web scraping utility
 │   └── scratch/                  # Transient data (gitignored, ephemeral)
@@ -60,7 +61,7 @@ Channel-automation V3/
 | Extract visual style | visual-style-extractor | 6-stage pipeline |
 | Extract channel voice style | style-extraction | SKILL.md invocation |
 | Write script | writer | `cmd_load` + Claude heuristic |
-| Create shot list | *(not yet implemented)* | — |
+| Create shot list | visual-orchestrator | SKILL.md invocation |
 
 ### What to Load
 
@@ -71,7 +72,7 @@ Channel-automation V3/
 | Style extraction | visual-style-extractor/CONTEXT.md, target video/URL | Everything else — self-contained pipeline |
 | Channel style extraction | style-extraction/CONTEXT.md, context/script-references/ | Everything else — self-contained |
 | Script writing | channel.md, STYLE_PROFILE.md, script-references/, projects/N/research/Research.md | competitors/ — writer needs voice + research, not strategy |
-| Visual planning *(future)* | visual-references/*/VISUAL_STYLE_GUIDE.md, projects/N/script.md | competitors/, channel.md — director needs visuals + script |
+| Visual planning | visual-orchestrator/CONTEXT.md, .claude/skills/visual-orchestrator/prompts/generation.md, projects/N/Script.md | visual-references/ (deferred to SHOT-09), competitors/, channel.md — director needs script + generation rules only |
 
 ### Reference Files
 
@@ -89,6 +90,7 @@ Channel-automation V3/
 | `channel-assistant` | 1.1 | Competitor intel, topic ideation, project init |
 | `researcher` | 1.2 | Two-pass web research → narrative dossier |
 | `writer` | 1.3 | Research dossier → narrated chapter script |
+| `visual-orchestrator` | 1.4 | Script → structured shot list |
 | `visual-style-extractor` | — | Reference video → visual pattern toolkit |
 
 ### Utility Skills

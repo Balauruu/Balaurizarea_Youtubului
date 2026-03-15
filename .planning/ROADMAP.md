@@ -44,7 +44,7 @@
 **Milestone Goal:** Build the Visual Orchestrator skill that parses finished scripts into structured shot lists, bridging narrative engineering (Phase 1) to the asset pipeline (Phase 2).
 
 - [x] **Phase 13: Stage Contract** — CONTEXT.md with pipeline-reset invariant and stage boundaries (completed 2026-03-15)
-- [ ] **Phase 14: Generation Prompt** — generation.md with full schema, granularity rules, and anti-patterns
+- [x] **Phase 14: Generation Prompt** — generation.md with full schema, granularity rules, and anti-patterns (completed 2026-03-15)
 - [ ] **Phase 15: Skill Entry Point** — SKILL.md invocation workflow and CLAUDE.md routing update
 
 ## Phase Details
@@ -76,7 +76,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 14-01-PLAN.md � Write generation.md with schema, building blocks, type routing, granularity rules, anti-patterns, and worked example
+- [ ] 14-01-PLAN.md � Write generation.md with schema, building blocks, type routing, granularity rules, anti-patterns, and worked example
 
 ### Phase 15: Skill Entry Point
 **Goal**: The skill is discoverable and invocable — SKILL.md provides a 3-step invocation workflow and CLAUDE.md routes visual planning tasks to the skill.
@@ -108,5 +108,5 @@ Plans:
 | 11. Style Extraction Skill | v1.2 | 2/2 | Complete | 2026-03-14 |
 | 12. Writer Agent | v1.2 | 2/2 | Complete | 2026-03-15 |
 | 13. Stage Contract | 1/1 | Complete    | 2026-03-15 | - |
-| 14. Generation Prompt | v1.3 | 0/1 | Not started | - |
+| 14. Generation Prompt | 1/1 | Complete   | 2026-03-15 | - |
 | 15. Skill Entry Point | v1.3 | 0/1 | Not started | - |

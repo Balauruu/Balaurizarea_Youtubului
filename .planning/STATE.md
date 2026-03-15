@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: The Director
 status: active
-stopped_at: Phase 14 context gathered
-last_updated: "2026-03-15T13:18:40.134Z"
+stopped_at: Phase 14 Plan 01 Task 1 complete — awaiting checkpoint Task 2 human-verify
+last_updated: "2026-03-15T13:34:21.730Z"
 last_activity: 2026-03-15 — v1.3 roadmap created (Phases 13-15)
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
 ---
 
 ---
@@ -60,6 +60,9 @@ Recent decisions affecting current work:
 - [Phase 13-stage-contract]: VISUAL_STYLE_GUIDE.md deferred to SHOT-09 — v1.3 inputs are Script.md and generation.md only
 - [Phase 13-stage-contract]: Pipeline-reset invariant: full regeneration only in v1.3; no chapter-level regen due to globally-sequential shot IDs
 - [Phase 13-stage-contract]: No Checkpoints section in visual-orchestrator CONTEXT.md — omitted by design
+- [Phase 14-generation-prompt]: 25 building blocks selected: 18 Duplessis baseline + 7 additions for true crime, missing persons, modern events coverage
+- [Phase 14-generation-prompt]: Worked example uses synthetic Carol Marden case to avoid memorization of Duplessis-specific patterns
+- [Phase 14-generation-prompt]: text_content MUST be populated for all text_overlay shots; null for all others — explicit hard rule
 
 ### Pending Todos
 
@@ -72,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T13:18:40.132Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-generation-prompt/14-CONTEXT.md
+Last session: 2026-03-15T13:34:16.981Z
+Stopped at: Phase 14 Plan 01 Task 1 complete — awaiting checkpoint Task 2 human-verify
+Resume file: None

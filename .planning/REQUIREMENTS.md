@@ -9,13 +9,13 @@ Requirements for Visual Orchestrator (Agent 1.4). Each maps to roadmap phases.
 
 ### Shot List Generation
 
-- [ ] **SHOT-01**: Skill parses Script.md chapter structure (## N. Title) and generates shots grouped by chapter
-- [ ] **SHOT-02**: Shot boundaries follow narrative beats (visual subject changes: era, location, figure, evidence type) — not paragraphs or sentences
-- [ ] **SHOT-03**: Each shot has sequential ID (S001, S002...), chapter number, narrative_context, visual_need, and suggested_types
-- [ ] **SHOT-04**: `visual_need` descriptions are specific enough for acquisition search queries (era + location + subject, no production terms)
-- [ ] **SHOT-05**: Visual variety enforced — mix of asset types across the shot list, not repeated suggested_types
-- [ ] **SHOT-06**: Each chapter begins with an establishing/orienting shot (geographic, temporal, or contextual)
-- [ ] **SHOT-07**: Abstract narration with no visual record routes to vector/animation types, not archival
+- [x] **SHOT-01**: Skill parses Script.md chapter structure (## N. Title) and generates shots grouped by chapter
+- [x] **SHOT-02**: Shot boundaries follow narrative beats (visual subject changes: era, location, figure, evidence type) — not paragraphs or sentences
+- [x] **SHOT-03**: Each shot has sequential ID (S001, S002...), chapter number, narrative_context, visual_need, and suggested_types
+- [x] **SHOT-04**: `visual_need` descriptions are specific enough for acquisition search queries (era + location + subject, no production terms)
+- [x] **SHOT-05**: Visual variety enforced — mix of asset types across the shot list, not repeated suggested_types
+- [x] **SHOT-06**: Each chapter begins with an establishing/orienting shot (geographic, temporal, or contextual)
+- [x] **SHOT-07**: Abstract narration with no visual record routes to vector/animation types, not archival
 
 ### Skill Infrastructure
 
@@ -48,13 +48,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SHOT-01 | Phase 14 | Pending |
-| SHOT-02 | Phase 14 | Pending |
-| SHOT-03 | Phase 14 | Pending |
-| SHOT-04 | Phase 14 | Pending |
-| SHOT-05 | Phase 14 | Pending |
-| SHOT-06 | Phase 14 | Pending |
-| SHOT-07 | Phase 14 | Pending |
+| SHOT-01 | Phase 14 | Complete |
+| SHOT-02 | Phase 14 | Complete |
+| SHOT-03 | Phase 14 | Complete |
+| SHOT-04 | Phase 14 | Complete |
+| SHOT-05 | Phase 14 | Complete |
+| SHOT-06 | Phase 14 | Complete |
+| SHOT-07 | Phase 14 | Complete |
 | INFRA-01 | Phase 13 | Complete |
 | INFRA-02 | Phase 13 | Complete |
 | INFRA-03 | Phase 15 | Pending |

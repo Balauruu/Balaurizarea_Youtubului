@@ -109,4 +109,4 @@ Plans:
 | 12. Writer Agent | v1.2 | 2/2 | Complete | 2026-03-15 |
 | 13. Stage Contract | 1/1 | Complete    | 2026-03-15 | - |
 | 14. Generation Prompt | 1/1 | Complete    | 2026-03-15 | - |
-| 15. Skill Entry Point | 1/1 | Complete   | 2026-03-15 | - |
+| 15. Skill Entry Point | 1/1 | Complete    | 2026-03-15 | - |

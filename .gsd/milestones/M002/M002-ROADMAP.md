@@ -52,7 +52,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Visual Orchestrator Skill** `risk:medium` `depends:[]`
+- [x] **S01: Visual Orchestrator Skill** `risk:medium` `depends:[]`
   > After this: feed Script.md + VISUAL_STYLE_GUIDE.md → get valid shotlist.json with building block type assignments and text overlay entries
 
 - [ ] **S02: Media Acquisition Skill** `risk:high` `depends:[S01]`

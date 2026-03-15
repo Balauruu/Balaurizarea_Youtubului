@@ -20,6 +20,10 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 - End-to-end validated: Duplessis Orphans topic from competitor analysis → research dossier → narrated script
 - Full test suite passing across all agents (252/253, 1 external dep issue)
 
+**M002 in progress (S01 complete):**
+- Visual Orchestrator skill: context-loader CLI + shotlist.json schema validator, 20 tests
+- shotlist.json schema contract established for downstream S02-S05 skills
+
 **Channel profile:** Dark history, true crime, unsolved mysteries. 20-50 min documentaries. Neutral, cinematic tone. Target audience: 22-38, intellectually curious.
 
 ## Architecture / Key Patterns

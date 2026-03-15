@@ -17,3 +17,5 @@
 | D009 | M002 | scope | Text overlays | Shotlist entries only, no generated assets | Editor places text elements in DaVinci with proper fonts/styles | No |
 | D010 | M002 | arch | Media source strategy | 10+ free sources (archive.org, LOC, Wikimedia, Pexels, Pixabay, Smithsonian, DPLA, Europeana, YouTube CC, crawl4ai) | More sources = better coverage, fewer gaps for generators | Yes — sources may be added/removed based on reliability |
 | D011 | M002 | arch | Pipeline coordination artifact | manifest.json at assets/ root | Central state tracking for all Phase 2 agents, gap lifecycle | No |
+| D012 | M002/S01 | schema | shotlist.json schema | Single shotlist_type + building_block per shot (not Architecture.md's suggested_types array) | Cleaner downstream filtering — each shot routes to exactly one skill | No |
+| D013 | M002/S01 | pattern | VISUAL_STYLE_GUIDE variability | CLI accepts --guide flag, defaults to first guide in context/visual-references/ | Orchestrator must work with any valid guide, not hardcode the Mexico cult guide's 25 blocks | No |

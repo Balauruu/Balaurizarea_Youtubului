@@ -6,7 +6,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ### R001 — Script-to-shotlist mapping via VISUAL_STYLE_GUIDE
 - Class: core-capability
-- Status: active
+- Status: validated
 - Description: Parse Script.md and apply VISUAL_STYLE_GUIDE decision tree to produce shotlist.json with building block type assignments for every narrative segment
 - Why it matters: This is the bridge between written script and visual production — without it, editors must manually decide every visual
 - Source: user
@@ -17,7 +17,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ### R002 — Text overlay entries in shotlist
 - Class: core-capability
-- Status: active
+- Status: validated
 - Description: Shotlist includes entries for text overlays (quote cards, date cards, keyword stingers, warning cards) with text content and timing, but no assets are generated for them
 - Why it matters: Editor needs to know where text elements go even though they're placed manually in DaVinci
 - Source: user
@@ -300,8 +300,8 @@ This file is the explicit capability and coverage contract for the project.
 
 | ID | Class | Status | Primary owner | Supporting | Proof |
 |---|---|---|---|---|---|
-| R001 | core-capability | active | M002/S01 | none | unmapped |
-| R002 | core-capability | active | M002/S01 | none | unmapped |
+| R001 | core-capability | validated | M002/S01 | none | validated |
+| R002 | core-capability | validated | M002/S01 | none | validated |
 | R003 | core-capability | active | M002/S02 | none | unmapped |
 | R004 | core-capability | active | M002/S02 | none | unmapped |
 | R005 | core-capability | active | M002/S03 | none | unmapped |
@@ -329,7 +329,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Coverage Summary
 
-- Active requirements: 11
-- Mapped to slices: 11
-- Validated: 10
+- Active requirements: 9
+- Mapped to slices: 9
+- Validated: 12
 - Unmapped active requirements: 0

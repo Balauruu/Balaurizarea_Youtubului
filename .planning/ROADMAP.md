@@ -73,10 +73,10 @@ Plans:
   3. Each shot entry contains all required fields: id, chapter, chapter_title, narrative_context (max 50-word paraphrase, not transcription), visual_need, building_block, shotlist_type, building_block_variant, text_content, and suggested_sources
   4. visual_need descriptions are specific enough for acquisition search queries: era + geography + subject with no cinematographer language ("slow dolly", "close-up") — the generation prompt includes explicit side-by-side WRONG/RIGHT examples
   5. Abstract narration with no visual record routes to vector or animation shotlist_type values, not archival — each chapter begins with an establishing/orienting shot before detail shots
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 14-01: Write prompts/generation.md for visual-orchestrator skill
+- [ ] 14-01-PLAN.md � Write generation.md with schema, building blocks, type routing, granularity rules, anti-patterns, and worked example
 
 ### Phase 15: Skill Entry Point
 **Goal**: The skill is discoverable and invocable — SKILL.md provides a 3-step invocation workflow and CLAUDE.md routes visual planning tasks to the skill.

@@ -19,8 +19,8 @@ Requirements for Visual Orchestrator (Agent 1.4). Each maps to roadmap phases.
 
 ### Skill Infrastructure
 
-- [ ] **INFRA-01**: Pure [HEURISTIC] skill — SKILL.md + CONTEXT.md + prompts/generation.md, zero Python code
-- [ ] **INFRA-02**: CONTEXT.md documents pipeline-reset invariant (shotlist.json + manifest.json atomically coupled)
+- [x] **INFRA-01**: Pure [HEURISTIC] skill — SKILL.md + CONTEXT.md + prompts/generation.md, zero Python code
+- [x] **INFRA-02**: CONTEXT.md documents pipeline-reset invariant (shotlist.json + manifest.json atomically coupled)
 - [ ] **INFRA-03**: CLAUDE.md updated with visual-orchestrator task routing and context loading entries
 
 ## Future Requirements
@@ -55,8 +55,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SHOT-05 | Phase 14 | Pending |
 | SHOT-06 | Phase 14 | Pending |
 | SHOT-07 | Phase 14 | Pending |
-| INFRA-01 | Phase 13 | Pending |
-| INFRA-02 | Phase 13 | Pending |
+| INFRA-01 | Phase 13 | Complete |
+| INFRA-02 | Phase 13 | Complete |
 | INFRA-03 | Phase 15 | Pending |
 
 **Coverage:**

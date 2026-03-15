@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An agentic documentary video generation pipeline for a YouTube channel focused on dark mysteries content. Claude Code itself is the orchestrator — it spawns sub-agents with skills to complete each phase. Three agents are now shipped: Agent 1.1 (Channel Assistant) handles strategy and ideation, Agent 1.2 (The Researcher) performs two-pass web research, and Agent 1.3 (The Writer) generates narrated chapter scripts from research dossiers in the channel's extracted voice.
+An agentic documentary video generation pipeline for a YouTube channel focused on dark mysteries content. Claude Code itself is the orchestrator — it spawns sub-agents with skills to complete each phase. Three agents are shipped: Agent 1.1 (Channel Assistant) handles strategy and ideation, Agent 1.2 (The Researcher) performs two-pass web research, and Agent 1.3 (The Writer) generates narrated chapter scripts from research dossiers in the channel's extracted voice. Agent 1.4 (Visual Orchestrator) is next — parsing scripts into shot lists for the asset pipeline.
 
 ## Core Value
 
@@ -29,7 +29,7 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 
 ### Active
 
-(None — next milestone will define new requirements via `/gsd:new-milestone`)
+- [ ] Visual Orchestrator skill — parse Script.md and generate shotlist.json with per-shot narrative context and visual needs
 
 ### Out of Scope
 
@@ -91,5 +91,14 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 | Writer CLI is stdlib-only context-loader | No LLM calls in code, Claude does all reasoning at generation time | ✓ Good |
 | 9-section generation prompt | Self-contained prompt with all constraints, no implicit knowledge needed | ✓ Good |
 
+## Current Milestone: v1.3 The Director
+
+**Goal:** Build the Visual Orchestrator skill that parses finished scripts into structured shot lists, bridging narrative engineering (Phase 1) to the asset pipeline (Phase 2).
+
+**Target features:**
+- Parse Script.md chapter structure and narrative content
+- Generate shotlist.json with per-shot visual needs and suggested asset types
+- Pure [HEURISTIC] skill — zero Python code, Claude does all reasoning
+
 ---
-*Last updated: 2026-03-15 after v1.2 milestone*
+*Last updated: 2026-03-15 after v1.3 milestone started*

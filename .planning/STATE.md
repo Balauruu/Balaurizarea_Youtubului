@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: The Writer
-status: archived
-stopped_at: "Milestone v1.2 archived"
+milestone: v1.3
+milestone_name: The Director
+status: active
+stopped_at: "Defining requirements"
 last_updated: "2026-03-15"
-last_activity: 2026-03-15 — Milestone v1.2 archived
+last_activity: 2026-03-15 — Milestone v1.3 started
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -20,21 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Surface obscure, high-impact documentary topics backed by competitor data and deep web research — not guesswork.
-**Current focus:** Planning next milestone
+**Current focus:** Milestone v1.3 — The Director (Visual Orchestrator)
 
 ## Current Position
 
-Milestone v1.2 "The Writer" archived. All 3 milestones shipped (v1.0, v1.1, v1.2).
-Next step: `/gsd:new-milestone` to define v1.3 or v2.0.
-
-## Performance Metrics
-
-| Metric | v1.0 | v1.1 | v1.2 |
-|--------|------|------|------|
-| LOC | 7,018 | 1,737 | ~500 (CLI + prompts) |
-| Tests | 175 | 175 | 9 (writer CLI) |
-| Phases | 6 | 4 | 2 |
-| Timeline | 2 days | 3 days | 6 days |
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-15 — Milestone v1.3 started
 
 ## Accumulated Context
 
@@ -53,5 +46,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-15
-Stopped at: Milestone v1.2 archived
+Stopped at: Defining requirements for v1.3
 Resume file: None

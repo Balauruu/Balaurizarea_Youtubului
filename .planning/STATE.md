@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: The Director
 status: active
-stopped_at: "Defining requirements"
+stopped_at: "Roadmap created — Phase 13 ready to plan"
 last_updated: "2026-03-15"
-last_activity: 2026-03-15 — Milestone v1.3 started
+last_activity: 2026-03-15 — v1.3 roadmap created, Phases 13-15 defined
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
-  total_plans: 0
+  total_plans: 3
   completed_plans: 0
 ---
 
@@ -20,20 +20,28 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Surface obscure, high-impact documentary topics backed by competitor data and deep web research — not guesswork.
-**Current focus:** Milestone v1.3 — The Director (Visual Orchestrator)
+**Current focus:** Phase 13 — Stage Contract (v1.3 The Director)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-15 — Milestone v1.3 started
+Phase: 13 of 15 (Stage Contract)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Last activity: 2026-03-15 — v1.3 roadmap created (Phases 13-15)
+
+Progress: [████████░░] 80% (12/15 phases complete across all milestones)
 
 ## Accumulated Context
 
 ### Decisions
 
-All decisions archived to milestone ROADMAP files. Key decisions persist in PROJECT.md Key Decisions table.
+All decisions archived in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- [v1.3 research]: Pure [HEURISTIC] skill — zero Python code, style-extraction is the direct template
+- [v1.3 research]: Extended schema from Duplessis shotlist.json is canonical; `suggested_sources` + `shotlist_type` are separate fields (not Architecture.md baseline `suggested_types`)
+- [v1.3 research]: Build order CONTEXT.md → generation.md → SKILL.md prevents documentation drift
+- [v1.3 research]: Pipeline-reset invariant — shotlist.json and manifest.json are atomically coupled; Script.md changes require full regeneration of both, no merge operation
 
 ### Pending Todos
 
@@ -41,10 +49,11 @@ None.
 
 ### Blockers/Concerns
 
-- Single reference script limits arc template coverage to cult/group radicalization arc — mitigated by explicit labeling in STYLE_PROFILE.md
+- [Phase 14]: Shot density calibration — express as word-count proportional (not flat range); validate against Duplessis baseline before proceeding to Phase 15
+- [Phase 14]: Validate generation.md against Duplessis Script V1.md + existing shotlist.json — this is the quality gate before SKILL.md is written
 
 ## Session Continuity
 
 Last session: 2026-03-15
-Stopped at: Defining requirements for v1.3
+Stopped at: Roadmap created for v1.3, Phase 13 ready to plan
 Resume file: None

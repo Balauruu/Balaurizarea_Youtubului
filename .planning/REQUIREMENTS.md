@@ -48,22 +48,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SHOT-01 | — | Pending |
-| SHOT-02 | — | Pending |
-| SHOT-03 | — | Pending |
-| SHOT-04 | — | Pending |
-| SHOT-05 | — | Pending |
-| SHOT-06 | — | Pending |
-| SHOT-07 | — | Pending |
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
+| SHOT-01 | Phase 14 | Pending |
+| SHOT-02 | Phase 14 | Pending |
+| SHOT-03 | Phase 14 | Pending |
+| SHOT-04 | Phase 14 | Pending |
+| SHOT-05 | Phase 14 | Pending |
+| SHOT-06 | Phase 14 | Pending |
+| SHOT-07 | Phase 14 | Pending |
+| INFRA-01 | Phase 13 | Pending |
+| INFRA-02 | Phase 13 | Pending |
+| INFRA-03 | Phase 15 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after initial definition*
+*Last updated: 2026-03-15 after roadmap creation*

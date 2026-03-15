@@ -1,5 +1,22 @@
 # Milestones
 
+## v1.3 The Director (Shipped: 2026-03-15)
+
+**Phases completed:** 3 phases, 3 plans, 6 tasks
+**Timeline:** 1 day (2026-03-15) | **Commits:** 23 | **Files changed:** 21 (+2,317 / -318)
+
+**Key accomplishments:**
+1. Visual Orchestrator stage contract (CONTEXT.md) — pipeline-reset invariant, [HEURISTIC] classification, deferred scope documented
+2. Self-contained 182-line generation prompt with 10 consolidated building blocks, 9-field shot schema, 6-type routing table
+3. 6 WRONG/RIGHT anti-pattern pairs for visual_need specificity (era + geography + subject, no production terms)
+4. Synthetic worked example (Carol Marden case) demonstrates text_overlay, archival_photo, and animation routing
+5. SKILL.md with 3-step invocation workflow and CLAUDE.md routing (4 integration points updated)
+6. All 4 shipped agents now discoverable and invocable through CLAUDE.md task routing
+
+**Tech debt:** 7 non-blocking items (human verification pending, Phase 15 nyquist incomplete, CLAUDE.md path inconsistency). See `milestones/v1.3-MILESTONE-AUDIT.md`.
+
+---
+
 ## v1.2 The Writer (Shipped: 2026-03-15)
 
 **Phases completed:** 2 phases, 4 plans, 8 tasks

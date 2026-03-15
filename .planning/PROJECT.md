@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An agentic documentary video generation pipeline for a YouTube channel focused on dark mysteries content. Claude Code itself is the orchestrator — it spawns sub-agents with skills to complete each phase. Three agents are shipped: Agent 1.1 (Channel Assistant) handles strategy and ideation, Agent 1.2 (The Researcher) performs two-pass web research, and Agent 1.3 (The Writer) generates narrated chapter scripts from research dossiers in the channel's extracted voice. Agent 1.4 (Visual Orchestrator) is next — parsing scripts into shot lists for the asset pipeline.
+An agentic documentary video generation pipeline for a YouTube channel focused on dark mysteries content. Claude Code itself is the orchestrator — it spawns sub-agents with skills to complete each phase. Four agents are shipped: Agent 1.1 (Channel Assistant) handles strategy and ideation, Agent 1.2 (The Researcher) performs two-pass web research, Agent 1.3 (The Writer) generates narrated chapter scripts from research dossiers in the channel's extracted voice, and Agent 1.4 (Visual Orchestrator) parses scripts into structured shot lists for asset acquisition.
 
 ## Core Value
 
@@ -26,10 +26,13 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 - Niche-agnostic research agent with manual topic input and project directory output — v1.1
 - ✓ Style extraction from reference scripts → STYLE_PROFILE.md — v1.2
 - ✓ Script generation from research dossier → numbered chapters with pure narration — v1.2
+- ✓ Visual Orchestrator stage contract with pipeline-reset invariant — v1.3
+- ✓ Generation prompt with 10 building blocks, 9-field schema, type routing — v1.3
+- ✓ SKILL.md invocation workflow and CLAUDE.md routing for all 4 agents — v1.3
 
 ### Active
 
-- [ ] Visual Orchestrator skill — parse Script.md and generate shotlist.json with per-shot narrative context and visual needs
+(None — planning next milestone)
 
 ### Out of Scope
 
@@ -47,14 +50,16 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 
 ## Context
 
-**Current state (v1.2 shipped):**
+**Current state (v1.3 shipped):**
 - Agent 1.1 (Channel Assistant): 7,018 LOC Python, 175 tests, full pipeline `scrape → analyze → trends → topics → project init`
 - Agent 1.2 (The Researcher): 1,737 LOC Python + prompts, two-pass research `survey → deepen → write`, validated on real topic
 - Agent 1.3 (The Writer): stdlib-only CLI + generation prompt, style extraction skill, `load → generate → Script.md`
+- Agent 1.4 (Visual Orchestrator): pure [HEURISTIC] skill — CONTEXT.md + generation.md + SKILL.md, zero Python code, `read Script.md → generate shotlist.json`
 - STYLE_PROFILE.md: 371-line channel voice behavioral ruleset (5 Universal Voice Rules, arc templates, transitions, open endings)
 - SQLite database with 37 migrated competitor videos from 3 channels
 - End-to-end validated: Duplessis Orphans topic from competitor analysis → research dossier → narrated script
 - Full test suite passing across all agents
+- All 4 agents discoverable via CLAUDE.md task routing table
 
 **Channel profile:** Dark history, true crime, unsolved mysteries. 20-50 min documentaries. Neutral, cinematic tone. Target audience: 22-38, intellectually curious.
 
@@ -90,15 +95,15 @@ Surface obscure, high-impact documentary topics backed by competitor data and de
 | STYLE_PROFILE.md separates universal rules from arc templates | Prevents cult-arc overfitting on non-cult topics | ✓ Good |
 | Writer CLI is stdlib-only context-loader | No LLM calls in code, Claude does all reasoning at generation time | ✓ Good |
 | 9-section generation prompt | Self-contained prompt with all constraints, no implicit knowledge needed | ✓ Good |
+| Pure [HEURISTIC] skill for visual orchestrator | Zero Python code, Claude reads files + applies rules directly | ✓ Good |
+| 10 consolidated building blocks (from 25) | User-reviewed: removed production-specific, merged archival subtypes; variant field for specificity | ✓ Good |
+| Pipeline-reset invariant (full regen only) | Globally-sequential shot IDs prevent chapter-level partial regen | ✓ Good |
+| Synthetic worked example (Carol Marden) | Avoids memorization bias from existing Duplessis shotlist | ✓ Good |
+| CONTEXT.md → generation.md → SKILL.md build order | Locks contract before prompt, locks prompt before entry point — prevents drift | ✓ Good |
 
-## Current Milestone: v1.3 The Director
+## Current Milestone: Planning next
 
-**Goal:** Build the Visual Orchestrator skill that parses finished scripts into structured shot lists, bridging narrative engineering (Phase 1) to the asset pipeline (Phase 2).
-
-**Target features:**
-- Parse Script.md chapter structure and narrative content
-- Generate shotlist.json with per-shot visual needs and suggested asset types
-- Pure [HEURISTIC] skill — zero Python code, Claude does all reasoning
+All Phase 1 agents shipped (v1.0-v1.3). Next milestone will address Phase 2 (asset pipeline) or enhanced orchestration features.
 
 ---
-*Last updated: 2026-03-15 after v1.3 milestone started*
+*Last updated: 2026-03-15 after v1.3 milestone shipped*

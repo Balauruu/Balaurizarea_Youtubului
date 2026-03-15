@@ -2,6 +2,53 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v1.3 — The Director
+
+**Shipped:** 2026-03-15
+**Phases:** 3 | **Plans:** 3 | **Sessions:** 1
+
+### What Was Built
+- Visual Orchestrator stage contract (CONTEXT.md) with pipeline-reset invariant and [HEURISTIC] classification
+- 182-line generation prompt with 10 consolidated building blocks, 9-field shot schema, 6-type routing table
+- 6 WRONG/RIGHT anti-pattern pairs for visual_need specificity
+- Synthetic worked example (Carol Marden case) with 3 shots across 3 different types
+- SKILL.md with 3-step invocation workflow and CLAUDE.md routing (4 integration points)
+
+### What Worked
+- **Contract-first build order** — CONTEXT.md → generation.md → SKILL.md prevented documentation drift. Each phase built against a locked contract from the previous phase
+- **User review at checkpoint** — 25 building blocks were consolidated to 10 during human-verify checkpoint, removing production-specific and redundant blocks. Better vocabulary emerged from review
+- **Vocabulary consolidation principle** — using `building_block_variant` for specificity within a block instead of separate blocks keeps routing unambiguous
+- **Fastest milestone yet** — entire v1.3 shipped in ~1.5 hours (single session), proving that documentation-only milestones with clear contracts execute rapidly
+- **Anti-pattern pairs** — WRONG/RIGHT examples in generation.md are more effective than rules-only. They give concrete calibration
+
+### What Was Inefficient
+- **ROADMAP checkbox drift (4th consecutive milestone)** — plan checkboxes still `[ ]` despite completion. v1.2 retro noted "needs automation" — still not addressed
+- **STATE.md still had double frontmatter** — tool appended a second YAML block instead of overwriting
+- **Phase 14 VERIFICATION.md not re-run after fix** — dangling "Concept Diagram" reference was fixed in code but verification status remains `gaps_found`
+- **Phase 15 SUMMARY missing requirements-completed field** — same frontmatter gap flagged in v1.0/v1.1/v1.2
+- **Nyquist validation incomplete for Phase 15** — Phase 13 and 14 show compliant, but 15 never completed
+
+### Patterns Established
+- Contract-first skill development: CONTEXT.md → prompt → SKILL.md (sequential dependency chain)
+- Building block vocabulary with variant field for sub-type specificity
+- Anti-pattern pairs (WRONG/RIGHT) as calibration artifacts in generation prompts
+- Pipeline-reset invariant as explicit design principle documented in stage contracts
+- Establishing shot rule: every chapter must begin with an orienting shot
+
+### Key Lessons
+1. **Documentation milestones are fast** — 3 phases, ~1.5 hours. Zero Python code means zero debugging, zero test writing
+2. **User checkpoints produce better architecture** — the 25→10 block consolidation would not have happened without the human-verify gate
+3. **Re-run verification after fixes** — dangling reference was fixed but verification file stayed stale. Add re-verification step to executor
+4. **SUMMARY frontmatter is a recurring gap** — 4th milestone with incomplete fields. Must be enforced in executor workflow
+5. **Automate ROADMAP checkboxes** — flagged in v1.0, v1.1, v1.2, and now v1.3. This is clearly a tooling gap, not a discipline issue
+
+### Cost Observations
+- Model mix: opus for planning/execution, sonnet for subagents (research, verification, integration)
+- Sessions: 1 (single session)
+- Notable: Entire milestone from roadmap creation to shipping in a single context window
+
+---
+
 ## Milestone: v1.1 — The Researcher
 
 **Shipped:** 2026-03-14
@@ -148,6 +195,7 @@
 | v1.0 | ~12 | 6 | Established TDD + context-loader pattern |
 | v1.1 | ~6 | 4 | Added two-pass research + JSON manifest handoff |
 | v1.2 | ~4 | 2 | Added [HEURISTIC] skill pattern + prompt-first design |
+| v1.3 | 1 | 3 | Contract-first build order + building block vocabulary |
 
 ### Cumulative Quality
 
@@ -156,12 +204,15 @@
 | v1.0 | 175 | 100% deterministic | 0 (all stdlib) |
 | v1.1 | 175+ | 100% deterministic | crawl4ai, playwright |
 | v1.2 | 184 (175+9) | 100% deterministic | 0 (stdlib-only writer CLI) |
+| v1.3 | 184 (unchanged) | 100% deterministic | 0 (zero Python, pure heuristic) |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. **ROADMAP checkbox drift is persistent** — occurred in all 3 milestones. Needs automation (hook or executor step)
-2. **SUMMARY frontmatter gaps recur** — `one_liner` and `requirements_completed` empty in v1.0/v1.1. v1.2 partially improved
+1. **ROADMAP checkbox drift is persistent** — occurred in all 4 milestones. Needs automation (hook or executor step)
+2. **SUMMARY frontmatter gaps recur** — `one_liner` and `requirements_completed` empty across all milestones. Must be enforced
 3. **Context-loader CLI pattern scales** — worked for 7 modules in v1.0, extended to v1.1 and v1.2 with zero friction
 4. **Foundation investment pays off** — Phase 7 (foundation) took longest; Phases 8-10 built on it rapidly
-5. **STATE.md corruption recurs** — multiple frontmatter blocks in v1.2. Tool writes need overwrite semantics
-6. **Nyquist validation is consistently skipped** — draft files exist in all milestones, never executed. Remove or automate
+5. **STATE.md corruption recurs** — multiple frontmatter blocks in v1.2 and v1.3. Tool writes need overwrite semantics
+6. **Nyquist validation is consistently skipped** — draft files exist in all milestones, rarely completed. Remove or automate
+7. **Documentation milestones execute fastest** — v1.3 (pure heuristic) shipped in 1 session. Contract-first approach eliminates debugging time
+8. **User checkpoints improve architecture** — v1.2 style review, v1.3 vocabulary consolidation both produced better designs through human review

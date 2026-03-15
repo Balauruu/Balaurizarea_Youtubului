@@ -1,25 +1,16 @@
 # Feature Research
 
-**Domain:** Style extraction and automated script generation for documentary narrative content
-**Researched:** 2026-03-14
-**Confidence:** HIGH (domain derived from existing reference scripts, channel DNA, and Architecture.md spec — not speculation)
+**Domain:** Script-to-shot-list generation for narrator-led archival documentary
+**Researched:** 2026-03-15
+**Confidence:** HIGH (domain principles from documentary practice and Architecture.md spec) / MEDIUM (shot count estimates from reasoning over script analysis)
 
 ---
 
-## Context: What Already Exists
+## Context: What This Skill Does
 
-This milestone adds two features to a working pipeline (v1.1 shipped):
+The Visual Orchestrator (Agent 1.4) reads a finished `Script.md` — pure narration, 4-7 chapters, 3,000-7,000 words — and outputs `shotlist.json`. It is a pure [HEURISTIC] skill: Claude reads the script and makes editorial judgments about what visuals are needed. No Python code. No visual style input (that comes from visual-style-extractor, a separate skill invoked separately).
 
-- Agent 1.1 (Channel Assistant) — topic briefs, competitor intel, project init
-- Agent 1.2 (The Researcher) — two-pass web research → `Research.md` dossier with HOOK/QUOTE callouts
-- `context/script-references/Mexico's Most Disturbing Cult.md` — one reference script (auto-captioned transcript, fragmented format)
-- `context/channel/channel.md` — channel DNA (tone, voice, audience, output targets)
-- `context/channel/writting_style_guide.md` — six style rules (narration-only, chapters, pacing, sources)
-
-The two new features:
-
-- **Skill 1.3: Style Extraction** — one-time heuristic that reads reference scripts, writes `STYLE_PROFILE.md`
-- **Agent 1.3: The Writer** — per-video agent that reads `Research.md` + `STYLE_PROFILE.md` + channel DNA → numbered chapter script
+The downstream consumer is Agent 2.1 (Media Acquisition), which reads `shotlist.json` as its only input. The quality of `shotlist.json` determines the quality of everything in Phase 2. If `visual_need` is vague or `suggested_types` is wrong, Agent 2.1 acquires the wrong assets.
 
 ---
 
@@ -27,107 +18,132 @@ The two new features:
 
 ### Table Stakes (Users Expect These)
 
-Features the pipeline must have or the output is unusable / requires heavy manual correction.
+Features this skill must have. Missing any of these makes the output structurally unusable by Agent 2.1.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Chapter structure with numbered acts | Reference script shows chapters 1–N with evocative titles; channel DNA mandates numbered acts | LOW | Style extraction must identify chapter boundaries in reference; Writer must output same format |
-| Pure narration output — no stage directions, no host commentary | Style rule #2: "Script is narration only." Producer cannot hand this to a voiceover artist if production notes are embedded | LOW | Enforced via prompt output format spec; the existing SKILL.md pattern handles this |
-| Factual fidelity anchored to Research.md | Style rule #4: "Every claim must be sourced. Speculation labeled as such." Hallucinated facts undermine the channel's authority positioning | MEDIUM | Writer prompt must anchor to dossier content; Research.md already provides per-claim attribution |
-| Channel tone: calm, journalistic, deadpan | Channel DNA defines this as the core voice. Deviation breaks brand consistency across every video | MEDIUM | Achieved via STYLE_PROFILE.md + channel.md loaded as context in Writer prompt |
-| Script word count in target range | 3,000–7,000 words, 20–50 min runtime (channel.md output targets). Too short = thin content; too long = padding | MEDIUM | Writer prompt must state target; may need a review pass if first draft is significantly short or long |
-| STYLE_PROFILE.md captures actionable patterns | "Calm tone" is not actionable. Must capture sentence rhythm, transition phrases, pacing structure, vocabulary register | MEDIUM | Reference script is a YouTube auto-caption transcript (no punctuation, arbitrary line breaks). Extraction prompt must work with this degraded format — see Implementation Notes |
-| STYLE_PROFILE.md as standalone readable artifact | Writer loads it as context on every video; it must be human-readable for manual review and editing | LOW | Plain markdown; stored in `context/` — not embedded in code |
+| Chapter mapping (`chapter` field) | Agent 2.1 uses chapter grouping to understand narrative context; acquisition without chapter structure loses the story's logic | LOW | Direct read from `## N. Title` headings in Script.md; chapters become the organizing principle |
+| Unique shot IDs in S001 format | Agent 2.1, 2.2, 2.3, 2.4 all reference shots by ID; gaps, mappings, and manifest.json use IDs throughout Phase 2 | LOW | Sequential integers zero-padded to 3 digits; Architecture.md defines this format |
+| `visual_need` in plain searchable language | Agent 2.1 builds search queries from this field; vague or abstract needs produce irrelevant search results from archive.org and wikimedia | HIGH | Free text but must be concrete: era, location, subject. "Remote Quebec orphanage, 1950s institutional building" not "an institutional setting" |
+| `suggested_types` from the 6 defined categories | Agent 2.1 routes acquisition to source domains based on type; wrong type = wrong source domain = zero useful assets | LOW | Must use Architecture.md's 6 types exactly: archival_video, archival_photo, broll, documents, vectors, animations |
+| `narrative_context` per shot | Agent 2.1 needs to know what the narrator says during this shot to judge whether an acquired asset matches the moment | LOW | Short paraphrase of the narration during the shot — not a quote, not a scene description. What is being said, not what is shown |
+| Shot count proportional to content | A 7-chapter, 7,000-word script needs coverage across all chapters; uniform shot density across chapters with wildly different lengths is wrong | MEDIUM | Calibrate by chapter length: short chapters (~400 words) warrant 5-8 shots; long chapters (700+ words) warrant 12-18 shots |
+| Every chapter covered | Leaving a chapter without shots means Agent 2.1 has no acquisition instructions for that portion of the video — a hard gap in Phase 2 | LOW | Must iterate through every `## N.` heading and produce at minimum 5 shots per chapter |
 
 ### Differentiators (Competitive Advantage)
 
-Features that make this pipeline produce better scripts than a generic "write a documentary script about X" prompt.
+Features that make the shot list genuinely useful for asset acquisition, not just structurally correct.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Hook and quote integration from Research.md | Research.md already contains `HOOK:` and `QUOTE:` callouts placed by Agent 1.2 specifically for the Writer. Consuming these directly = narrative tension for free | LOW | Writer prompt must explicitly instruct: use HOOK/QUOTE callouts as chapter openers and narration anchors. High ROI, zero extra work |
-| Transition phrase library extracted from reference | Reference script uses specific connective phrases ("this proved to be", "in the spring of", "it was upon this track that"). Capturing these preserves voice consistency; generic transitions ("furthermore", "notably") break the deadpan register | LOW | Simple verbatim extraction during style analysis. High signal, low effort |
-| Pacing profile: exposition vs. tension escalation | Reference script spends 2–3 chapters in slow historical setup before escalating to horror. Encoding this pattern as a qualitative instruction ("build slowly for the first third, then escalate") prevents flat pacing in generated scripts | MEDIUM | Word count per chapter in reference gives a rough baseline; qualitative instruction in STYLE_PROFILE.md is more durable than a hard ratio |
-| Open-ending pattern explicitly encoded | Style rule #6: if a mystery is unsolved, present evidence and leave the weight with the audience. Without explicit instruction, LLMs tend to artificially resolve ambiguity | LOW | STYLE_PROFILE.md includes an open-ending template derived from reference; prompt constraint reinforces it |
-| Chapter title generation in reference register | Reference uses evocative short titles ("Strangers in the Jungle", "Initial Control"). These titles carry narrative weight. Writer generates titles in same register, not generic "Background" or "Chapter 1" | LOW | Example titles from reference provide direct model for Writer |
-| Source authority woven into narration | Dossier provides per-claim attribution. Weaving these into narration naturally ("court records from 1962 show...") elevates perceived credibility without disrupting pacing | MEDIUM | Prompt instruction + example from reference of how factual authority is conveyed (stated with conviction, not always explicitly cited) |
+| Narrative-beat granularity (not paragraph-level) | Shot boundaries drawn where the visual subject actually changes, not at paragraph breaks. A paragraph about a legal mechanism and a paragraph quoting a survivor need different visuals even if they share a paragraph boundary in the script. | HIGH | The core editorial judgment. Breaks happen when: era shifts, location shifts, key figure introduced, evidence type shifts (systemic → personal), emotional register shifts. Claude must read for these, not count paragraphs. |
+| Era and location specificity in `visual_need` | "Remote Quebec orphanage, 1950s" is a workable archive.org search query. "An institutional setting" returns nothing useful. | MEDIUM | Extract the most specific geographic and temporal markers the narration provides before writing `visual_need`. The script already contains this information. |
+| Shot type selection logic | Documents for bureaucratic evidence and paperwork. archival_photo for named key figures. broll for atmosphere, geography, everyday life of an era. vectors for figures/silhouettes when no archival image exists. animations for events that have no visual record at all. | MEDIUM | Different narrative situations require different acquisition strategies. Routing the wrong type wastes Agent 2.1's time and produces gaps that could have been filled. |
+| Visual variety across a chapter | A chapter of 12 shots should not use archival_photo for all 12. Professional documentary editing alternates types to maintain visual rhythm: establishing wide, detail, document, figure, atmospheric broll. | MEDIUM | After generating shots for a chapter, review the type distribution. If monotonous, revise to introduce variety. This mirrors how documentary editors build visual rhythm. |
+| Establishing shot at chapter start | Documentary chapters open with a visual that orients the viewer to the new setting, era, or subject. Diving immediately into detail shots without orientation is disorienting. | LOW | The first shot of each chapter should be geographic, temporal, or contextual — something that answers "where/when are we now?" before the narration drills into specifics. |
+| Handling abstract narration correctly | Some narration has no literal visual: "The diagnosis made the impairment real in every subsequent transaction." Literal illustration fails here. A document shot, a conceptual vector, or an archival photograph of a relevant bureaucratic process can carry the weight of the abstraction. | HIGH | This is where shot planning requires genuine editorial judgment. The Duplessis Orphans script has many such moments. The wrong response is to try to illustrate the abstraction literally. The right response is to ask: what visual texture or object represents this system? |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Multiple script variants (A/B versions) | Seems useful for optimization | Doubles review work; pipeline converges on one topic per video; no feedback loop exists yet to evaluate which variant performs better | One authoritative script per run; manual iteration if revision is needed |
-| Inline production notes in script text | Directors want visual cues alongside narration | Breaks the "pure narration" rule (style rule #2); confuses voiceover source with direction; Agent 1.4 (Visual Orchestrator) reads the finished script and generates the shotlist — that is where visual cues live | Clean narration only; Agent 1.4 handles visual interpretation |
-| Style extraction re-run every video | "Fresher style" sounds like quality | Style extraction is explicitly one-time per Architecture.md Skill 1.3 spec; re-running on the same reference adds cost with no benefit | Re-run only when new reference scripts are added to `context/script-references/` |
-| Automated fact-checking pass after writing | Catching hallucinations sounds essential | The dossier-anchored approach already mitigates hallucination risk; a fact-checking pass requires another scraping/LLM pass, adds latency, and the checking LLM faces the same hallucination risk as the writing LLM | Anchor Writer to Research.md; human review catches errors that matter for publication |
-| Auto-generated chapter outline for Writer approval before full script | Adds a review checkpoint | Adds a round-trip that may not be needed; the Writer derives structure from the material using STYLE_PROFILE.md guidance; impose this only if full scripts frequently need structural revision | Ship full scripts first; add outline approval step reactively if structural issues emerge |
-| TTS / voice-over generation | Natural next step after script | Out of scope per Architecture.md; no TTS tool in stack; audio is handled in DaVinci Resolve by the editor | Stop at script text; TTS is a Phase 3+ concern |
-| Style extraction from multiple reference scripts averaged | More data sounds better | The existing reference is already an auto-caption transcript (degraded format); averaging multiple degraded transcripts produces more noise, not better signal | Use one clean style profile; add more references only when clean transcripts are available |
-| LLM API wrapper for Writer reasoning | Seems like the "right" way to call Claude programmatically | Architecture.md Rule 1: zero LLM API wrappers. All reasoning handled natively by Claude Code runtime | SKILL.md pattern — Claude Code is the runtime; no SDK code written |
+| Shot duration / timing | "8 seconds for this shot" seems useful for editor planning | Duration is determined in the edit from available assets and pacing decisions — not predictable before assets exist. Assets may be 3 seconds or 45 seconds; the editor decides. Architecture.md explicitly excludes duration. | Leave duration out entirely. Editor owns timing in DaVinci Resolve. |
+| Camera angle / framing instructions | Professional shot lists for live shoots include these | This is an acquisition pipeline, not a live shoot. Assets are found, not captured. Camera angles are whatever the archival material contains. Prescribing "wide shot" produces requirements that cannot be filled. | Describe what the visual should show ("aerial view of rural Quebec settlement"), not how it was framed. |
+| Effects or transition types | "Ken Burns pan left" seems like useful production context | Post-production instructions belong to the editor in DaVinci Resolve, not the acquisition pipeline. Architecture.md explicitly excludes effects, transitions, and production instructions. | Let the editor apply effects at cut time from acquired assets. |
+| Priority ranking between shots | "Shot S003 is more important than S002" seems useful for acquisition triage | Creates false hierarchy. Agent 2.1 acquires by topic context, not shot priority. Priority at this stage adds complexity with no acquisition benefit. | All shots are equal in `shotlist.json`. Unmatched shots go to gaps and are handled by Agent 2.2/2.3/2.4. |
+| One shot per paragraph, mechanically | Paragraphs are natural units; seems systematic | Script.md paragraphs vary wildly in scope. Some contain a single visual idea. Others contain two or three topic shifts. Mechanical paragraph-to-shot mapping over-covers narrow paragraphs and under-covers dense ones. | Draw shot boundaries at narrative beat shifts: era, location, figure, evidence type, emotional register. Not at paragraph breaks. |
+| One shot per sentence | Finer granularity seems safer | 3,000-7,000 words at ~15 words per sentence = 200-466 shots. Agent 2.1 cannot acquire 400+ distinct assets in one pass. Diminishing returns on granularity below the narrative-beat level. | Narrative beat is the right unit. Multiple sentences within the same visual context = one shot. |
+| Exact image composition description | "Man walking from left to right in foreground" | We find assets, not shoot them. Composition of archival material is fixed. Composition descriptions waste `visual_need` space on properties that cannot be specified in acquisition. | Describe subject and context: "man leaving Quebec courthouse, 1950s." Not composition. |
+| Dialogue attribution per shot | Script seems to have dialogue | Script.md is pure narration. There is no dialogue — survivor quotes in the script are narrated by the documentary voice, not delivered on camera. Attributing quotes to on-screen speakers confuses the acquisition agent. | Use `narrative_context` to indicate the subject of the narration, not to claim a person is on screen. |
+
+---
+
+## Shot Granularity: The Core Decision
+
+**Recommendation: Narrative beat, not structural unit (paragraph or sentence).**
+
+Professional documentary editors describe a "beat" as the smallest unit of meaning that requires a visual change. In practice for an archival narration documentary:
+
+**Draw a new shot when any of the following shift:**
+- Time period changes ("In 1944..." vs. "By 1961...")
+- Geographic location changes (Quebec City vs. Montreal asylum)
+- A new named key figure is introduced (needs their own archival visual)
+- Evidence type shifts (systemic bureaucratic argument → personal survivor account)
+- Emotional register shifts (analytical exposition → testimony of harm)
+- A pivotal event or turning point is described that warrants its own visual emphasis
+
+**Do NOT draw a new shot for:**
+- Each new paragraph within the same visual context
+- Each new sentence
+- Transitions between related ideas in the same setting
+
+**Shot count estimate for this channel's scripts:**
+- 7-chapter, 7,000-word script: approximately 70-90 shots total
+- 4-chapter, 3,000-word script: approximately 40-55 shots total
+- Per-chapter range: 5-18 shots, calibrated to chapter word count
+- Maps to a 20-50 minute documentary at 1-3 shots per minute of narration, consistent with archival documentary pacing
+
+This is a calibrated estimate based on analyzing the Duplessis Orphans Script V1.md (7 chapters, ~4,000 words) against professional documentary practice. Actual count will vary by how densely the narration shifts subjects.
 
 ---
 
 ## Feature Dependencies
 
 ```
-[context/script-references/*.md]
-    └──required by──> [Style Extraction (Skill 1.3)]  [HEURISTIC — one-time]
-                          └──produces──> [context/STYLE_PROFILE.md]
-                                             └──required by──> [The Writer (Agent 1.3)]
+Script.md chapter headings (## N. Title)
+    └──required by──> Chapter mapping (groups all shots)
+                          └──required by──> Shot ID assignment (S001 sequential)
 
-[projects/N. Title/research/Research.md]   (output of Agent 1.2)
-    └──required by──> [The Writer (Agent 1.3)]
+Narrative beat identification
+    └──enables──> visual_need specificity (what to search for)
+    └──enables──> suggested_types selection (how to acquire it)
+    └──enables──> visual variety enforcement (what types have been used)
+    └──enables──> establishing shot placement (what orients each chapter)
 
-[context/channel/channel.md]
-    └──required by──> [The Writer (Agent 1.3)]
-    └──required by──> [Style Extraction (Skill 1.3)]   (tone validation context)
+Era/location extraction from narration
+    └──feeds into──> visual_need field quality
+                          └──determines──> Agent 2.1 search query quality
 
-[context/channel/writting_style_guide.md]
-    └──required by──> [The Writer (Agent 1.3)]
-
-[The Writer (Agent 1.3)]
-    └──produces──> [projects/N. Title/script.md]
-                       └──feeds──> [Agent 1.4: Visual Orchestrator]  (future milestone)
+Abstract narration recognition
+    └──triggers──> vectors or animations type (rather than archival)
+                       └──prevents──> unfillable gaps in Agent 2.1 pass
 ```
 
 ### Dependency Notes
 
-- **Style Extraction requires reference scripts:** One reference exists (`Mexico's Most Disturbing Cult.md`). Sufficient to produce an initial STYLE_PROFILE.md. The auto-caption format is degraded — see Implementation Notes.
-- **Writer requires STYLE_PROFILE.md:** Without it, Writer falls back to generic documentary voice, losing the channel's deadpan-neutral register. Hard dependency.
-- **Writer requires Research.md:** Script cannot be generated without a completed research dossier. Sequential dependency — research must complete before writing begins.
-- **STYLE_PROFILE.md is a reusable artifact:** Lives in `context/`, shared across all future videos. Not regenerated per video.
-- **Agent 1.4 is downstream:** The Writer's script is consumed by the Visual Orchestrator (not yet built). The script output format must be stable for that future handoff.
+- **Chapter mapping is the skeleton:** All other features attach to it. Shots without chapter assignment are useless to Agent 2.1.
+- **Narrative beat granularity enables everything else:** You cannot enforce visual variety until you have the right number of distinct shots. You cannot establish chapters until you know where beats fall within chapters.
+- **Era/location specificity is the highest-leverage quality investment:** Agent 2.1 translates `visual_need` directly to search queries. Specificity here has a multiplier effect across all of Phase 2.
+- **Abstract narration routing prevents phantom gaps:** If abstract narration is given archival_photo type, Agent 2.1 will search for a photo that doesn't exist, creating a gap that Agent 2.2 will then try to generate — wasting two agents. Routing it to vectors/animations upfront is correct.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1.2)
+### Launch With (v1)
 
-Minimum needed to produce a usable script from a research dossier.
+Minimum viable output that Agent 2.1 can operate from.
 
-- [ ] **Style extraction prompt** — reads reference script(s), outputs `STYLE_PROFILE.md` with: sentence rhythm description, chapter structure pattern, transition phrases (verbatim list), pacing notes (build rate), tone markers, open-ending instruction. [HEURISTIC — no code needed]
-- [ ] **STYLE_PROFILE.md stored in `context/`** — loaded by Writer on every run; human-readable for manual adjustment
-- [ ] **Writer SKILL.md** — defines the four context files to load, output format (numbered chapters, word count target, file path), and the generation prompt
-- [ ] **Script format spec** — chapter numbers and evocative titles, pure narration, no production notes, 3,000–7,000 word target
-- [ ] **HOOK/QUOTE integration instruction** — Writer prompt explicitly instructs use of Research.md callouts as narrative anchors
+- [ ] Parse all chapter headings from Script.md and organize shots by chapter — chapter structure is the organizing principle for the entire Phase 2 pipeline
+- [ ] Generate one shot per distinct narrative beat (not per paragraph) — draw boundaries at era/location/person/evidence-type shifts
+- [ ] Write `visual_need` in plain language with era and location specificity — this is what Agent 2.1 searches for in archive.org and wikimedia
+- [ ] Assign `suggested_types` from the 6 defined Architecture.md categories based on what narrative situation each shot represents
+- [ ] Write `narrative_context` as a brief paraphrase of what the narrator says during the shot — enough for Agent 2.1 to judge whether an acquired asset matches
+- [ ] Cover every chapter — no chapter in the script left without shots
 
 ### Add After Validation (v1.x)
 
-Add once a first script has been reviewed and gaps identified.
+Add once a first shot list has been generated and reviewed against the script.
 
-- [ ] **Pacing audit heuristic** — after Writer produces script, a secondary review step checks word count per chapter and flags disproportionate chapters. Trigger: first scripts show consistently unbalanced acts.
-- [ ] **Transition phrase enforcement** — if early scripts drift from channel voice, promote the transition phrase list from STYLE_PROFILE.md to a hard constraint section in the Writer prompt
-- [ ] **Second reference script** — when a clean (non-auto-captioned) transcript is available, re-run style extraction and expand STYLE_PROFILE.md with merged patterns
-- [ ] **Writer CLI pre-check** — thin Python script that verifies `Research.md` exists before invoking Writer, prints clear error if missing. [DETERMINISTIC — low priority, prevents confusing failures]
+- [ ] Visual variety enforcement — after generating shots for each chapter, review type distribution and revise any chapter that uses a single type for all shots
+- [ ] Establishing shot verification — confirm that the first shot of each chapter is geographic, temporal, or contextual rather than a detail shot
 
 ### Future Consideration (v2+)
 
-Defer until core is validated.
+Defer until core is validated against real asset acquisition.
 
-- [ ] **Chapter outline approval checkpoint** — generate outline first, get user approval, then write full narration. Add only if full scripts frequently need structural revision.
-- [ ] **Style drift detection** — compare script output against STYLE_PROFILE.md metrics. Needs multiple reference scripts to establish meaningful baselines.
-- [ ] **Script versioning** — keep draft history in `projects/N. Title/drafts/`. Worthwhile once multiple videos shipped and iteration patterns emerge.
+- [ ] Abstract narration guidance section in the generation prompt — a dedicated prompt section that explicitly addresses how to handle conceptual/systemic narration with no literal visual analog
+- [ ] Two-pass generation: read full script and annotate narrative beats, then generate shots from the annotation — separates analysis from generation for better beat identification
 
 ---
 
@@ -135,74 +151,57 @@ Defer until core is validated.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Style extraction prompt → STYLE_PROFILE.md | HIGH | LOW (pure heuristic) | P1 |
-| Writer SKILL.md: chapter structure + pure narration | HIGH | LOW (prompt + format spec) | P1 |
-| Writer: factual anchoring to Research.md | HIGH | MEDIUM (prompt engineering) | P1 |
-| Writer: HOOK/QUOTE integration from dossier | HIGH | LOW (prompt instruction) | P1 |
-| Writer: channel tone via STYLE_PROFILE.md | HIGH | LOW (context loading) | P1 |
-| Writer: chapter title generation | MEDIUM | LOW | P1 |
-| STYLE_PROFILE.md: transition phrase library | MEDIUM | LOW | P2 |
-| STYLE_PROFILE.md: pacing notes | MEDIUM | MEDIUM | P2 |
-| STYLE_PROFILE.md: open-ending template | MEDIUM | LOW | P2 |
-| Pacing audit heuristic (post-generation) | LOW | MEDIUM | P3 |
-| Chapter outline approval checkpoint | LOW | LOW | P3 |
+| Chapter mapping | HIGH | LOW | P1 |
+| Unique shot IDs (S001 format) | HIGH | LOW | P1 |
+| `narrative_context` per shot | HIGH | LOW | P1 |
+| `visual_need` with era/location specificity | HIGH | MEDIUM | P1 |
+| `suggested_types` from 6 defined categories | HIGH | LOW | P1 |
+| Narrative beat granularity (not paragraph) | HIGH | HIGH | P1 |
+| Shot type selection logic per narrative situation | HIGH | MEDIUM | P1 |
+| Every chapter covered | HIGH | LOW | P1 |
+| Visual variety enforcement within chapters | MEDIUM | MEDIUM | P2 |
+| Establishing/orienting shot at chapter starts | MEDIUM | LOW | P2 |
+| Abstract narration routing to vectors/animations | MEDIUM | HIGH | P2 |
+| Shot count calibrated to chapter length | MEDIUM | LOW | P2 |
 
 **Priority key:**
-- P1: Must have for launch
-- P2: Should have, add when possible
+- P1: Must have for Agent 2.1 to function at all
+- P2: Improves acquisition quality significantly; add in first review pass after generation
 - P3: Nice to have, future consideration
 
 ---
 
-## Implementation Notes
+## Script.md Format Dependencies
 
-### Reference Script Format Problem
+The Visual Orchestrator's output quality is directly constrained by what Script.md contains. Identified dependencies and signals:
 
-The only existing reference script (`Mexico's Most Disturbing Cult.md`) is a YouTube auto-caption transcript. It has:
-- No sentence-ending punctuation
-- Arbitrary line breaks mid-sentence
-- `[Music]` / `[Applause]` markers interspersed
-- Chapter headers embedded mid-file (`1. Strangers in the Jungle`, `2. Initial Control`)
+| Script.md Property | How It Feeds Shot List |
+|--------------------|------------------------|
+| Chapter headings (`## N. Title`) | Primary structure signal — shots group by chapter |
+| Era markers in narration ("In 1944...", "By 1961...") | Time-period specificity for `visual_need` |
+| Geographic markers ("Quebec", "St. Jean de Dieu asylum in Montreal") | Location specificity for `visual_need` |
+| Named key figures ("Maurice Duplessis", "Paul St. Aubain") | Signal to assign archival_photo type; figure needs own visual |
+| Survivor quote / testimony paragraph | Signal to shift suggested_types toward archival_photo or broll (personal visual, not systemic document) |
+| Abstract systemic claim ("The diagnosis made the impairment real...") | Signal to use vectors or animations — no literal visual exists |
+| Statistical or financial evidence ("$70 million in subsidies") | Signal to use documents type — a scanned document or record screenshot |
+| Government report or official record referenced | Signal to use documents type |
+| Paragraph length variation | Does NOT determine shot count — beat shifts do |
 
-**Consequence for style extraction:** Cannot use punctuation-based sentence boundary detection or quantitative rhythm analysis. The extraction prompt must instead:
-1. Identify chapter boundaries from numbered headers
-2. Read line groupings to infer sentence rhythm qualitatively
-3. Extract transition phrases and connective language verbatim
-4. Characterize pacing as qualitative instruction ("slow historical build for chapters 1–2, escalate in chapters 3–4") not a numeric ratio
-
-This is a prompt engineering constraint, not a blocker. The extraction is still achievable from this format. A clean transcript (properly punctuated) would yield higher-confidence style patterns.
-
-### STYLE_PROFILE.md Scope
-
-The profile should contain only what the Writer can act on. Avoid abstract descriptions. Include:
-- 5–8 example transition phrases extracted verbatim from the reference script
-- Chapter structure pattern: how many chapters, approximate distribution of content across acts
-- Pacing instruction: when to build slowly, when to escalate, when to let a fact land without commentary
-- Vocabulary register: word classes to favor (precise historical nouns, active past-tense verbs) and avoid (rhetorical questions, superlatives, first-person)
-- Open-ending template: how the reference script ends unresolved cases, with example
-- What the voice does NOT do: no "smash that subscribe button", no "join us as we explore", no "shockingly", no rhetorical questions to the audience
-
-### Writer Skill Architecture
-
-Per Architecture.md Rule 2, the Writer is [HEURISTIC] — Claude Code does the reasoning. The skill is a SKILL.md that:
-1. Instructs Claude to load the four context files (STYLE_PROFILE.md, Research.md, channel.md, writting_style_guide.md)
-2. Defines the output format (numbered chapters with titles, word count target, file path)
-3. Provides the generation prompt
-
-No Python code needed for the core writing step. A thin CLI pre-check (deterministic) can be added later to verify Research.md exists before invoking, but that is not MVP.
+The Script.md format (pure narration, no stage directions, no visual cues) is intentionally clean per Architecture.md and the Writer skill contract. The Visual Orchestrator must extract all visual signals from narrative content alone. This is the correct design. The skill should not require a modified Script.md format.
 
 ---
 
 ## Sources
 
-- `context/script-references/Mexico's Most Disturbing Cult.md` — analyzed directly: chapter format, voice patterns, transition phrases, pacing, open-ending treatment
-- `context/channel/channel.md` — channel DNA, tone rules, audience profile, output targets
-- `context/channel/writting_style_guide.md` — six style rules (narration-only, chapters, pacing, sources, silence, open endings)
-- `Architecture.md` — Skill 1.3 and Agent 1.3 spec, HEURISTIC/DETERMINISTIC classification rule, zero-LLM-wrapper rule
-- `.planning/PROJECT.md` — v1.2 milestone definition, existing features, constraints
-- `.claude/skills/researcher/SKILL.md` — Research.md dossier format (Writer's primary input); confirmed HOOK/QUOTE callout structure
-- `projects/1. The Duplessis Orphans.../research/Research.md` — live example of dossier output, confirmed section structure and callout pattern
+- [How To Create A Shot List For Your Documentary — Desktop Documentaries](https://www.desktop-documentaries.com/create-a-shot-list.html)
+- [Bringing History to Life: The Art of Using Archival Footage in Documentaries](https://danielclarksonfisher.com/bringing-history-to-life-the-art-of-using-archival-footage-in-documentaries/)
+- [Pacing and Rhythm — Narrative Documentary Production, Fiveable](https://fiveable.me/narrative-documentary-production/unit-6/pacing-rhythm/study-guide/wA0rkICSeb7KoDNi)
+- [Narrative Structure in Documentary Editing — Fiveable](https://fiveable.me/documentary-production/unit-12/narrative-structure-documentary-editing/study-guide/ImaHZdcuYc8nDo5i)
+- [How to Create a Documentary Shot List — StudioBinder](https://www.studiobinder.com/blog/documentary-shot-list-template/)
+- `Architecture.md` — shotlist.json schema definition, 6 asset types, Phase 2 pipeline design, Agent 2.1 input contract
+- `projects/1. The Duplessis Orphans.../Script V1.md` — analyzed as primary example: chapter structure, narrative beat density, abstract vs. concrete narration patterns
 
 ---
-*Feature research for: Skill 1.3 (Style Extraction) and Agent 1.3 (The Writer)*
-*Researched: 2026-03-14*
+
+*Feature research for: Visual Orchestrator (Agent 1.4) — script-to-shot-list generation*
+*Researched: 2026-03-15*

@@ -1,210 +1,254 @@
 # Pitfalls Research
 
-**Domain:** Style Extraction and Script Generation — Agentic Documentary Pipeline (v1.2 "The Writer")
-**Researched:** 2026-03-14
-**Confidence:** HIGH (based on direct analysis of the existing codebase, the reference script at `context/script-references/`, Architecture.md constraints, and established patterns for prompt-driven LLM pipelines)
+**Domain:** Script-to-Shot-List Generation — Heuristic Visual Orchestration (v1.3 "The Director")
+**Researched:** 2026-03-15
+**Confidence:** HIGH (based on direct analysis of Architecture.md, Script V1.md, existing pipeline contracts, and known failure modes of LLM-driven structured output generation)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Style Extraction Implemented as NLP Code Instead of a Prompt
+### Pitfall 1: Over-Specifying Shots (Production Instructions Creep)
 
 **What goes wrong:**
-The style extraction skill gets implemented as deterministic Python: sentence-length counters, readability scores (Flesch-Kincaid), vocabulary frequency tables, regex-based transition phrase extraction. The code ships, it produces numbers, and those numbers are useless to the Writer because they describe surface statistics rather than the actual narrative craft patterns that make the channel's voice distinctive. The STYLE_PROFILE.md ends up full of "average sentence length: 14.2 words" instead of "sentences fragment mid-thought at moments of revelation to force a beat before the next clause."
+The shotlist.json entries drift from "visual need" into production instructions. Shots acquire fields like `duration_seconds`, `camera_movement`, `color_grade`, `transition_type`, or `priority`. The `visual_need` field itself becomes prescriptive: "slow pan across black-and-white photograph of Maurice Duplessis at 24fps with film grain overlay" instead of "official portrait of political figure, 1940s-1950s." The downstream Media Acquisition agent (2.1) can't act on camera movement instructions — it sources media, not edit instructions. The editor (DaVinci Resolve) finds the shot list contradicts their editorial judgment on half the shots.
 
 **Why it happens:**
-Style analysis feels like a data problem — you have text, you want to quantify it. Developers default to code for anything that involves processing text files. The Architecture.md classification rule (HEURISTIC vs. DETERMINISTIC) is the explicit guard against this, but the temptation is strong because NLP code looks objective.
+Claude has extensive training on film production shot lists, which do include camera movement, timing, and transitions. When asked to generate a "shot list," the LLM draws on that training and produces cinematographer-style output. Without an explicit prohibition in the prompt, production instructions creep in naturally.
 
 **How to avoid:**
-Style extraction is entirely [HEURISTIC]. The deliverable is a prompt file that Claude reads against the reference scripts. No code written. The prompt should ask for:
-- Sentence rhythm pattern (how clauses are assembled, where they break)
-- Chapter opening conventions (how scenes are entered — environment, character, event)
-- Tension-building technique (what the narrator withholds vs. reveals and when)
-- Vocabulary register (clinical, journalistic, conversational — with specific examples)
-- Structural template (act count, act function, pacing ratio between exposition and tension)
-- Explicit prohibitions (what the reference scripts never do)
+The Visual Orchestrator prompt must contain a hard, explicit fence with examples of what does NOT belong:
+- "Do not include: camera movement (pan, tilt, zoom), duration, timing, transitions, effects, color instructions, priority scores, or post-production notes."
+- "The `visual_need` field describes WHAT the viewer needs to see — location, era, subject — not HOW the camera shows it."
+- Provide a side-by-side: "WRONG: slow dolly into archival photograph of compound. RIGHT: aerial or wide view of remote rural compound, 1970s."
 
-The output (STYLE_PROFILE.md) is a writing brief with examples, not a statistics report.
+Architecture.md is explicit: "No duration, priority, effects, transitions, or post-production instructions — those are the editor's domain." This rule must be pasted verbatim into the generation prompt as a constraint header, not buried in prose.
 
 **Warning signs:**
-- A Python file named `style_extractor.py` or similar is created.
-- The STYLE_PROFILE.md contains numerical metrics without prose examples.
-- The profile describes what the text IS (sentence count) rather than how it WORKS (narrative function).
+- Any shot entry contains keys beyond `id`, `chapter`, `narrative_context`, `visual_need`, `suggested_types`.
+- `visual_need` strings contain camera terms: pan, tilt, dolly, push, pull, rack focus, dissolve.
+- Shot entries include `duration`, `priority`, `mood`, `color`, or `effect` fields.
 
-**Phase to address:** Phase 1 (Style Extraction Skill Design). Classify before touching a keyboard. If the classification comes out DETERMINISTIC, that is a classification error, not a code opportunity.
+**Phase to address:** Phase 1 (Prompt Design — Hard Fences). Define the schema and field-level constraints in the prompt before any generation attempt. Test the prompt against a single chapter and verify no production terminology appears in any field.
 
 ---
 
-### Pitfall 2: The Generated Script Loses Channel Voice Within the First Chapter
+### Pitfall 2: Under-Specifying Shots (Visual Need Too Vague to Act On)
 
 **What goes wrong:**
-The script generation prompt provides the research dossier, the STYLE_PROFILE.md, and channel DNA — and the Writer still produces generic documentary narration. Sentences like "This case shocked the nation" and "Let us examine the events that unfolded." The voice is competent but indistinct. It sounds like Wikipedia read aloud, not the channel's clinical deadpan that lets facts deliver their own horror.
+The opposite failure from Pitfall 1. The Visual Orchestrator swings too abstract: `visual_need` becomes "something historical," "relevant imagery," or "footage of the time period." The narrative context is there, but the visual need provides no guidance for what Agent 2.1 should actually search for. The acquisition agent builds generic search queries, finds generic stock footage, and the gap between the script's specificity and the visual output is enormous. The editor receives 50 clips of "1940s people walking" with no connection to the actual story.
 
 **Why it happens:**
-LLMs default to the mode of "competent documentary narrator" when given research + generic style instructions. The style profile needs to be specific enough to override the LLM's prior. Vague instructions ("be neutral and journalistic") are already the LLM's default — they add nothing. What breaks the default is concrete behavioral rules with examples pulled from the actual reference scripts.
+When the generation prompt instructs the LLM to be "loose" and avoid over-specification, the LLM sometimes interprets "loose" as "vague." The concept of "narrative need, not production instruction" requires understanding the distinction — which is subtle enough that without examples, the LLM defaults to being unhelpfully abstract.
 
 **How to avoid:**
-The synthesis prompt for script generation must include:
-- Three or four verbatim excerpts from the reference script showing the channel's actual voice in action, labeled with what they demonstrate ("Note: revelation withheld until the end of the paragraph — the worst detail comes last").
-- Explicit prohibitions extracted from what the reference script never does: no rhetorical questions directed at the audience, no "imagine if you will," no meta-commentary about the documentary itself.
-- The channel's specific deadpan device: stating a grotesque fact in the same register as a logistical detail. This must be named and demonstrated, not just described.
-- A chapter opener template from the reference script — because chapter openings are where generic narration most reliably creeps in.
+The prompt must include examples showing the correct specificity level — not production detail, but specific enough that a human researcher could identify the right asset category:
+- WRONG (too vague): "historical imagery from that era"
+- RIGHT (correctly loose): "church-administered orphanage or residential institution interior, Quebec or Canada, 1940s-1950s"
+- WRONG (too vague): "relevant footage"
+- RIGHT (correctly loose): "government or legislative building, Quebec, mid-20th century — exterior or interior establishing shot"
+
+The rule is: `visual_need` should be specific enough that two different acquisition agents would search the same source domain and retrieve similar asset types, without specifying the exact asset.
 
 **Warning signs:**
-- Script chapter 1 opens with a broad historical context paragraph (the LLM's default frame).
-- The script uses second-person address ("you might wonder," "consider this").
-- Facts are introduced with emotional signposting ("shockingly," "horrifyingly") rather than stated plainly.
-- The script reads naturally in isolation but sounds wrong next to the reference script.
+- `visual_need` strings under 10 words that contain only generic terms ("historical imagery," "relevant footage," "period material").
+- Multiple consecutive shots share identical or near-identical `visual_need` text.
+- Agent 2.1 returns zero results for a shot because the search query built from `visual_need` returns nothing useful.
 
-**Phase to address:** Phase 1 (Script Generation Prompt Engineering). Build and test the voice constraints before wiring up the full pipeline. Test the prompt against the existing reference topic (The Duplessis Orphans) — if it cannot reconstruct a plausible version of a known documentary topic in the channel's voice, the prompt is not ready.
+**Phase to address:** Phase 1 (Prompt Design — Specificity Calibration). Include three worked examples showing the correct level of specificity in the prompt. After the first test generation, review all `visual_need` strings for vagueness before moving to integration.
 
 ---
 
-### Pitfall 3: STYLE_PROFILE.md Is Written Once and Never Validated Against New Topics
+### Pitfall 3: Wrong Granularity — Too Many Shots (Noise)
 
 **What goes wrong:**
-The style extraction runs once against "Mexico's Most Disturbing Cult" and produces a STYLE_PROFILE.md. The profile works well for that reference. Then The Duplessis Orphans is scripted — a completely different topic (Canadian institutional abuse vs. Mexican cult) — and the profile's chapter structure template (built on the cult narrative arc) produces a mismatch. The profile says "open with the physical setting and atmosphere" which works for cult content but forces an awkward geography intro onto an institutional corruption story.
+The script is parsed at sentence or clause level. A 5,000-word script with 300 sentences produces 200+ shot entries. Most shots repeat the same visual need (the same location, the same era, the same subject) because the narration lingers on a topic across many sentences. Agent 2.1 builds 200 search queries, downloads 200 sets of results, and the manifest.json becomes unmanageable. The editor receives a shot list with no usable hierarchy — everything is equally weighted.
 
 **Why it happens:**
-A single reference script is a sample of one. Style patterns that are universal to the channel's voice get mixed with patterns specific to that topic's narrative arc. The style profile inherits both without distinguishing them.
+LLMs are thorough by default. When asked to generate a shot for "each narrative moment," they parse every sentence as a moment. The script's prose is dense and continuous — it does not have natural breakpoints the LLM can use without explicit guidance on granularity.
 
 **How to avoid:**
-- If more than one reference script exists, run style extraction across all of them and derive only the patterns that appear in all references. Topic-specific structural patterns are excluded from STYLE_PROFILE.md.
-- Structure STYLE_PROFILE.md with two explicit sections: "Universal Voice Rules" (apply to every script) and "Narrative Arc Templates" (optional templates by story type — cult/group, institutional corruption, disappearance, etc.). The Writer picks the matching template for the topic type.
-- The current single reference ("Mexico's Most Disturbing Cult") should be labeled as providing a "cult/group narrative arc template" — not the universal structure template.
+Define granularity rules explicitly in the prompt:
+- "One shot entry per distinct visual setting, subject, or concept — not one per sentence."
+- "If three consecutive narration sentences describe the same location and era, they share one shot entry."
+- "Target: 3-6 shots per chapter. A 5-chapter script should produce 15-30 total shots."
+- "Group related narration under a single `narrative_context` — include the 2-3 most representative sentences, not every sentence."
+
+Provide an example of collapsing: show 4 sentences about the same topic mapped to 1 shot entry, with the `narrative_context` capturing the essence.
 
 **Warning signs:**
-- Every generated script begins with an atmospheric physical setting description regardless of topic type.
-- The profile has only one chapter structure template with no variation by story type.
-- A script about institutional corruption opens with geography or weather (borrowed from the cult reference).
+- Total shot count exceeds 50 for a 5,000-word script.
+- Multiple consecutive shot entries share the same `suggested_types` and nearly identical `visual_need`.
+- Chapter shot counts exceed 10.
 
-**Phase to address:** Phase 1 (Style Extraction Design). Acknowledge the single-reference limitation upfront. Design the profile format to accommodate multiple arc templates. Flag in STYLE_PROFILE.md which sections are "universal voice" vs. "one reference script only."
+**Phase to address:** Phase 1 (Prompt Design — Granularity Rules). Set explicit target ranges in the prompt. After first test generation, count shots per chapter. If any chapter exceeds 8, the granularity rule is not working.
 
 ---
 
-### Pitfall 4: Research.md → Script Handoff Loses Narrative Hooks
+### Pitfall 4: Wrong Granularity — Too Few Shots (Gaps)
 
 **What goes wrong:**
-Agent 1.2 (The Researcher) produces Research.md with a narrative-first structure that includes explicit HOOK and QUOTE callouts. Agent 1.3 (The Writer) reads the file but treats it as a fact database — pulling timeline events and key figures while ignoring the callouts. The script that results is factually complete but lacks the "hook quality" that makes the channel's content work. The best quotes end up buried in chapter 4. The most disturbing contradiction never surfaces.
+The script has 6 chapters but the shotlist.json has 8 shots total — roughly one per chapter section. The shots are broad: "footage of Quebec in the 1940s-1960s." Agent 2.1 can acquire assets, but has no way to match them to specific narrative moments. The manifest.json has 8 shot IDs for a 40-minute documentary. The editor receives a handful of assets with no contextual anchoring. The `gaps` section of the manifest is enormous because the shot entries are too coarse to evaluate gaps against.
 
 **Why it happens:**
-The Writer's synthesis prompt focuses on "convert research into a script" and the LLM interprets that as "organize the facts into chapters." The narrative tension signals embedded in the research dossier are not referenced in the writing prompt, so they get ignored.
+When the LLM consolidates aggressively (to avoid the "too many shots" pitfall), it over-collapses. A single `visual_need` ends up covering 800 words of narration across many distinct scenes. The prompt's instruction to be "loose" is interpreted as "minimal."
 
 **How to avoid:**
-The Writer's synthesis prompt must explicitly instruct how to use Research.md's structure:
-- "The HOOK callout in Research.md is the story's entry point — build the introduction around it, do not bury it in chapter 2."
-- "QUOTE callouts are primary source moments — they anchor the chapter they appear in, not summarize it."
-- "The 'unanswered_questions' section is the documentary's engine — each one should either drive a chapter's tension or be withheld as the final revelation."
-- "The 'contradictions' section provides the points of unease. Use them where the narration needs to shift register."
+Combine the upper-bound and lower-bound targets in the prompt: "Target 3-6 shots per chapter. Each shot should cover no more than 2-3 minutes of narration (approximately 300-450 words at documentary pacing). A shot entry that covers more than 500 words of narration is probably too coarse."
 
-The handoff is not a file path. It is a structured reading instruction.
+The lower bound is enforced by requiring each chapter to have at least 2 shots (intro and body minimum).
 
 **Warning signs:**
-- Script introduction is a broad historical overview rather than the Research.md HOOK.
-- The most impactful quote from Research.md appears late or is paraphrased rather than quoted directly.
-- Script chapters map to timeline sections rather than narrative tension arcs.
+- Total shot count under 15 for a 5-chapter script.
+- Any single `narrative_context` field contains more than 5 sentences.
+- Any chapter has fewer than 2 shot entries.
 
-**Phase to address:** Phase 2 (Script Generation Prompt Engineering — Research Integration). The reading instructions for Research.md belong in the synthesis prompt, not in a comment or readme.
+**Phase to address:** Phase 1 (Prompt Design — Granularity Rules). Same phase as Pitfall 3 — granularity rules address both extremes simultaneously.
 
 ---
 
-### Pitfall 5: LLM API Wrapper Introduced for "Script Quality" Evaluation
+### Pitfall 5: Visual Monotony — Repeated `suggested_types`
 
 **What goes wrong:**
-After the Writer produces a script, a temptation arises to add automated quality evaluation: "does this sound like the channel?" The solution proposed is a second LLM call using the Anthropic SDK to score the script against the style profile. Code is written. An `@anthropic-ai/sdk` or `anthropic` Python import appears. This violates Architecture.md Rule 1 (ZERO LLM API WRAPPERS) and breaks the pipeline's foundational design.
+Every shot entry lists `["archival_photo", "archival_video"]` as `suggested_types`. The suggestion provides no differentiation signal for the acquisition agent. The shot list fails its visual variety function — all 30 shots converge on the same two asset types, and the final video cuts between static photos and archival clips with no visual texture variation. Documents, vectors, animations, and broll are never suggested, so Agent 2.1 never looks for them, and Agent 2.2/2.3 never gets meaningful input.
 
 **Why it happens:**
-Quality evaluation feels like it needs another "agent" — and the reflex is to implement agents as API calls. The architecture rule is explicit, but when building iteratively it is easy to rationalize "just one evaluation call." The violation compounds: once one API wrapper exists, the pattern propagates.
+`archival_photo` and `archival_video` are the "safe" documentary asset types — they are always plausible. The LLM defaults to them unless forced to consider other options. Without explicit prompting to consider the full asset type vocabulary, the suggestion field becomes a formality rather than a meaningful signal.
 
 **How to avoid:**
-Script quality evaluation is [HEURISTIC] and belongs to Claude Code natively. After the Writer produces the script:
-1. Claude reads the output script and STYLE_PROFILE.md in the same session.
-2. Claude performs the quality check using its native reasoning.
-3. If the script fails the check, Claude revises in-context or flags specific sections for re-generation.
-
-No Python code evaluates script quality. No API calls. The runtime IS the evaluator.
+The prompt must:
+1. List all valid asset types with their definitions: `archival_video`, `archival_photo`, `broll`, `documents`, `vectors`, `animations`.
+2. Provide examples of when non-obvious types apply: newspaper clippings and court records → `documents`; maps or organizational charts → `animations`; subjects with no photographic record → `vectors`.
+3. Include a distribution expectation: "A well-varied shot list should include at least 4 different asset types across all shots. If your list uses only archival_photo and archival_video, review it."
+4. Add prompting for `documents` specifically — dark history content is rich with government reports, court filings, newspaper front pages, and official memos that are visually compelling and publicly available.
 
 **Warning signs:**
-- Any file in the writer skill directory imports `anthropic`, `openai`, or any LLM SDK.
-- A `evaluate_script.py` or `score_voice.py` script is created.
-- The SKILL.md mentions "API call" in the quality check step.
+- More than 70% of shot entries list identical `suggested_types`.
+- `documents`, `vectors`, or `animations` appear in zero shot entries for a script with government records, court proceedings, or abstract concepts.
+- `broll` appears in zero entries for a script with location or atmosphere needs.
 
-**Phase to address:** Phase 1 (Architecture Classification). Before writing any writer code, classify every step. Evaluation = HEURISTIC = no code.
+**Phase to address:** Phase 1 (Prompt Design — Asset Type Distribution). Include the full asset type taxonomy in the prompt with usage examples. After first generation, count the distribution of suggested types. If any valid type appears in 0 entries, add a targeted example to the prompt.
 
 ---
 
-### Pitfall 6: Script Generation Prompt Tries to Enforce Structure Through Formatting Rules Alone
+### Pitfall 6: LLM-Generated JSON Is Malformed or Schema-Incomplete
 
 **What goes wrong:**
-The script generation prompt instructs the Writer to "produce 4-7 chapters, each 600-900 words, with a chapter title on its own line followed by the narration." The LLM complies with the format but not the narrative logic — chapters are split at arbitrary word count thresholds rather than natural tension breaks. Chapter 3 ends mid-revelation because the word count was hit. Chapter 5 is mostly recap filler because there was quota to fill.
+The Visual Orchestrator generates JSON with structural problems: trailing commas, unescaped quotes in `narrative_context` strings (the narration often contains actual quotes from testimony), missing closing brackets, inconsistent field naming (`suggested_type` vs. `suggested_types`), or extra fields not in the schema. Agent 2.1 attempts to read shotlist.json and fails with a JSON parse error, halting the pipeline. Worse, the JSON is valid but structurally wrong — an array where an object is expected, or string values where arrays are required for `suggested_types`.
 
 **Why it happens:**
-Formatting constraints are easier to specify than narrative logic constraints. Developers reach for word counts and structural templates because those are measurable. But for narrative content, format compliance is not quality.
+The `narrative_context` field pulls directly from script narration, which contains survivor testimony with quotation marks and apostrophes. These characters break JSON string escaping. LLMs sometimes produce well-formed JSON structurally but introduce character escaping errors when field values contain rich text. Additionally, LLMs sometimes invent additional "helpful" fields (`urgency`, `mood`, `source_era`) that do not belong in the schema.
 
 **How to avoid:**
-Chapter boundaries must be defined by narrative logic, not word count:
-- "Each chapter ends when a new question is introduced or a revelation is made — not before."
-- "A chapter may be 300 words if the narrative beat is complete, or 1,200 words if the tension arc requires it."
-- Provide the channel's chapter function template from the reference script: Intro (hook + thesis), Act 1 (establish world), Act 2 (introduce threat), Act 3 (escalation), Act 4 (peak horror), Act 5 (aftermath/open question).
-- Word count targets belong in the SKILL.md as a post-generation check ("if total script word count is outside 3,000-7,000 words, flag for review") — not as a constraint inside the generation prompt.
+1. The schema must be defined in the prompt as a JSON example with annotated field types — not described in prose.
+2. Add an explicit rule: "narrative_context is a plain string — do not include quotation marks from the script inside this field. Paraphrase or describe what the narrator says; do not transcribe it verbatim."
+3. Add: "Do not add fields not shown in the schema. The schema is final."
+4. Since this is a [HEURISTIC] skill (no Python code), include a validation step in the CONTEXT.md: after generating shotlist.json, Claude reads it back and verifies all required fields are present and no extra fields exist before writing the file.
+5. Instruct Claude to validate the JSON by mentally parsing it before writing — "Review the output. Are all strings properly closed? Are all arrays properly terminated? Does each shot object have exactly the four required fields?"
 
 **Warning signs:**
-- Chapters end at suspiciously similar word counts (600-900 words each, uniformly).
-- A chapter's final sentence does not complete a narrative thought — it trails.
-- The script has uniform chapter lengths regardless of topic complexity.
+- Python `json.loads()` raises `JSONDecodeError` on the output file.
+- Any shot entry contains fields not in the schema (`urgency`, `mood`, `era`, `color`, `priority`).
+- `suggested_types` is a string instead of an array in any entry.
+- Agent 2.1 fails with a KeyError or TypeError when accessing shot fields.
 
-**Phase to address:** Phase 2 (Script Generation Prompt Engineering — Chapter Structure). Specify narrative logic constraints before formatting constraints. Test with the Duplessis Orphans research dossier and verify chapter breaks land on narrative beats.
+**Phase to address:** Phase 1 (Prompt Design — JSON Schema Enforcement) AND Phase 2 (Integration — Validation Step). The prompt prevents schema drift; the CONTEXT.md validation step catches it before the file is committed.
 
 ---
 
-### Pitfall 7: STYLE_PROFILE.md Becomes a Living Document That Drifts
+### Pitfall 7: Narrative Context Transcribes the Script Instead of Summarizing It
 
 **What goes wrong:**
-After the first script is generated, the user edits the script manually (natural — they are the creator). The style extraction skill gets re-run to "update the profile" based on the edited script. Then a second reference script is added to `context/script-references/`. The profile is updated again. After three scripts, STYLE_PROFILE.md contains contradictory rules because each update layered new observations without reconciling them with the old. The Writer receives a profile that says "keep sentences short" in section 2 and "use long, subordinate-clause-heavy sentences for historical exposition" in section 5.
+The `narrative_context` field becomes a verbatim copy of 300+ words of script narration. The shotlist.json file size balloons. More critically, the field is supposed to help the acquisition agent understand what the narrator is saying during this shot — but a 300-word verbatim block does not communicate the visual need any more efficiently than 20 words would. Agent 2.1 cannot build a meaningful search query from a dense narration excerpt. The field's signal-to-noise ratio is low.
 
 **Why it happens:**
-Style profiles are tempting to maintain continuously. Each new reference or manual edit feels like new signal to incorporate. There is no reconciliation step.
+The LLM has access to the full script and finds it easier to copy relevant text than to synthesize. Without a word limit or a synthesis instruction, verbatim reproduction is the path of least resistance.
 
 **How to avoid:**
-- STYLE_PROFILE.md is a versioned artifact, not a living document. It is regenerated from scratch when new reference material warrants it — never patched in-place.
-- Style extraction runs only on scripts that are explicitly marked as "reference quality" in `context/script-references/`. Not on drafts, not on generated output.
-- Each STYLE_PROFILE.md regeneration includes a reconciliation step: "Does any rule in the new profile contradict a rule in the previous profile? If so, which takes precedence and why?" The answer is written into the profile explicitly.
-- Version the profile: `STYLE_PROFILE_v1.md`, `STYLE_PROFILE_v2.md`. The Writer's SKILL.md specifies which version to load.
+Define the purpose and limit of `narrative_context` explicitly:
+- "narrative_context is a 1-2 sentence synthesis of what the narrator is communicating during this shot — not a transcription."
+- "Maximum 50 words. Paraphrase, do not quote directly."
+- Example: WRONG: "[200 words of narration about the 1962 Bedard Report]". RIGHT: "Narrator describes the 1962 Bedard Report finding that one-third of Quebec's psychiatric patients were misclassified for fiscal reasons."
 
 **Warning signs:**
-- STYLE_PROFILE.md contains contradictory instructions with no resolution.
-- The profile has been edited in-place more than twice.
-- Generated scripts produce inconsistent voice quality across topics even when research quality is consistent.
+- Any `narrative_context` value exceeds 100 words.
+- `narrative_context` strings contain quotation marks (sign of verbatim transcription).
+- The shotlist.json file size is disproportionately large relative to shot count.
 
-**Phase to address:** Phase 1 (Style Extraction Design). Design the versioning and regeneration policy before the first profile is written.
+**Phase to address:** Phase 1 (Prompt Design — Field Definitions). Include explicit word limits and synthesis instruction in the field definition.
 
 ---
 
-### Pitfall 8: Writer Skill Reads Too Much Context, Degrades Output
+### Pitfall 8: Shot IDs Are Not Stable Across Regenerations
 
 **What goes wrong:**
-The Writer's invocation loads: Research.md (2,000+ words), ResearchArchive.md (5,000+ words), STYLE_PROFILE.md (1,500+ words), channel.md (1,000+ words), the full reference script (5,000+ words as few-shot example), and past_topics.md. Total context load: 15,000+ words before any script generation begins. The LLM's output quality degrades in the latter chapters because attention is distributed across too many inputs. Chapter 5 is measurably worse than Chapter 2 because the context is saturated.
+The script is revised (the user edits Script.md manually or the Writer re-generates). The Visual Orchestrator re-runs. New shot IDs are generated differently — S001 now maps to a different shot than the previous run. Meanwhile, manifest.json from a partial Agent 2.1 run still references the old S001-S030 range. The shot mappings in manifest.json become wrong. The `gaps` section references non-existent shot IDs. The pipeline is in an inconsistent state.
 
 **Why it happens:**
-The instinct is "more context = better output." Each file seems individually justified. The aggregate cost is not considered until the degradation appears in output.
+Shot IDs are generated sequentially by the LLM, starting from S001. If the chapter structure changes or shots are added/removed, all subsequent IDs shift. There is no stable anchor that links a shot ID to a specific narrative moment across runs.
 
 **How to avoid:**
-The Writer loads a curated context package, not everything available:
-- Research.md (curated dossier, target 2,000 words) — required.
-- STYLE_PROFILE.md — required, but trimmed to the sections most relevant to this topic type.
-- A single verbatim excerpt from the reference script (the intro + one full chapter), not the full script. The excerpt demonstrates voice; the full script is not needed.
-- channel.md executive summary only (first 200 words), not the full file.
-- Past topics: not needed at script generation time. Deduplication happens upstream.
+Document this as an explicit design constraint in the CONTEXT.md and SKILL.md:
+- "shotlist.json is regenerated from scratch when Script.md changes. Any existing manifest.json is invalidated and must be discarded."
+- "Do not attempt to patch or merge shot lists. Full regeneration is the only safe operation."
+- Add a clear operational note: "If Agent 2.1 has already run against a shot list, do not regenerate the shot list without also discarding the manifest and re-running acquisition."
 
-The ResearchArchive.md is available for targeted lookups (specific dates, quotes) but is not loaded into the generation context by default.
+This is a pipeline reset design, not a merge design. The CONTEXT.md should make this explicit so the user does not attempt to reconcile two runs.
 
 **Warning signs:**
-- SKILL.md instructs the Writer to load more than four files at script generation time.
-- Chapter quality is inconsistent across the script (early chapters richer than late chapters).
-- Generation prompt includes the full text of a reference script rather than a curated excerpt.
+- A manifest.json exists with shot references that do not match the current shotlist.json.
+- User attempts to "update" shotlist.json by editing individual entries after Agent 2.1 has run.
+- Chapter count in script differs from chapter names in shotlist.json.
 
-**Phase to address:** Phase 2 (Writer Context Engineering). Define the exact context package before writing the generation prompt. Test with a token count estimate and verify it stays under 8,000 words of total context.
+**Phase to address:** Phase 2 (CONTEXT.md — Pipeline Invariants). Define the invariant: shotlist.json and manifest.json are atomically coupled. Changing one invalidates the other.
+
+---
+
+### Pitfall 9: `suggested_types` Treated as Constraints by Agent 2.1
+
+**What goes wrong:**
+Agent 2.1 reads `suggested_types: ["archival_photo"]` and acquires only archival photos for that shot, discarding an archival video clip it found that would work perfectly. The suggestions become a filter rather than a hint. The shot list's "loose" design intent is violated at the consumer level. The result is unnecessary gaps in the manifest where good assets existed but were excluded.
+
+**Why it happens:**
+The `suggested_types` field name reads as prescriptive. If Agent 2.1's prompt doesn't explicitly frame the field as a non-binding hint, it reasons: "the shot list says archival_photo, so I should acquire archival photos for this shot."
+
+**How to avoid:**
+This is an Agent 2.1 design concern, but Agent 1.4 can prevent it by making the intent explicit in the shot list itself:
+- In the shotlist.json file, include a top-level `"schema_notes"` object (or document-level comment via the generation prompt) that states: `"suggested_types: non-binding hints — acquisition agent may use any asset type that satisfies the narrative need."`
+- Architecture.md already states: "Hints, not constraints — acquisition agent can use any type that fits." This phrasing should appear in the CONTEXT.md for Agent 2.1 when it is built.
+- The shotlist.json field name `suggested_types` is deliberately named with "suggested" to signal non-binding intent — the prompt for Agent 1.4 should explain this reasoning so the naming choice is documented.
+
+**Warning signs:**
+- Agent 2.1 reports zero results for a shot despite the source domains having relevant material (because it searched only one asset type).
+- Manifest.json has no cross-type asset mappings (every shot mapped to exactly one asset type).
+- Gap analysis finds gaps for shots where broll or documents would have worked but only photos were searched.
+
+**Phase to address:** Phase 2 (Agent 2.1 Design — Hint Interpretation). Explicitly address the hint-not-constraint interpretation in Agent 2.1's CONTEXT.md. Also addressed by the field naming convention established in Agent 1.4.
+
+---
+
+### Pitfall 10: Script Chapter Structure Is Misread (No Chapter Markers)
+
+**What goes wrong:**
+Script.md uses `## 1. Chapter Title` markdown headers to mark chapter boundaries. The Visual Orchestrator generates a shotlist.json that doesn't respect chapter boundaries — shots from the introduction appear mixed with shots from chapter 3, or the chapter field values are inconsistent strings ("intro," "1," "Chapter 1," "1. The Arithmetic of Abandonment"). Agent 2.1 cannot use the chapter field for any ordering or grouping because it isn't normalized.
+
+**Why it happens:**
+The LLM reads the script as flowing prose. Chapter headers are visible but the LLM must be explicitly instructed to use them as structural anchors, not just headings. Without that instruction, chapter attribution is approximate and the naming convention is inconsistent.
+
+**How to avoid:**
+The generation prompt must include:
+- "Script.md uses `## N. Chapter Title` headers to mark chapter boundaries. Each shot's `chapter` field must use the exact chapter title as it appears in the header, verbatim."
+- "Example: if the header is `## 1. The Arithmetic of Abandonment`, the chapter field value is `1. The Arithmetic of Abandonment`."
+- "All shots that fall between the start of a chapter header and the next chapter header belong to that chapter."
+
+This creates a normalized, predictable chapter field that Agent 2.1 and the Asset Manager (2.4) can use for ordering.
+
+**Warning signs:**
+- Different shot entries for the same chapter use different `chapter` field strings.
+- Shots from the script introduction appear with `chapter: "intro"` but the script header reads `## 1. [Title]`.
+- Chapter values are bare numbers ("1", "2") rather than full chapter titles.
+
+**Phase to address:** Phase 1 (Prompt Design — Script Parsing Instructions). The chapter parsing rule must be in the prompt. After first generation, verify all chapter field values match the exact chapter headers in the source script.
 
 ---
 
@@ -212,12 +256,12 @@ The ResearchArchive.md is available for targeted lookups (specific dates, quotes
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Implementing style extraction as Python NLP code | Feels objective, ships fast | Produces statistics, not craft insight; useless to the Writer | Never — this is a HEURISTIC task |
-| Single STYLE_PROFILE.md with no versioning | Simpler file management | Profile drifts and contradicts itself after second reference added | Never |
-| Loading all research files into Writer context | Maximum information | Context saturation degrades chapter quality in second half of script | MVP only — define a curated context package before v1 ships |
-| Formatting constraints (word count per chapter) as quality gate | Easy to measure | Chapters split on word count thresholds, not narrative beats | Never for content quality; acceptable as a secondary range check only |
-| One narrative arc template for all topic types | Simpler STYLE_PROFILE.md | Cult arc template forces wrong structure onto institutional corruption topics | MVP only if only one topic type is planned |
-| Writing research integration instructions in readme rather than synthesis prompt | Keeps the prompt "clean" | Writer ignores HOOK callouts and narrative signals in Research.md | Never — instructions belong in the prompt the Writer uses |
+| Skipping JSON validation step in CONTEXT.md | Faster skill design | Malformed shotlist.json halts Agent 2.1 on first run | Never — add the validation step before first use |
+| Generating shot IDs without a stable anchor | Simple sequential IDs, easy to read | Any script edit invalidates manifest.json; no safe merge path | Acceptable as a design choice if the pipeline-reset invariant is clearly documented |
+| Using only archival_photo and archival_video as suggested types | Safe, always sourced | Visual monotony; Agent 2.2 and 2.3 receive no meaningful input; vectors and animations underused | Never — the full asset type taxonomy must be used |
+| Verbatim narrative_context from script | No synthesis work needed | Shotlist.json bloats; Agent 2.1 cannot build useful search queries from dense narration blocks | Never — synthesis is the value the orchestrator adds |
+| One shot per chapter (coarse granularity) | Minimal shot list, fast to generate | Manifest.json cannot distinguish visual needs within a chapter; gap analysis is useless at this coarseness | Never for production; acceptable as a smoke-test to verify JSON structure only |
+| Including production instructions in visual_need | Satisfies the LLM's training on film shot lists | Editor and acquisition agent cannot use the output; output is for a different pipeline | Never |
 
 ---
 
@@ -225,25 +269,26 @@ The ResearchArchive.md is available for targeted lookups (specific dates, quotes
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Research.md → Writer handoff | Passing the file path; Writer treats it as a fact dump | Pass a structured reading instruction in the synthesis prompt specifying how each Research.md section maps to script structure |
-| STYLE_PROFILE.md → Writer handoff | Loading the full profile verbatim in every generation | Load only the sections relevant to the topic type; trim universal rules to the five most constraining ones |
-| Reference script as few-shot example | Including the full reference script in the Writer's context | Include intro + one chapter only as a verbatim voice example; label what it demonstrates |
-| Style extraction timing | Running style extraction once at project start and treating it as permanent | Re-run from scratch when new reference scripts are added; version the output |
-| channel.md in Writer context | Loading the full channel.md file | Load executive summary only (voice, tone, audience in 200 words); the Writer does not need competitive analysis or pipeline docs |
-| Script output location | Writing to `.claude/scratch/` | Write to `projects/N. [Video Title]/Script.md` — it is a first-class production artifact, not a scratch file |
+| Agent 1.4 → Agent 2.1 (shot list consumption) | Agent 2.1 treats `suggested_types` as a required filter | Agent 2.1 prompt must frame `suggested_types` as a non-binding hint; any asset type satisfying the narrative need is valid |
+| Agent 1.4 → Agent 2.1 (narrative_context as search input) | Agent 2.1 uses full `narrative_context` verbatim as a search query | Agent 2.1 must extract search terms from `narrative_context`; long verbatim strings produce bad queries |
+| Agent 1.4 → Agent 2.4 (shot ordering) | Asset Manager uses shot IDs assuming stable ordering across regenerations | Ordering only applies within a single shotlist.json version; any regeneration invalidates the ordering |
+| Script.md → shotlist.json (chapter attribution) | Chapter field uses inconsistent naming conventions | Chapter field must match exact `## N. Chapter Title` headers from Script.md verbatim |
+| shotlist.json → manifest.json (pipeline coupling) | User edits shotlist.json after manifest.json is created | These artifacts are atomically coupled — editing one invalidates the other; full regeneration is the only safe operation |
+| documents asset type | Acquisition agent never receives `documents` suggestions because orchestrator defaults to photo/video | Visual Orchestrator prompt must explicitly include examples showing when `documents` applies (court filings, newspaper front pages, government reports) |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Style profile is craft-oriented:** STYLE_PROFILE.md contains behavioral rules with verbatim examples from the reference script — not statistical summaries. Verify no Flesch-Kincaid scores or sentence-length averages appear.
-- [ ] **Voice persists to the end:** Read the generated script's final chapter. Verify the channel's deadpan register is intact — it should not drift into summary mode or emotional signposting in the closing act.
-- [ ] **Narrative hooks are used:** Cross-reference the Research.md HOOK callout against the script introduction. Verify the hook is the entry point, not buried in chapter 2.
-- [ ] **No LLM API imports:** Search for `import anthropic`, `from anthropic`, `import openai`, `from openai` in all writer skill scripts. Any match is a violation.
-- [ ] **Chapter breaks are narrative:** Read chapter boundaries — the last sentence of each chapter should complete a thought or land a revelation. Verify no chapter ends mid-sentence or mid-argument because a word count threshold was hit.
-- [ ] **Script word count is in range:** Total script word count should fall between 3,000 and 7,000 words. Outside this range, flag for review before the script moves to visual orchestration.
-- [ ] **Context package is bounded:** Count the total words loaded into the Writer's context at generation time. It should not exceed 8,000 words across all input files.
-- [ ] **Output path is correct:** Script.md lands in `projects/N. [Video Title]/` — not in `.claude/scratch/` or the researcher's output directory.
+- [ ] **No production instructions in any field:** Review 5 random shot entries. Verify `visual_need` contains no camera movement, timing, effect, or transition language. Verify no extra fields beyond the four schema fields exist.
+- [ ] **Correct granularity:** Count total shots and divide by chapter count. Average should be 3-6 shots per chapter. No chapter should have fewer than 2 or more than 8 shots.
+- [ ] **Visual type diversity:** Count unique values in all `suggested_types` arrays. At least 4 distinct types should appear across the full shot list. `documents` should appear if the script references any official records, reports, or publications.
+- [ ] **JSON is valid:** Load shotlist.json with `python -c "import json; json.load(open('shotlist.json'))"`. Any parse error is a blocker before Agent 2.1 runs.
+- [ ] **Schema compliance:** Verify every shot entry has exactly four fields: `id`, `chapter`, `narrative_context`, `visual_need`, `suggested_types`. No additional fields. No missing fields.
+- [ ] **Chapter names are exact:** Compare all unique `chapter` values in shotlist.json against the exact chapter headers in Script.md. They must match verbatim.
+- [ ] **narrative_context is synthesized, not transcribed:** Verify no `narrative_context` value exceeds 80 words. Verify no `narrative_context` value contains quotation marks (sign of verbatim script copy).
+- [ ] **suggested_types are arrays:** Verify `suggested_types` is a JSON array (not a string) in every shot entry.
+- [ ] **Shot count is in range:** A 5,000-word, 5-chapter script should produce 15-30 shots. Outside this range, review granularity before passing to Agent 2.1.
 
 ---
 
@@ -251,13 +296,15 @@ The ResearchArchive.md is available for targeted lookups (specific dates, quotes
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Style profile contains statistics, not craft rules | LOW | Delete profile; re-run extraction with corrected HEURISTIC prompt; no code changes needed |
-| Generated script loses channel voice | LOW | Revise synthesis prompt with stronger voice constraints and verbatim examples; re-generate |
-| Style profile has contradictory rules | MEDIUM | Re-run full extraction from scratch against all reference scripts; reconcile conflicts explicitly in the new profile |
-| Research.md hooks ignored in script | LOW | Add explicit reading instructions to synthesis prompt; re-generate script |
-| LLM API wrapper introduced | MEDIUM | Remove all API wrapper code; re-classify the task as HEURISTIC; rebuild the evaluation step as a Claude Code in-session check |
-| Context saturation degrades chapter quality | LOW | Define and enforce the curated context package; re-generate with trimmed inputs |
-| Script output written to wrong location | LOW | Update SKILL.md output path; move existing output to correct directory |
+| Production instructions in shot list | LOW | Revise prompt with explicit prohibitions and examples; regenerate full shot list |
+| Under-specified visual needs | LOW | Add specificity examples to prompt; regenerate full shot list |
+| Wrong granularity (too many shots) | LOW | Add target ranges and collapsing examples to prompt; regenerate |
+| Wrong granularity (too few shots) | LOW | Add minimum-per-chapter rule to prompt; regenerate |
+| Visual monotony (only 2 asset types) | LOW | Add asset type taxonomy with usage examples to prompt; regenerate |
+| Malformed JSON | LOW | Identify escaping issue (usually unescaped quotes in narrative_context); fix prompt to instruct paraphrase not transcription; regenerate |
+| Shot IDs out of sync with manifest.json | MEDIUM | Discard manifest.json; re-run Agent 2.1 against the updated shotlist.json from scratch |
+| Inconsistent chapter field values | LOW | Regenerate with explicit chapter naming instruction; or manually correct chapter fields if only 2-3 are wrong |
+| Agent 2.1 treating suggested_types as constraints | LOW | Update Agent 2.1 CONTEXT.md to restate hint-not-constraint intent; re-run acquisition for affected shots |
 
 ---
 
@@ -265,29 +312,31 @@ The ResearchArchive.md is available for targeted lookups (specific dates, quotes
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Style extraction as NLP code (Pitfall 1) | Phase 1: Skill Design — classify as HEURISTIC before any code is written | No `.py` file created for style extraction; STYLE_PROFILE.md contains craft rules with examples |
-| Script loses channel voice (Pitfall 2) | Phase 1: Script Generation Prompt Engineering | Run pilot against Duplessis Orphans research; compare voice against reference script excerpt |
-| Single-reference profile generalizes badly (Pitfall 3) | Phase 1: Style Extraction Design | STYLE_PROFILE.md distinguishes "universal voice rules" from "topic arc template" |
-| Research hooks lost in handoff (Pitfall 4) | Phase 2: Writer Prompt — Research Integration | Script introduction uses Research.md HOOK callout; best quotes anchor chapters, not summaries |
-| LLM API wrapper introduced (Pitfall 5) | Phase 1: Architecture Classification | `grep -r "import anthropic\|import openai"` on writer skill directory returns no results |
-| Formatting constraints override narrative logic (Pitfall 6) | Phase 2: Script Generation Prompt Engineering | Chapter breaks fall on narrative beats; chapter lengths vary based on act complexity |
-| STYLE_PROFILE.md drifts with in-place edits (Pitfall 7) | Phase 1: Style Extraction Design | Profile is versioned; no in-place edits after generation; regeneration policy documented in SKILL.md |
-| Context saturation degrades output (Pitfall 8) | Phase 2: Writer Context Engineering | Context package defined and word-count-budgeted; tested with token estimate before generation |
+| Production instructions creep (Pitfall 1) | Phase 1: Prompt Design — Hard Fences | Review 5 random shot entries; zero production terms in any field |
+| Visual need too vague (Pitfall 2) | Phase 1: Prompt Design — Specificity Calibration | Two independent searches from each `visual_need` string should return the same source domain |
+| Too many shots — noise (Pitfall 3) | Phase 1: Prompt Design — Granularity Rules | Chapter shot count average is 3-6; no chapter exceeds 8 |
+| Too few shots — gaps (Pitfall 4) | Phase 1: Prompt Design — Granularity Rules | No chapter has fewer than 2 shots; no `narrative_context` covers more than 450 words of narration |
+| Visual monotony (Pitfall 5) | Phase 1: Prompt Design — Asset Type Distribution | At least 4 distinct types across shot list; `documents` present if script references records |
+| Malformed JSON (Pitfall 6) | Phase 1: Prompt Design — Schema Enforcement AND Phase 2: CONTEXT.md Validation Step | `json.load()` succeeds; all required fields present in every entry |
+| Verbatim narrative_context (Pitfall 7) | Phase 1: Prompt Design — Field Definitions | No `narrative_context` exceeds 80 words; no quotation marks in the field |
+| Unstable shot IDs across regenerations (Pitfall 8) | Phase 2: CONTEXT.md — Pipeline Invariants | Pipeline-reset invariant documented; no merge operation defined |
+| suggested_types as constraints (Pitfall 9) | Phase 2: Agent 2.1 Design — Hint Interpretation | Agent 2.1 CONTEXT.md states hint-not-constraint explicitly |
+| Script chapter misread (Pitfall 10) | Phase 1: Prompt Design — Script Parsing Instructions | All `chapter` field values match exact headers from Script.md |
 
 ---
 
 ## Sources
 
-- Direct analysis: `context/script-references/Mexico's Most Disturbing Cult.md` — existing reference script showing actual channel voice patterns
-- Direct analysis: `Architecture.md` — Rule 1 (zero LLM API wrappers), Rule 2 (HEURISTIC vs. DETERMINISTIC classification)
-- Direct analysis: `context/channel/channel.md` — channel DNA, voice rules, audience profile
-- Direct analysis: `.claude/skills/researcher/SKILL.md` — existing Research.md schema and HOOK/QUOTE callout conventions
-- Direct analysis: `.planning/PROJECT.md` — v1.2 milestone goals, existing key decisions log
-- Known pattern: LLM attention degradation in long-context generation — documented in multiple long-context benchmarks (RULER, InfiniteBench) showing quality drop in second half of long-form outputs under high input load
-- Known pattern: LLM default to "competent but generic" documentary mode without strong behavioral constraints — observed in GPT-4 and Claude creative writing evaluations; overridden by verbatim examples and explicit prohibitions, not by vague style descriptors
-- Known pattern: Style profiles as statistics vs. craft rules — failure mode documented in automated readability research showing Flesch-Kincaid and similar metrics do not predict perceived quality or voice distinctiveness
+- Direct analysis: `Architecture.md` — Agent 1.4 schema definition, design principles ("No duration, priority, effects, transitions"), `suggested_types` field intent ("hints, not constraints"), asset type taxonomy
+- Direct analysis: `projects/1. The Duplessis Orphans.../Script V1.md` — actual script structure, chapter headers, narration density, survivor testimony (shows rich quoted text that will cause JSON escaping issues)
+- Direct analysis: `Architecture.md` Phase 2 — Agent 2.1 input contract ("reads only shotlist.json"), gap analysis mechanism, manifest schema
+- Direct analysis: `.planning/PROJECT.md` — v1.3 milestone goal, [HEURISTIC] classification, zero Python code constraint
+- Known pattern: LLM default to cinematographer-style shot lists when prompted for "shot list" without explicit schema constraints — training data contains extensive film production templates
+- Known pattern: JSON escaping failures in LLM-generated structured output when field values contain rich text (quotation marks, apostrophes) — documented behavior in structured output benchmarks
+- Known pattern: Schema field drift (LLM adding "helpful" extra fields) — documented in JSON-mode evaluations; occurs without explicit "no extra fields" instruction
+- Known pattern: LLM interpretation of "loose" as "vague" in generation prompts without worked examples showing the correct specificity level
 
 ---
 
-*Pitfalls research for: Style Extraction and Script Generation (v1.2 "The Writer") — documentary video production pipeline*
-*Researched: 2026-03-14*
+*Pitfalls research for: Script-to-Shot-List Generation — Heuristic Visual Orchestration (v1.3 "The Director")*
+*Researched: 2026-03-15*

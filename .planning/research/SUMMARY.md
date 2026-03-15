@@ -1,17 +1,17 @@
 # Project Research Summary
 
-**Project:** Channel Automation v1.2 — "The Writer"
-**Domain:** Prompt-driven style extraction and automated script generation for documentary video pipeline
-**Researched:** 2026-03-14
+**Project:** v1.3 Visual Orchestrator — Agent 1.4 (Shot List Generation)
+**Domain:** Heuristic script-to-shot-list generation for archival documentary pipeline
+**Researched:** 2026-03-15
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This milestone adds two skills to a working agentic pipeline (v1.1 ships Channel Assistant + Researcher): Skill 1.3 (Style Extraction) and Agent 1.3 (The Writer). Both are almost entirely [HEURISTIC] operations — Claude Code does the reasoning natively, and the only deterministic code required is a thin context-loader CLI that aggregates files and prints them to stdout. The recommended approach is to resist the pull toward NLP libraries, LLM SDKs, and complex templating in favor of prompt files and stdlib-only Python. Zero new pip dependencies are required.
+The Visual Orchestrator (Agent 1.4) is a pure [HEURISTIC] skill that reads a finished `Script.md` and outputs `shotlist.json`. Research confirms this is the right classification: all reasoning is editorial judgment (what visual does this narrative beat need?), and the only deterministic work is resolving file paths and validating JSON schema. The correct template is the existing `style-extraction` skill — zero Python code, a single `generation.md` prompt, SKILL.md for invocation, and CONTEXT.md as the stage contract. No new dependencies are required; the entire stack is Python stdlib already present in the project.
 
-The core insight from combined research: this is a prompt engineering problem, not a software engineering problem. STYLE_PROFILE.md is the key artifact — it must contain craft-oriented behavioral rules with verbatim examples from the reference script, not statistical summaries. The Writer's quality ceiling is determined by how precisely the synthesis prompt names the channel's deadpan-neutral voice patterns and how explicitly it instructs use of Research.md's HOOK/QUOTE callouts as narrative anchors. The build order is sequential and non-negotiable: style extraction must be validated before meaningful writer testing can begin.
+The recommended approach is a single-pass, chapter-by-chapter generation where Claude reads Script.md and VISUAL_STYLE_GUIDE.md together and emits shot entries at narrative beat boundaries — not paragraph or sentence boundaries. The schema has evolved beyond Architecture.md's baseline: the actual generated Duplessis shotlist introduces `building_block`, `shotlist_type`, `building_block_variant`, `text_content`, and `suggested_sources` as fields that proved necessary in practice. This extended schema is the canonical target for the skill, not the Architecture.md baseline.
 
-The primary risk is misclassification — defaulting to deterministic code for tasks that are inherently heuristic. The Architecture.md HEURISTIC/DETERMINISTIC rule is the explicit guard against this. A secondary risk is context saturation: loading too many files into the Writer's generation context degrades output quality in the later chapters of the script. The research identifies a hard budget of 8,000 words of total context at generation time. Both risks are avoidable by strictly applying the classification rule before touching a keyboard.
+The primary risks are all prompt-design failures addressable before any generation attempt: production instruction creep in `visual_need`, under-specified visual needs that produce useless acquisition queries, wrong shot granularity in either direction, and JSON schema drift from narration quotes causing escaping failures. All have known mitigations that belong in `generation.md` as explicit fences with worked examples. A second risk category — shot ID instability across regenerations — is a pipeline design invariant (shotlist.json and manifest.json are atomically coupled; regeneration invalidates the manifest) that must be documented in CONTEXT.md, not handled in code.
 
 ---
 
@@ -19,111 +19,125 @@ The primary risk is misclassification — defaulting to deterministic code for t
 
 ### Recommended Stack
 
-The v1.0/v1.1 stack is unchanged and requires no re-evaluation. For v1.2 specifically, zero new third-party dependencies are needed. All deterministic work uses Python stdlib: `re` for sentence splitting, `collections.Counter` for word frequency, `statistics` for length distribution, `pathlib` for file operations, and `argparse` for the CLI. This is the correct outcome for a primarily heuristic milestone — the deterministic layer is intentionally thin by design.
+No new dependencies for v1.3. The entire deterministic layer uses Python stdlib (`re`, `json`, `pathlib`, `argparse`). The skill follows the zero-code pattern of `style-extraction`: Claude performs all reasoning natively through Read/Write/Glob tools. There is no CLI to build, no PYTHONPATH to configure, no pip install step.
 
 **Core technologies:**
-- `re` (stdlib): Sentence splitting and pattern detection for style metric computation — no third-party tokenizer needed for transcribed speech input
-- `collections` (stdlib): Word frequency and vocabulary analysis via Counter — already idiomatic in the channel-assistant codebase
-- `statistics` (stdlib): Sentence length distribution (mean, median, stdev) — anchors quantitative surface metrics in STYLE_PROFILE.md
-- `pathlib` (stdlib): File discovery and project path resolution — already the project standard per CLAUDE.md
-- `argparse` (stdlib): CLI argument parsing — same pattern as researcher and channel-assistant CLIs
+- `re` (stdlib): Chapter boundary detection via `re.split()` on `## N.` headers — sufficient for Script.md's fixed format; no parsing library needed
+- `json` (stdlib): Schema validation via manual `assert` checks on five required keys — no `jsonschema` library needed
+- `pathlib` (stdlib): File discovery, already the project standard per CLAUDE.md
+- Claude Code native tools: Glob for project path resolution, Read/Write for all file I/O — no CLI wrapping required
 
-**Explicitly rejected:** textstat (wrong signal — readability indices do not capture voice patterns), spaCy (50MB install for POS tagging that adds nothing on transcribed speech input), NLTK (heavy corpus downloads, no advantage over stdlib for this use case), LangChain/LlamaIndex (violates Architecture.md Rule 1 — zero LLM API wrappers), any LLM embedding library (style similarity is Claude's job, not cosine distance).
+**Explicitly rejected:** `jsonschema` library (five flat keys do not justify 0.7MB install), spaCy/NLTK (script is clean prose, `re.split()` is sufficient), any LLM API wrapper (Architecture.md Rule 1 violation), Python context-loader CLI (Glob/Bash suffices for two-file resolution; style-extraction proves zero-code handles more complex workflows).
 
 ### Expected Features
 
-The Writer milestone delivers two features. Style extraction is a one-time channel setup operation; script generation is a per-video production step. Both feed directly into the downstream Visual Orchestrator (Agent 1.4, future milestone), so the script output format must be stable.
+**Must have (table stakes) — P1, required for Agent 2.1 to function at all:**
+- Chapter mapping (`chapter` integer + `chapter_title` string) — Agent 2.1 groups acquisition by chapter; both fields required
+- Sequential shot IDs in S001 format — referenced throughout Phase 2 manifest and gap analysis; never reset per chapter
+- `visual_need` with era and location specificity — this is Agent 2.1's primary search query signal; must be concrete enough that two agents search the same source domain
+- `building_block` matching VISUAL_STYLE_GUIDE names exactly — Agent 2.1 looks these up; invented names break the pipeline
+- `shotlist_type` from the closed enum — routes acquisition: text_overlay shots are skipped, map/animation/vector flagged for Agents 2.2/2.3
+- `narrative_context` as a concise paraphrase (max 50 words) — anchors acquisition to narration; must paraphrase, not transcribe
+- `text_content` for text_overlay shots — verbatim text for editor-placed Quote Cards, Date Cards, Keyword Stingers
+- `suggested_sources` as domain hints — archive.org, nfb.ca, wikimedia_commons; empty array for text_overlay
+- `building_block_variant` — variant name from VISUAL_STYLE_GUIDE or null
+- Every chapter covered — no narration chapter left without shot entries in Phase 2
 
-**Must have (table stakes):**
-- Style extraction prompt that produces STYLE_PROFILE.md with craft-oriented behavioral rules and verbatim examples — not statistics or readability scores
-- STYLE_PROFILE.md stored in `context/channel/` as stable channel-level context (parallel to channel.md, not inside any project directory)
-- Writer SKILL.md: numbered chapter structure, pure narration output, no stage directions or embedded production notes
-- Factual anchoring: every claim in the script traceable to Research.md — Writer does not generate facts from training memory
-- HOOK/QUOTE integration: Writer prompt explicitly instructs use of Research.md callouts as chapter entry points and narration anchors
-- Script word count in target range: 3,000–7,000 words (20–50 min runtime per channel.md output targets)
-- Channel tone enforcement: calm, journalistic, deadpan — achieved by loading STYLE_PROFILE.md + channel.md as generation context
-
-**Should have (differentiators):**
-- Transition phrase library extracted verbatim from reference script — prevents generic connective language ("furthermore", "notably") that breaks the deadpan register
-- Pacing profile: slow historical build for first third, escalation to horror — qualitative instruction, not a hard word-count ratio
-- Open-ending template derived from reference — prevents LLMs from artificially resolving ambiguity in unsolved cases (explicit style rule in writting_style_guide.md)
-- Chapter title generation in the reference register: evocative short titles ("Strangers in the Jungle") rather than generic labels ("Background", "Chapter 1")
-- Source authority woven into narration naturally ("court records from 1962 show...") without disrupting pacing
-- STYLE_PROFILE.md distinguished into "Universal Voice Rules" vs. "Narrative Arc Templates by story type" — avoids cult-topic arc template overfitting to non-cult topics
+**Should have (differentiators) — P2, improves acquisition quality significantly:**
+- Visual variety enforcement: at least 4 distinct `shotlist_type` values across the full shot list; review distribution after generation
+- Establishing/orienting shot at the start of each chapter (geographic, temporal, or contextual before detail shots)
+- Correct routing of abstract narration to `vector` or `animation` types — prevents phantom gaps in Agent 2.1 from searching for assets that do not exist
+- Shot count calibrated to chapter word count: short chapters (~400 words) warrant 5-8 shots; long chapters (700+ words) warrant 12-18 shots
 
 **Defer (v2+):**
-- Chapter outline approval checkpoint before full script generation — add reactively only if full scripts frequently need structural revision
-- Multiple script variants for A/B testing — doubles review work, no feedback loop exists yet
-- Style drift detection across generated scripts — needs more than one reference to establish a meaningful baseline
-- TTS/voiceover generation — out of scope per Architecture.md; audio is handled in DaVinci Resolve
+- Two-pass generation (annotate beats separately, then assign types) — adds context overhead without quality improvement at this schema complexity level; consider only if single-pass produces inconsistent building block assignments
+- Dedicated abstract narration prompt section — add after first real generation reveals which cases are problematic
 
 ### Architecture Approach
 
-Both new skills extend the established "CLI prints, Claude reasons" pattern used by all existing skills. The style-extraction skill has no Python code at all — two files only (SKILL.md + extract.md prompt). The writer skill adds a thin `cli.py` with a single `load` subcommand that aggregates Research.md + STYLE_PROFILE.md + channel.md and prints to stdout. Claude performs all generation natively from that context. No new architectural concepts are introduced — both skills are direct applications of patterns already proven in researcher and channel-assistant.
+The Visual Orchestrator is a single-prompt skill following the `style-extraction` pattern. Three files in `.claude/skills/visual-orchestrator/`: CONTEXT.md (stage contract), SKILL.md (invocation workflow), and `prompts/generation.md` (all reasoning instructions). No `scripts/` directory. Build order: CONTEXT.md first (locks the contract), then `generation.md` (where reasoning complexity lives), then SKILL.md (human-facing entry point). Validate `generation.md` against the existing Duplessis Script V1.md before committing — the existing shotlist.json is the quality baseline.
 
 **Major components:**
-1. `style-extraction/SKILL.md` + `prompts/extract.md` — One-time channel setup: reads reference scripts, writes STYLE_PROFILE.md. Pure heuristic, zero Python code written
-2. `context/channel/STYLE_PROFILE.md` — Stable channel-level artifact: written once by style-extraction, read by every Writer invocation. Lives at the same tier as channel.md
-3. `writer/scripts/writer/cli.py` — Thin context aggregator: resolves project path from topic string, reads three files, prints to stdout. Single `load` subcommand, identical pattern to researcher's CLI
-4. `writer/prompts/write_script.md` — Script generation rules: chapter structure defined by narrative logic (not word count), voice constraints with verbatim examples, explicit Research.md reading instructions, output format specification
-5. `projects/N. Title/script/Script.md` — Per-video terminal output: first-class production artifact (not scratch), feeds Agent 1.4 in the next milestone
+1. `CONTEXT.md` — inputs/outputs/process/checkpoints; defines the pipeline-reset invariant (shotlist.json and manifest.json are atomically coupled)
+2. `prompts/generation.md` — shot granularity rules, extended schema definition, building block application from VISUAL_STYLE_GUIDE decision tree, text overlay handling, JSON constraints, worked examples showing correct specificity
+3. `SKILL.md` — 3-step invocation: resolve project + identify guide, read inputs, generate and write shotlist.json
 
-**Build sequence (non-negotiable order):** style-extraction SKILL.md and extract.md prompt → validate STYLE_PROFILE.md output → writer prompts/write_script.md → writer cli.py → writer SKILL.md → end-to-end validation against Duplessis Orphans Research.md.
+**Extended schema (canonical — from actual Duplessis shotlist.json, NOT the Architecture.md baseline):**
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `project` | string | Yes (top-level) | From project directory name |
+| `guide_source` | string | Yes (top-level) | Which VISUAL_STYLE_GUIDE was applied |
+| `generated` | ISO 8601 | Yes (top-level) | Generation timestamp |
+| `id` | string | Yes | S001 sequential across all chapters |
+| `chapter` | integer | Yes | 0 for prologue, 1+ for numbered chapters |
+| `chapter_title` | string | Yes | Verbatim from Script.md heading |
+| `narrative_context` | string | Yes | 1-2 sentence paraphrase, max 50 words |
+| `visual_need` | string | Yes | Free text, era/location specific, no production terms |
+| `building_block` | string | Yes | Exact match from VISUAL_STYLE_GUIDE |
+| `shotlist_type` | enum | Yes | archival_video, archival_photo, text_overlay, map, animation, vector |
+| `building_block_variant` | string or null | Yes | Variant from guide or null |
+| `text_content` | string or null | Yes | Verbatim text for text_overlay; null for media shots |
+| `suggested_sources` | array | Yes | Domain hints; [] for text_overlay |
 
 ### Critical Pitfalls
 
-1. **Style extraction implemented as NLP code instead of a prompt** — Any Python file created for style extraction is a classification error. STYLE_PROFILE.md must contain behavioral rules with examples ("sentences fragment mid-thought at revelation moments to force a beat") not statistics ("average sentence length: 14.2 words"). If the profile describes what the text IS rather than how it WORKS, discard and re-run with a corrected prompt.
+1. **Production instruction creep in `visual_need`** — Claude's training on film shot lists pulls toward cinematographer language ("slow dolly into archival photo"). The generation prompt must include explicit prohibitions with side-by-side examples: "WRONG: slow dolly into archival photograph of compound. RIGHT: aerial or wide view of remote rural compound, 1970s." Paste Architecture.md's exclusion rule verbatim as a constraint header in the prompt.
 
-2. **Script loses channel voice within the first chapter** — LLMs default to "competent documentary narrator" when given research + vague style instructions. Break the default with: verbatim reference script excerpts labeled with what they demonstrate, explicit prohibitions (no rhetorical questions, no "imagine if you will", no emotional signposting like "shockingly"), and the channel's specific deadpan device named and demonstrated. Validate the prompt against the Duplessis Orphans Research.md before considering the prompt finished.
+2. **Under-specified visual needs** — "Historical imagery" or "relevant footage" produces nothing actionable for Agent 2.1. Rule: the description must be specific enough that two independent acquisition agents would search the same source domain. Include three worked examples in the prompt showing correct specificity: era, geography, subject, medium.
 
-3. **Research.md HOOK/QUOTE callouts ignored in script output** — Agent 1.2 embeds explicit narrative signal callouts in the dossier specifically for the Writer. The Writer's synthesis prompt must contain reading instructions: "The HOOK is the story's entry point — build the introduction around it, not buried in chapter 2." "QUOTE callouts anchor the chapter they appear in — they are not summary material." The handoff is a structured reading instruction, not a file path.
+3. **Wrong shot granularity (both directions)** — Too many shots (sentence-level) produces 200+ entries that are unmanageable for Agent 2.1. Too few (one per chapter) produces gaps with no visual anchoring. Target 3-6 shots per chapter for the prompt instruction; the actual Duplessis shotlist shows 8-15 is realistic for 700-word chapters. Set both a minimum (2 per chapter) and a maximum (no single `narrative_context` spanning more than 450 words of narration).
 
-4. **Context saturation degrades second-half chapter quality** — Hard budget: 8,000 words of total input context at generation time. Curated package: Research.md + STYLE_PROFILE.md (relevant sections only) + reference script excerpt (intro + one chapter, not the full script) + channel.md executive summary (first 200 words). Do not load ResearchArchive.md, raw source files, or past_topics.md at generation time.
+4. **JSON schema drift from narration text** — Script narration contains survivor quotes with quotation marks and apostrophes that break JSON string escaping. Rule: `narrative_context` must paraphrase, not transcribe. "Do not add fields not shown in the schema." Include a self-validation step in CONTEXT.md: Claude reads back the generated JSON and verifies all required fields are present before writing the file.
 
-5. **LLM API wrapper introduced for quality evaluation or any other step** — Any `import anthropic` or `import openai` in writer skill scripts is an Architecture.md Rule 1 violation. Script quality evaluation is [HEURISTIC] — Claude reads the output and evaluates natively in the same session. No code evaluates script quality.
+5. **Shot ID instability across regenerations** — Sequential IDs have no stable anchor to specific narrative moments. This is an intentional design trade-off documented as a pipeline invariant: shotlist.json and manifest.json are atomically coupled. Any Script.md change requires regenerating both from scratch. Document this in CONTEXT.md and SKILL.md explicitly — there is no merge operation, only full regeneration.
 
 ---
 
 ## Implications for Roadmap
 
-Based on combined research, two phases cover the entire milestone. Both are tightly coupled by validation dependencies — Phase 1 must complete and produce a validated STYLE_PROFILE.md before Phase 2 has any meaningful tests to run.
+The build is three deliverables in a clear dependency order, all achievable in a single milestone session validated against existing artifacts.
 
-### Phase 1: Style Extraction Skill
+### Phase 1: Prompt Design (generation.md)
 
-**Rationale:** STYLE_PROFILE.md is a prerequisite for meaningful Writer testing. Without it, writer output cannot be evaluated against the channel's voice — you have no anchor. This phase has zero code to write (pure heuristic), so it completes quickly and unblocks Phase 2 immediately. The sooner STYLE_PROFILE.md is committed to the repo, the sooner all downstream work has stable channel DNA to reference.
+**Rationale:** The prompt is where all quality risk lives. Building and validating it first — against the existing Duplessis Script V1.md and shotlist.json — means reasoning constraints are tested before any skill infrastructure exists. This is the same order used for the Writer: write_script.md before cli.py.
 
-**Delivers:** `context/channel/STYLE_PROFILE.md` committed to the repository as stable channel-level context. Also delivers `.claude/skills/style-extraction/SKILL.md` and `prompts/extract.md`.
+**Delivers:** `prompts/generation.md` with: extended schema definition, shot granularity rules (with worked collapsing examples), explicit prohibitions on production terms with side-by-side examples, visual specificity calibration examples, full asset type taxonomy with usage triggers, chapter parsing instructions (prologue = chapter 0, verbatim title from heading), JSON escaping rules, self-validation step.
 
-**Addresses (features):** STYLE_PROFILE.md with craft-oriented behavioral rules, transition phrase library, pacing profile, open-ending template, "Universal Voice Rules" vs. "Narrative Arc Templates" distinction (mitigates single-reference overfitting to cult topic type).
+**Addresses features:** All P1 table-stakes features — chapter mapping, shot IDs, visual_need, building_block, shotlist_type, narrative_context, text_content, suggested_sources, building_block_variant.
 
-**Avoids:** Pitfall 1 (style extraction as NLP code — classify as HEURISTIC before any file is created), Pitfall 3 (single-reference profile forcing cult arc onto non-cult topics — design the profile format to accommodate multiple arc templates from the start), Pitfall 7 (STYLE_PROFILE.md drifting via in-place edits — set the versioning and regeneration policy before the first profile is written).
+**Avoids pitfalls:** 1 (production creep), 2 (vague visual needs), 3 (wrong granularity), 4 (JSON schema drift), 5 (visual monotony from prompt design side), 7 (verbatim narrative_context), 10 (chapter misread).
 
-### Phase 2: Writer Agent
+### Phase 2: Stage Contract (CONTEXT.md)
 
-**Rationale:** Depends directly on Phase 1 output. The write_script.md prompt is written before the CLI because the prompt structure determines what context the CLI needs to load and print. Validated against the existing Duplessis Orphans Research.md as an integration test — this project has a completed dossier, so no new research work is required to run the first real end-to-end script generation.
+**Rationale:** The stage contract locks the pipeline invariant and provides the orchestrator routing reference. Must exist before SKILL.md so the invocation workflow has an authoritative document to reference.
 
-**Delivers:** `writer/SKILL.md`, `writer/prompts/write_script.md`, `writer/scripts/writer/cli.py`, and `projects/1. The Duplessis Orphans.../script/Script.md` as the integration test output.
+**Delivers:** `CONTEXT.md` with: inputs table (Script.md, VISUAL_STYLE_GUIDE.md, prompts/generation.md), numbered process steps, checkpoint (human review via git diff after generation), outputs table (shotlist.json path), pipeline-reset invariant documented explicitly, deferred items (duration, priority, effects, transitions) listed.
 
-**Uses (stack):** stdlib only — `pathlib`, `argparse`. No new installs required.
+**Avoids pitfalls:** 8 (shot ID instability — pipeline-reset invariant documented here), 9 (suggested_types as constraints — hint-not-constraint framing documented for Agent 2.1 handoff).
 
-**Implements (architecture):** "CLI prints, Claude reasons" pattern (established convention from researcher and channel-assistant). Project path resolution via directory matching — reuse researcher's pattern exactly, do not reimplement. Context aggregation: Research.md + STYLE_PROFILE.md + channel.md printed to stdout with clear section headers.
+### Phase 3: Invocation Workflow (SKILL.md) + CLAUDE.md Update
 
-**Avoids:** Pitfall 2 (script loses channel voice — use verbatim examples and explicit prohibitions in write_script.md), Pitfall 4 (Research.md hooks lost in handoff — explicit reading instructions in synthesis prompt, not in a comment or readme), Pitfall 5 (LLM API wrapper for evaluation — evaluation is heuristic, no code), Pitfall 6 (formatting constraints override narrative logic — chapter breaks defined by narrative beats, not word count thresholds), Pitfall 8 (context saturation — enforce 8,000-word context budget before writing the generation prompt).
+**Rationale:** Written last because it references both the prompt file path and CONTEXT.md's defined inputs. Zero code means no integration risk. CLAUDE.md update registers the skill in routing so it is discoverable.
+
+**Delivers:** `SKILL.md` with prerequisites, 3-step invocation workflow (resolve project + guide disambiguation, read inputs, generate and write), output path. CLAUDE.md task routing row added (`| Create shot list | visual-orchestrator | CONTEXT.md |`) and "What to Load" row added for visual planning.
+
+**Implements:** Zero-code pure-heuristic skill pattern from style-extraction — no scripts/ directory, no CLI, no PYTHONPATH.
 
 ### Phase Ordering Rationale
 
-- Style extraction must precede script generation because the Writer has no validated voice anchor without STYLE_PROFILE.md. Running Phase 2 before Phase 1 produces untestable output with no quality baseline.
-- Within Phase 2, write_script.md must precede cli.py because the prompt defines the required context package, which determines what the CLI loads. Writing the CLI first produces a loader that may not serve the actual generation needs.
-- SKILL.md for the writer is written last — after both prompt and CLI are validated — because SKILL.md references both and must accurately describe a tested, working workflow.
-- End-to-end validation against the Duplessis Orphans project is the terminal step, not an optional check. It is the only meaningful integration test because it exercises the full pipeline on a real topic with a completed Research.md dossier.
+- Prompt before contract: Testing generation.md against real artifacts (Duplessis Script V1.md + existing shotlist.json) reveals whether the schema definition and granularity rules are complete before the contract is locked.
+- Contract before SKILL.md: Invocation steps reference the contract's defined inputs; writing SKILL.md without a locked CONTEXT.md creates documentation drift.
+- Single session achievable: All three files are independent documents with no code imports or test suites. Each can be validated against existing project artifacts without new research.
+- No Python phase: Architecture research confirms zero-code is the correct pattern. Adding a CLI is an explicitly documented anti-pattern in ARCHITECTURE.md — Glob/Bash performs project resolution directly.
 
 ### Research Flags
 
-Phases with standard patterns (no deeper research needed during planning):
-- **Phase 1 (Style Extraction):** No code, pure prompt design. Classification is HEURISTIC per Architecture.md Rule 2. No unknowns to research — the only variable is STYLE_PROFILE.md output quality, which is validated empirically by running the extraction and reviewing the result.
-- **Phase 2 (Writer Agent):** CLI follows the researcher's established pattern exactly. The prompt engineering variables are fully documented by pitfalls research (8 specific failure modes with prevention strategies). No deeper technical research needed.
+Phases with well-documented patterns (no additional research needed):
+- **All phases:** The entire skill follows patterns already present in this codebase. `style-extraction` is the direct template. The Duplessis shotlist.json is a quality baseline. The Mexico Cult VISUAL_STYLE_GUIDE.md provides the type taxonomy. No external research required.
 
-No phases require `/gsd:research-phase` during planning. Both phases are well-defined by direct codebase inspection and Architecture.md constraints. The only open question is whether the single reference script produces a STYLE_PROFILE.md that generalizes adequately to non-cult topic types — this is validated in Phase 1, not researched in advance.
+Validation checkpoint (not a research gap, but a required implementation step):
+- **After Phase 1:** Run `generation.md` against Duplessis Script V1.md and compare output to the existing shotlist.json. If building block distribution or shot density diverges significantly from the baseline, revise granularity rules before proceeding to Phase 2.
 
 ---
 
@@ -131,18 +145,20 @@ No phases require `/gsd:research-phase` during planning. Both phases are well-de
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Zero new dependencies — all stdlib. No version conflicts possible. Confirmed by direct codebase analysis of existing channel-assistant and researcher skills, both stdlib-only. |
-| Features | HIGH | Derived from direct analysis of existing reference script, channel.md, writting_style_guide.md, Architecture.md spec, and the live Duplessis Orphans Research.md. Feature boundaries driven by the HEURISTIC/DETERMINISTIC rule, which is explicit and binding. No speculation involved. |
-| Architecture | HIGH | Based on direct inspection of all existing skills. Both new skills extend established patterns without introducing new concepts. Build order is determined by validation dependencies, not preference. |
-| Pitfalls | HIGH | Pitfalls derived from Architecture.md Rules 1 and 2 (binding constraints), direct analysis of the degraded reference script format, and documented LLM behavior patterns in long-context generation (RULER, InfiniteBench benchmarks). Prevention strategies map to specific, actionable prompt engineering decisions. |
+| Stack | HIGH | Zero new dependencies confirmed by Architecture.md Rule 1 and direct inspection of all existing skill directories; style-extraction proves the zero-code pattern works for more complex workflows |
+| Features | HIGH | Extended schema derived from the actual Duplessis shotlist.json artifact (60+ shots); Architecture.md defines the baseline and Phase 2 consumer contracts |
+| Architecture | HIGH | Direct codebase inspection of style-extraction (the template), writer (the prompt-before-CLI build order), visual-style-extractor (two-pass — confirmed NOT to apply here); build order from actual file dependencies |
+| Pitfalls | HIGH | Derived from Architecture.md binding constraints ("No duration, priority, effects"), actual Script V1.md content (quotes/apostrophes confirmed in narration), and documented LLM structured-output failure patterns (schema drift, production instruction training bias) |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Single reference script limits STYLE_PROFILE.md coverage:** STYLE_PROFILE.md will be derived from one reference (`Mexico's Most Disturbing Cult.md`), which is a cult/group narrative — not all topic types on the channel. Mitigate by explicitly labeling profile sections as "universal voice rules" vs. "cult arc template (one reference only)." Add a second reference when a clean transcript becomes available for a non-cult topic (institutional corruption, disappearance, or dark web topic).
-- **Auto-caption format degrades quantitative style metrics:** The reference script is a YouTube auto-caption export with no punctuation and arbitrary line breaks. Sentence boundary detection and length distribution will have lower signal quality than a properly punctuated transcript. The extraction prompt must work qualitatively — inferring rhythm from line groupings and narrative structure from chapter headers — rather than quantitatively. This is acknowledged and handled in the prompt design approach; it is not a blocker.
-- **Script quality validation is manual at launch:** There is no automated way to verify a generated script matches the channel's voice. The validation step is human review of the Duplessis Orphans script against the reference. This is by design (heuristic task), but it means iteration speed depends on reviewer availability. Add a pacing audit heuristic (post-generation word count per chapter review) as a secondary check in v1.x after the first scripts are validated.
+- **Shot density calibration:** PITFALLS research recommends 3-6 shots per chapter as the prompt target, but the actual Duplessis shotlist shows 8-15 per chapter is realistic for 700-word chapters. The prompt should express density as word-count proportional rather than a flat range. Resolve by counting shots-per-chapter in the Duplessis baseline during Phase 1 validation.
+
+- **Multiple VISUAL_STYLE_GUIDE disambiguation:** SKILL.md Step 1 must handle the case where multiple guides exist in `context/visual-references/`. Current recommendation: ask the user which to apply. This is correct but must be written as an explicit conditional in SKILL.md to avoid ambiguous behavior at invocation time.
+
+- **Schema naming mismatch (suggested_types vs. suggested_sources):** Architecture.md baseline uses `suggested_types`; the actual Duplessis shotlist uses `suggested_sources` + `shotlist_type` as separate fields serving distinct purposes. The generation.md prompt and SKILL.md must reference the extended schema exclusively — any reference to the Architecture.md baseline schema risks regenerating with the wrong field names, breaking Agent 2.1.
 
 ---
 
@@ -150,24 +166,25 @@ No phases require `/gsd:research-phase` during planning. Both phases are well-de
 
 ### Primary (HIGH confidence)
 
-- `.claude/skills/researcher/SKILL.md` and `cli.py` — established "CLI prints, Claude reasons" pattern that writer replicates directly
-- `.claude/skills/channel-assistant/SKILL.md` and `project_init.py` — confirmed that scaffold already creates `script/` subdirectory; writer needs no directory creation logic
-- `Architecture.md` — CRITICAL ARCHITECTURE RULES (binding project constraints): Rule 1 (zero LLM API wrappers), Rule 2 (HEURISTIC vs. DETERMINISTIC classification)
-- `context/script-references/Mexico's Most Disturbing Cult.md` — confirmed reference script format (auto-caption, degraded), chapter structure, voice patterns, transition phrases
-- `context/channel/channel.md` — channel DNA, tone rules, audience profile, output targets (3,000–7,000 words, 20–50 min)
-- `context/channel/writting_style_guide.md` — six style rules: narration-only, chapters, pacing, sources, silence, open endings
-- `projects/1. The Duplessis Orphans.../research/Research.md` — confirmed live dossier format, HOOK/QUOTE callout structure, word count
-- `.planning/PROJECT.md` — v1.2 milestone definition, key decisions log
+- `Architecture.md` — Agent 1.4 spec, Phase 2 pipeline design, asset type taxonomy, CRITICAL ARCHITECTURE RULES (Rule 1: no LLM wrappers; Rule 2: HEURISTIC/DETERMINISTIC classification)
+- `projects/1. The Duplessis Orphans.../shotlist.json` — canonical extended schema from actual generation (60+ shots); quality and density baseline
+- `projects/1. The Duplessis Orphans.../Script V1.md` — actual Script.md format, chapter structure (`## N. Title`), narration density, survivor testimony (confirms quote/apostrophe escaping risk)
+- `.claude/skills/style-extraction/` (SKILL.md, CONTEXT.md, prompts/extraction.md) — direct zero-code template for the Visual Orchestrator's skill structure
+- `.claude/skills/writer/` (SKILL.md, CONTEXT.md, prompts/generation.md) — prompt structure reference and prompt-before-CLI build order
+- `context/visual-references/Mexico's Most Disturbing Cult/VISUAL_STYLE_GUIDE.md` — type taxonomy and building block vocabulary source
+- `.planning/PROJECT.md` — v1.3 milestone requirements and [HEURISTIC] classification
 
 ### Secondary (MEDIUM confidence)
 
-- Programming Historian: Introduction to Stylometry with Python — validated TTR, sentence length, punctuation density as standard stylometric features for style analysis
-- LLM long-context behavior (RULER, InfiniteBench benchmarks) — quality degradation in second half of long-form outputs under high input load; informed the 8,000-word context budget recommendation
+- [Desktop Documentaries — How To Create A Shot List For Your Documentary](https://www.desktop-documentaries.com/create-a-shot-list.html) — professional documentary shot list conventions (narrative anchor, visual subject, media type, sequence position)
+- [StudioBinder — How to Create a Documentary Shot List](https://www.studiobinder.com/blog/documentary-shot-list-template/) — confirmed what shot lists do NOT contain (camera angles, timing, transitions, music, color)
+- [Fiveable — Pacing and Rhythm in Narrative Documentary Production](https://fiveable.me/narrative-documentary-production/unit-6/pacing-rhythm/study-guide/wA0rkICSeb7KoDNi) — archival documentary pacing: 1 shot every 4-12 seconds, beat-based not paragraph-based
+- [Fiveable — Narrative Structure in Documentary Editing](https://fiveable.me/documentary-production/unit-12/narrative-structure-documentary-editing/study-guide/ImaHZdcuYc8nDo5i) — beat definition for archival narration documentary context
 
-### Tertiary (LOW confidence)
+### Tertiary (inference from known patterns)
 
-- LLM default to "competent but generic" documentary narrator mode — observed behavior pattern documented in multiple creative writing evaluation contexts; overridden by verbatim examples and explicit prohibitions rather than by abstract style descriptions
+- LLM structured-output failure modes — JSON escaping errors from rich text field values, schema field drift ("helpful" extra fields), production instruction training bias when prompted for "shot list" without explicit schema constraints; all documented behaviors that directly inform the pitfall prevention strategies
 
 ---
-*Research completed: 2026-03-14*
+*Research completed: 2026-03-15*
 *Ready for roadmap: yes*

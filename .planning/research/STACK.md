@@ -1,86 +1,216 @@
 # Stack Research
 
-**Domain:** Style Extraction and Script Generation (Agent 1.3 — The Writer)
-**Researched:** 2026-03-14
+**Domain:** Visual Orchestrator — Zero-Code Shot List Generation from Documentary Scripts (Agent 1.4)
+**Researched:** 2026-03-15
 **Confidence:** HIGH
 
-> **Scope:** This document covers stack additions for v1.2 only. The validated v1.0/v1.1 stack (Python, SQLite stdlib, yt-dlp, crawl4ai, trafilatura, requests, difflib, beautifulsoup4, internetarchive) is unchanged. Do not re-evaluate those decisions.
+> **Scope:** This document covers stack additions for v1.3 only. The validated stack from v1.0–v1.2 (Python stdlib, SQLite, yt-dlp, crawl4ai, trafilatura, requests, BeautifulSoup4, scenedetect, imagededup, Pillow, numpy) is unchanged. Do not re-evaluate those decisions.
 >
-> **Architecture reminder:** Architecture.md Rule 2 — classify before building. Style extraction is [HEURISTIC]: Claude reasons over the reference script and produces STYLE_PROFILE.md. Script generation is [HEURISTIC]: Claude reads Research.md + STYLE_PROFILE.md and writes the narration. The only [DETERMINISTIC] work is the CLI that assembles and prints context files for Claude to consume.
+> **Architecture reminder:** Architecture.md Rule 2 applies directly. The Visual Orchestrator is classified [HEURISTIC]. Claude reads Script.md and VISUAL_STYLE_GUIDE.md and reasons about visual needs for each narrative beat. The only [DETERMINISTIC] work is a thin CLI that assembles context files for Claude to consume and validates the resulting shotlist.json against its schema.
 
 ---
 
-## What v1.2 Needs That v1.1 Does Not Have
+## What v1.3 Needs That v1.2 Does Not Have
 
-Two deliverables, both primarily prompt-driven:
+One deliverable, entirely prompt-driven:
 
-1. **Style extraction** — a one-time operation that reads `context/script-references/*.md` and produces a `STYLE_PROFILE.md` capturing sentence rhythm, vocabulary register, chapter structure, and pacing. Claude does the reasoning; a small deterministic layer quantifies surface metrics (sentence lengths, word counts, punctuation density) to anchor the prompt.
+**Shot list generation** — an agent that reads a finished Script.md and maps each narrative beat to a visual need. Output is `shotlist.json` at `projects/N. [Title]/shotlist.json`. Claude does all reasoning; no NLP, no vector similarity, no third-party tools.
 
-2. **Script generation** — an agent that reads Research.md + STYLE_PROFILE.md + channel DNA and produces numbered chapters with pure narration. This is 100% [HEURISTIC]. No deterministic code beyond a CLI context-loader.
-
-The reference scripts are plain `.md` files (YouTube auto-transcription text, as seen in `context/script-references/Mexico's Most Disturbing Cult.md`). They are already clean prose — no HTML, no PDF, no scraped content. This means the extraction problem is straightforward text processing, not NLP pipeline complexity.
+The script is already clean prose in a known format: chapter headers (`## N. Title`), continuous narration paragraphs, no bullet points, no stage directions. The parsing problem is purely structural — identify chapter boundaries and segment prose into shootable units. This is a `str.split()` problem, not a parsing framework problem.
 
 ---
 
 ## Recommended Stack Additions
 
-### Core: Style Metric Extraction
+### Total new dependencies: 0
+
+All required capability is present in the existing stack.
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| `re` (stdlib) | stdlib | Sentence splitting, pattern detection | The reference scripts are transcribed speech — no consistent punctuation. Sentences must be split on `.`, `?`, `!` with basic heuristics (abbreviation handling). `re.split()` covers this with a 10-line pattern. No third-party tokenizer needed for this input format. |
-| `collections` (stdlib) | stdlib | Word frequency, vocabulary analysis | `Counter` computes type-token ratio, top-N word frequencies, and chapter word counts. Zero install. Already used idiomatically in the channel-assistant codebase. |
-| `statistics` (stdlib) | stdlib | Sentence length distribution | `statistics.mean()`, `statistics.median()`, `statistics.stdev()` compute the sentence length stats (mean words/sentence, standard deviation). These numbers go into STYLE_PROFILE.md as anchors for Claude's generation prompt. |
+| `re` (stdlib) | stdlib | Chapter boundary detection, paragraph segmentation | Script format is fixed: `## N. Title` headers on their own line. `re.split()` on `^\#\# \d+\.` cleanly separates chapters. Already used in v1.2 style extractor. |
+| `json` (stdlib) | stdlib | Write and validate shotlist.json | JSON serialization for the shot list output. Already project standard throughout all agents. |
+| `pathlib` (stdlib) | stdlib | File discovery — resolve project directory, locate Script.md and VISUAL_STYLE_GUIDE.md | Already the project standard per CLAUDE.md. Identical to writer CLI pattern. |
+| `argparse` (stdlib) | stdlib | CLI argument parsing | Same pattern as `python -m writer load "[topic]"`. Accept topic name, resolve project directory, print assembled context. |
 
-**Why NOT textstat (0.7.8):** textstat computes Flesch-Kincaid, Gunning Fog, and other readability scores that measure how hard text is to read for a general audience. These metrics are not useful for style replication. The channel's writing style goal is not "readable" in the academic sense — it is "neutral, cinematic, deadpan." Readability indices do not capture sentence rhythm, vocabulary register, or narrative pacing. textstat adds a dependency that solves the wrong problem.
+No new install step. No new compatibility surface. Zero deviation from the project's established "stdlib-only for thin deterministic layers" rule.
 
-**Why NOT spaCy (3.8.11, 11MB model):** spaCy provides POS tagging, dependency parsing, NER, and lemmatization. These would be useful if the style profile needed to classify noun phrases, passive voice frequency, or syntactic complexity. For this use case — transcribed speech from a documentary narrator — the style signal lives in sentence length distribution, clause-level punctuation rhythm, and chapter structure. These are all computable with `re` and `collections`. spaCy adds a 50MB install (core + model), a `python -m spacy download en_core_web_sm` step, and an `import spacy; nlp = spacy.load()` startup overhead for metrics that `str.split()` and `re` can compute directly. The v1.0 Key Decisions established "stdlib-only where possible" — this is a direct application. The Agent 1.2 STACK.md explicitly ruled out spaCy for the same reason.
+---
 
-**Why NOT NLTK:** NLTK is older than spaCy, heavier (3.7GB+ corpus downloads), and designed for academic text analysis. Same conclusion as spaCy: wrong tool for this input type.
+## Prompt Engineering Patterns for Heuristic Shot List Generation
 
-### Supporting: Context-Loader CLI
+The skill is prompt-driven. These patterns apply directly to building the generation prompt at `.claude/skills/visual-orchestrator/prompts/generation.md`.
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `pathlib` (stdlib) | stdlib | File discovery and reading | Glob `context/script-references/*.md` and `projects/N. [Title]/Research.md`. Already the project standard for all file operations per CLAUDE.md. |
-| `argparse` (stdlib) | stdlib | CLI argument parsing | The writer skill needs a CLI that accepts `--project-dir` and `--mode` (extract-style | generate-script). Same pattern as researcher's `cli.py`. |
+### Pattern 1: Narrative Beat Segmentation (not paragraph-based)
 
-No new third-party dependencies for the context-loader. It reads files and prints structured context — identical to the pattern in `researcher/cli.py` and `channel-assistant/cli.py`.
+**What it is:** Instruct Claude to segment narration by *visual transition moments*, not by paragraph boundaries. A paragraph that covers three distinct visual ideas should produce three shot entries. A long paragraph with one sustained visual idea produces one shot entry.
+
+**Why it works for this domain:** Documentary narration frequently sustains a single visual for multiple sentences before cutting. Paragraph-per-shot produces over-segmentation. Transition-moment-per-shot matches how editors actually cut.
+
+**Prompt instruction pattern:**
+```
+Identify each moment where the visual subject changes: a new person is introduced,
+the location shifts, an event is described that requires different imagery,
+or the temporal context changes (e.g., "thirty years later").
+Each change is a shot boundary. Do not split shots at paragraph boundaries
+unless a visual transition coincides.
+```
+
+### Pattern 2: Narrative Context Verbatim Extraction
+
+**What it is:** The `narrative_context` field in each shot entry captures the *actual narration text* driving that shot — a direct quote from Script.md, not a paraphrase. Claude copies the relevant passage as-is.
+
+**Why it works:** The downstream Media Acquisition agent (2.1) reads only `shotlist.json`, not the script. If `narrative_context` is paraphrased, the acquisition agent loses the specific language that anchors search queries ("the 1942 law allowing unclaimed bodies to be sold to medical schools for $10 each" is a more useful search signal than "information about deaths in institutions"). Verbatim extraction preserves the signal.
+
+**Prompt instruction pattern:**
+```
+narrative_context: Copy the exact narration text that plays during this shot.
+Trim to the relevant span — not the full paragraph. Preserve original wording.
+```
+
+### Pattern 3: Visual Need as a Search Query
+
+**What it is:** The `visual_need` field is written as if it were a search query submitted to an image archive — specific subject, era, geography, and mood. No production language ("slow zoom", "cut to"), no editorial tone ("haunting", "unsettling").
+
+**Why it works:** The Media Acquisition agent (2.1) will build search queries from `visual_need`. Vague descriptions ("something dark and historical") generate bad results. Specific, factual descriptions ("Quebec psychiatric hospital interior 1950s black and white photograph") generate useful ones. Writing the field as a search query forces the right level of specificity.
+
+**Prompt instruction pattern:**
+```
+visual_need: Describe the visual in searchable terms — subject, era, geography, medium
+(photograph vs. footage vs. map). Write it as an image archive search query.
+No production instructions, no mood adjectives.
+```
+
+### Pattern 4: suggested_types Anchored to VISUAL_STYLE_GUIDE.md
+
+**What it is:** The `suggested_types` array is populated from the fixed vocabulary defined in VISUAL_STYLE_GUIDE.md — not invented per shot. The generation prompt loads the guide's type taxonomy and instructs Claude to select from it.
+
+**Why it works:** The asset pipeline downstream expects consistent type identifiers. If the orchestrator invents types (`"period_engraving"`, `"courtroom_sketch"`), the acquisition agent cannot map them to its source domains. The VISUAL_STYLE_GUIDE.md already defines the type taxonomy (`archival_video`, `archival_photo`, `broll`, `map_animation`, `document_scan`, etc.) from actual reference video analysis. Claude selects from this closed vocabulary.
+
+**Prompt instruction pattern:**
+```
+suggested_types: Select 1–3 types from the type vocabulary in the Visual Style Guide.
+Do not invent new types. If no type fits, use the closest match and add a note
+to visual_need explaining the gap.
+```
+
+### Pattern 5: Chapter-First Grouping
+
+**What it is:** Shot entries are grouped under their chapter before being serialized to JSON. The `chapter` field uses the exact chapter title from Script.md (e.g., `"1. The Arithmetic of Abandonment"`), not a normalized slug.
+
+**Why it works:** Human editors reviewing the shot list need to navigate by chapter, matching the script. Using the exact chapter title preserves traceability to Script.md without requiring a separate mapping table. The Asset Manager (2.4) can group the final asset manifest the same way.
+
+---
+
+## JSON Schema Design for shotlist.json
+
+### Confirmed Schema (from Architecture.md)
+
+```json
+{
+  "shots": [
+    {
+      "id": "S001",
+      "chapter": "1. The Arithmetic of Abandonment",
+      "narrative_context": "exact narration text excerpt from Script.md",
+      "visual_need": "Quebec orphanage exterior 1940s black and white photograph",
+      "suggested_types": ["archival_photo", "archival_video"]
+    }
+  ]
+}
+```
+
+### Schema Design Rationale
+
+**What the schema intentionally excludes — and why:**
+
+| Excluded Field | Why Excluded | What Handles It Instead |
+|----------------|--------------|-------------------------|
+| `duration` | Editor's domain (DaVinci Resolve), not the orchestrator's. Duration depends on final narration pacing, music, and cut rhythm. | Human editor |
+| `priority` | Asset acquisition priorities are determined by gap analysis in Agent 2.1, not pre-assigned. Pre-assigning creates false precision. | Agent 2.1 gap analysis |
+| `effects` / `transitions` | Post-production decisions that depend on what assets are actually acquired. The orchestrator works from script, not final cut. | Human editor / future Remotion agent |
+| `search_query` | `visual_need` already functions as the search query. A separate field creates duplication and drift risk. | `visual_need` field |
+| `confidence` | Shot confidence scoring adds complexity without observable benefit at this stage. Every shot is Claude's best reading of the script. | Human review step |
+| `asset_id` | Asset IDs are assigned by the Asset Manager (2.4), not the orchestrator. Orchestrator works before assets exist. | Agent 2.4 |
+
+**What makes the schema robust without bloat:**
+
+- `id` uses zero-padded sequential integers (`S001`, `S002`) — sortable, collision-free, short
+- `chapter` uses the exact Script.md heading — preserves traceability without a mapping table
+- `narrative_context` is verbatim — preserves search signal for downstream agents
+- `visual_need` is human-readable and machine-queryable — serves both review and acquisition
+- `suggested_types` is a closed vocabulary array — prevents type taxonomy drift
+
+### Schema Validation (Deterministic Layer)
+
+The CLI should validate the output JSON before writing it. Using only stdlib `json` + manual key checks — no jsonschema library needed. The validation is:
+
+```python
+required_keys = {"id", "chapter", "narrative_context", "visual_need", "suggested_types"}
+valid_types = {"archival_video", "archival_photo", "broll", "map_animation",
+               "document_scan", "text_overlay", "talking_head"}
+
+for shot in data["shots"]:
+    assert required_keys.issubset(shot.keys()), f"Missing keys in {shot['id']}"
+    assert isinstance(shot["suggested_types"], list), f"suggested_types must be list"
+    assert all(t in valid_types for t in shot["suggested_types"]), f"Unknown type in {shot['id']}"
+```
+
+No `jsonschema` (0.7MB install) needed. Five lines of stdlib assertions catch schema drift.
+
+---
+
+## Documentary Shot List Conventions Applied to This Domain
+
+These conventions from professional documentary production inform the prompt design.
+
+### What documentary editors actually need on a shot list
+
+Based on professional documentary production workflows (HIGH confidence — conventions are stable and well-documented across industry sources):
+
+1. **Narrative anchor** — what the narrator is saying. The visual editor must know the narration to choose matching footage duration. `narrative_context` serves this.
+
+2. **Visual subject** — what appears on screen, not how it's edited. A shot list specifies the subject (`Quebec orphanage, 1940s`), not the cut (`medium shot, slow zoom`). Editorial choices happen in the edit suite.
+
+3. **Media type** — archival footage vs. photograph vs. map vs. animation. Different types require different sourcing workflows (archive.org vs. Wikipedia Commons vs. generated). `suggested_types` serves this.
+
+4. **Sequence position** — which chapter and roughly which narrative moment. `chapter` + `id` (sequential) serve this.
+
+What shot lists for documentary post-production do NOT contain:
+- Camera angles or movements (editor decides)
+- On-screen duration (pacing decided in edit)
+- Transitions between shots (editor decides)
+- Music or audio cues (separate music supervision workflow)
+- Color grade instructions (colorist's domain)
+
+The Architecture.md schema already reflects these conventions correctly. The prompt design should reinforce them by explicitly excluding production language from `visual_need`.
+
+### Shot density heuristics for 20–50 minute documentaries
+
+For this channel's format (20–50 minute documentaries, 3,000–7,000 word scripts):
+
+- Typical documentary cut rate: 1 shot every 4–12 seconds of screen time
+- 20 minutes at 8 seconds average = ~150 shots; 50 minutes = ~375 shots
+- 5,000-word narration at 130 words/minute ≈ 38 minutes of screen time ≈ 285 shots
+
+In practice, the orchestrator does not aim for a target shot count. It identifies visual transition moments in the script. A 7-chapter, 5,000-word script will naturally produce 40–80 distinct visual needs — fewer than total shots, because the acquisition agent maps each visual need to potentially several asset files, and the editor may hold a single asset for multiple sentences.
+
+The prompt should target **one shot entry per visual transition** in the narration, not one per sentence or one per paragraph.
 
 ---
 
 ## Installation
 
 ```bash
-# No new pip installs required for v1.2.
-# All needed libraries are Python stdlib:
-#   re, collections, statistics, pathlib, argparse, json, datetime
+# No new pip installs required for v1.3.
+# All required libraries are Python stdlib:
+#   re, json, pathlib, argparse, sys
 
-# Confirm Python version (should be 3.10+ for match/case syntax if used)
-python --version
+# Confirm no dependency additions are needed
+python -c "import re, json, pathlib, argparse; print('All stdlib modules available')"
 ```
 
-**Total new hard dependencies: 0.** This is the correct outcome for a primarily [HEURISTIC] milestone. The deterministic layer is thin by design.
-
----
-
-## What the Deterministic Layer Actually Does
-
-The style extractor script (`writer/style_extractor.py`) has one job: compute quantifiable surface metrics from a reference script and write a JSON snapshot that Claude's synthesis prompt can reference. Claude does all the qualitative interpretation.
-
-**Metrics to compute (all via stdlib):**
-
-| Metric | How Computed | Why It Matters |
-|--------|--------------|----------------|
-| Mean sentence word count | `re.split()` + `statistics.mean()` | Deadpan narration runs long sentences; knowing the mean anchors Claude |
-| Sentence length std deviation | `statistics.stdev()` | Low stdev = uniform cadence; high stdev = varied rhythm |
-| Chapter count and avg chapter word count | Split on `^\d+\.` chapter headers | Establishes act structure expectations |
-| Type-Token Ratio | `len(set(words)) / len(words)` | Measures vocabulary richness — low TTR = repetitive, high = varied |
-| Top-50 most frequent words | `Counter(words).most_common(50)` | Reveals vocabulary register (formal vs. colloquial) |
-| Punctuation density | count `,` `;` `:` per 100 words | Reveals clause-level rhythm and pause frequency |
-| Sentence-opening patterns | first word of each sentence | Shows whether narrator favors subject-first or transition-phrase openings |
-
-This JSON snapshot feeds into a synthesis prompt file (`prompts/style_synthesis.md`) that Claude reads to write STYLE_PROFILE.md. STYLE_PROFILE.md is the writer-facing output — a plain markdown file Claude loads when generating the script.
+**Total new hard dependencies: 0.** Correct outcome for a [HEURISTIC] milestone. The deterministic layer is a thin context-loader and schema validator.
 
 ---
 
@@ -88,10 +218,11 @@ This JSON snapshot feeds into a synthesis prompt file (`prompts/style_synthesis.
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| stdlib `re` + `statistics` | textstat 0.7.8 | Use textstat if you need Flesch-Kincaid or academic readability scores for a different feature (e.g., comparing script complexity to competitors). Not needed here. |
-| stdlib `re` + `statistics` | spaCy 3.8.11 + en_core_web_sm | Use spaCy if a future milestone needs POS-based analysis (passive voice frequency, noun chunk density, syntactic complexity) for style comparison. The install cost becomes worthwhile at that point. |
-| stdlib `re` + `statistics` | NLTK | Use NLTK only if you need corpus-level frequency analysis against a reference corpus (e.g., comparing channel vocabulary against Brown corpus). Not a current requirement. |
-| Prompt-driven script generation (Claude native) | Fine-tuned model | A fine-tuned model would produce more stylistically consistent output but requires GPU infrastructure, training data curation, and ongoing maintenance. Claude Code with STYLE_PROFILE.md context is the correct approach for this pipeline's scale and architecture constraints. |
+| Verbatim `narrative_context` (copied from script) | Paraphrased summary | Use paraphrase only if the downstream agent cannot handle long text fields. Agent 2.1 benefits from full verbatim text for search query construction — no reason to paraphrase. |
+| Closed `suggested_types` vocabulary from VISUAL_STYLE_GUIDE.md | Open-ended free-text types | Use open types only if the VISUAL_STYLE_GUIDE.md type taxonomy is abandoned. The closed vocabulary prevents type drift across the pipeline. |
+| Manual `json` key validation (stdlib) | `jsonschema` library | Use jsonschema if schema complexity grows (nested objects, pattern validation, optional fields with defaults). At 5 flat required keys, stdlib assertions are proportionate. |
+| Chapter header as `chapter` field value | Numeric chapter index | Use numeric index if chapter titles change frequently during script revision. Titles give human editors direct traceability to the script without a lookup table — prefer until there's evidence of instability. |
+| Single-pass generation (read script, output JSON) | Two-pass (identify beats, then assign types) | Use two-pass if the generation prompt produces inconsistent type assignments. The VISUAL_STYLE_GUIDE.md type taxonomy is small enough (5–8 types) that single-pass assignment is reliable. |
 
 ---
 
@@ -99,43 +230,39 @@ This JSON snapshot feeds into a synthesis prompt file (`prompts/style_synthesis.
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| textstat | Computes readability indices (Flesch, Gunning Fog) — wrong signal for style replication. Adds dependency for metrics that do not appear in STYLE_PROFILE.md. | `statistics` stdlib for sentence length distribution |
-| spaCy + en_core_web_sm | POS tagging and NER are unnecessary for surface style metrics on transcribed speech. 50MB install for zero functional gain at this milestone. | `re` + `collections` stdlib |
-| NLTK | Older, heavier, requires corpus downloads. No capability advantage over stdlib for this use case. | `re` + `collections` stdlib |
-| LangChain / LlamaIndex | Architecture.md Rule 1: zero LLM API wrappers. These do not add value when Claude Code is the orchestrator. | Claude Code native orchestration |
-| Any LLM embedding library (sentence-transformers, openai embeddings) | Style similarity is computed by Claude reading STYLE_PROFILE.md — not by embedding comparison. Adds PyTorch to the dependency graph for no reason. | Claude reasoning over STYLE_PROFILE.md |
-| Jinja2 or other templating engines | The script output is pure narration text, not HTML or structured templates. Claude generates the narration directly; a template engine adds indirection without value. | Claude generates narration directly into a text file |
+| `jsonschema` library | Five required flat keys do not justify a 0.7MB install. Stdlib assertions catch schema violations with less code. | `assert` + manual key checks in CLI |
+| spaCy / NLTK sentence tokenization | Script sentences are editorial prose, not raw text. The format is clean. `re.split()` on `\n\n` for paragraphs and on chapter headers is sufficient. | `re.split()` stdlib |
+| Any LLM API wrapper | Architecture.md Rule 1. The skill runs as Claude Code natively. | Claude Code native orchestration |
+| `shot_duration` or `priority` fields | Both require information the orchestrator does not have (final assets, edit pacing). Adding them now creates false precision and placeholder-filling behavior. | Omit; downstream agents determine these |
+| Sentence-level segmentation | One shot per sentence produces 500+ entries for a 5,000-word script — too granular for an acquisition agent to work with and not how documentary editors think about shot lists. | One shot per visual transition in narration |
+| Shot confidence scores | Adds a numeric field that encodes Claude's uncertainty, which is already expressed through the `visual_need` text. Numeric confidence scores invite downstream agents to make threshold decisions that belong to human review. | Human review of shotlist.json |
+| Automated script parsing before Claude reads it | Pre-parsing chapters via Python before handing to Claude adds code for no gain. Claude reads chapter structure directly from the raw Script.md format. | Load raw Script.md, let Claude segment |
 
 ---
 
 ## Stack Patterns
 
-**Style extraction (one-time, per reference script added):**
-- CLI accepts path to reference script directory
-- Python reads all `.md` files, computes surface metrics via stdlib
-- Writes `style_metrics.json` to `.claude/scratch/` (transient)
-- Claude reads the JSON snapshot + reference script excerpts → synthesizes STYLE_PROFILE.md
-- STYLE_PROFILE.md written to `context/channel/` for persistent use
+**Shot list generation (per video, after Script.md is complete):**
 
-**Script generation (per video, after research dossier is complete):**
-- CLI loads: `projects/N. [Title]/Research.md` + `context/channel/STYLE_PROFILE.md` + `context/channel/channel.md`
-- Prints assembled context to stdout
-- Claude reads context, generates script as numbered chapters with pure narration
-- Output written to `projects/N. [Title]/Script.md`
+1. CLI loads: `projects/N. [Title]/Script.md` + `context/visual-references/*/VISUAL_STYLE_GUIDE.md`
+2. Prints assembled context to stdout with labeled sections
+3. Claude reads generation prompt at `.claude/skills/visual-orchestrator/prompts/generation.md`
+4. Claude identifies visual transition moments in each chapter
+5. Claude generates `shotlist.json` entries using verbatim narrative context and closed type vocabulary
+6. CLI validates JSON schema before writing to `projects/N. [Title]/shotlist.json`
 
-Both patterns follow the established context-loader CLI pattern from v1.0/v1.1. No new architectural concepts.
+This follows the identical context-loader CLI pattern established in v1.0–v1.2. No new architectural concepts.
 
 ---
 
 ## Version Compatibility
 
-| Package | Version | Python 3.10+ Status | Notes |
-|---------|---------|---------------------|-------|
-| re | stdlib | Always available | No compatibility concerns |
-| collections | stdlib | Always available | No compatibility concerns |
-| statistics | stdlib | Always available (3.4+) | No compatibility concerns |
-| pathlib | stdlib | Always available (3.4+) | Already project standard |
-| argparse | stdlib | Always available | Already used in researcher and channel-assistant CLIs |
+| Package | Version | Status | Notes |
+|---------|---------|--------|-------|
+| `re` | stdlib | Always available | No compatibility concerns |
+| `json` | stdlib | Always available | No compatibility concerns |
+| `pathlib` | stdlib | 3.4+ | Already project standard |
+| `argparse` | stdlib | Always available | Already used in all existing CLI entry points |
 
 No new compatibility risks. Zero external dependencies means zero version conflict surface.
 
@@ -143,13 +270,13 @@ No new compatibility risks. Zero external dependencies means zero version confli
 
 ## Sources
 
-- [textstat PyPI](https://pypi.org/project/textstat/) — Version 0.7.8 (July 22, 2025) confirmed; readability metrics assessed — HIGH confidence
-- [spaCy PyPI](https://pypi.org/project/spacy/) — Version 3.8.11 (November 17, 2025) confirmed; en_core_web_sm at 11MB — HIGH confidence
-- [spaCy Models Documentation](https://spacy.io/models/en) — en_core_web_sm components (tok2vec, tagger, parser, senter, ner, lemmatizer) — HIGH confidence
-- [Programming Historian: Introduction to Stylometry with Python](https://programminghistorian.org/en/lessons/introduction-to-stylometry-with-python) — Type-Token Ratio, sentence length, punctuation density as standard stylometric features — MEDIUM confidence (academic source, validated against multiple stylometry papers)
-- [TextDescriptives / textstat GitHub](https://github.com/textstat/textstat) — Confirmed readability metrics scope; does not include sentence rhythm or vocabulary register features — HIGH confidence
-- Python stdlib documentation: `re`, `collections.Counter`, `statistics` — no external verification needed
+- Architecture.md (`Agent 1.4: Visual Orchestrator` section) — Shot entry schema and field definitions — HIGH confidence (canonical project spec)
+- `context/visual-references/Mexico's Most Disturbing Cult/VISUAL_STYLE_GUIDE.md` — Type taxonomy (`archival_video`, `archival_photo`, `broll`, etc.) confirmed from actual v4 output — HIGH confidence
+- `projects/1. The Duplessis Orphans.../Script V1.md` — Actual script structure: chapter headers (`## N. Title`), prose paragraphs, no stage directions — HIGH confidence (primary artifact)
+- `.claude/skills/writer/CONTEXT.md` — Confirms Script.md format: starts with `## 1. [Chapter Title]`, pure prose, no production notes — HIGH confidence
+- `.claude/skills/writer/prompts/generation.md` — Confirms no visual cues in script output; visual Orchestrator owns those — HIGH confidence
+- Architecture.md (Phase 2 Asset Pipeline section) — Confirms Agent 2.1 reads only `shotlist.json`, not Script.md — HIGH confidence (informs what signal shotlist.json must preserve)
 
 ---
-*Stack research for: v1.2 Style Extraction and Script Generation (documentary video pipeline)*
-*Researched: 2026-03-14*
+*Stack research for: v1.3 Visual Orchestrator — Shot List Generation (documentary video pipeline)*
+*Researched: 2026-03-15*

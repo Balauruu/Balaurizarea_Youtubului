@@ -1,8 +1,8 @@
 # Architecture Research
 
-**Domain:** Documentary pipeline — style extraction and script generation (v1.2)
-**Researched:** 2026-03-14
-**Confidence:** HIGH (direct codebase inspection of all existing skills)
+**Domain:** Documentary pipeline — Visual Orchestrator (Agent 1.4) skill integration (v1.3)
+**Researched:** 2026-03-15
+**Confidence:** HIGH (direct codebase inspection of all existing skills and actual shotlist.json artifact)
 
 ---
 
@@ -15,32 +15,47 @@
 │                    Claude Code (Orchestrator)                         │
 │          Dispatches skills, performs all [HEURISTIC] reasoning        │
 ├──────────────┬──────────────┬──────────────┬────────────────────────-┤
-│  Agent 1.1   │  Agent 1.2   │  Skill 1.3   │     Agent 1.3           │
-│  channel-    │  researcher  │  style-      │     writer              │
-│  assistant   │              │  extraction  │     (NEW)               │
-│  (existing)  │  (existing)  │  (NEW)       │                         │
+│  Agent 1.1   │  Agent 1.2   │  Agent 1.3   │  Agent 1.4              │
+│  channel-    │  researcher  │  writer      │  visual-                │
+│  assistant   │              │              │  orchestrator           │
+│  (existing)  │  (existing)  │  (existing)  │  (NEW)                  │
 └──────┬───────┴──────┬───────┴──────┬───────┴──────────┬──────────────┘
        |              |              |                  |
        v              v              v                  v
 ┌──────────────────────────────────────────────────────────────────────┐
 │                      Filesystem (shared state)                        │
-├─────────────────┬──────────────────┬────────────────────────---------┤
-│ context/        │ projects/N.Title/ │ context/script-references/      │
-│ channel/        │ research/         │ (reference scripts - read-only) │
-│ channel.md      │   Research.md     │                                 │
-│ STYLE_PROFILE.md│ script/           │                                 │
-│ (NEW)           │   Script.md (NEW) │                                 │
+├─────────────────┬──────────────────┬─────────────────────────────────┤
+│ context/        │ projects/N.Title/ │ context/visual-references/      │
+│ channel/        │   metadata.md     │   [Video Name]/                 │
+│ channel.md      │   research/       │   VISUAL_STYLE_GUIDE.md         │
+│ STYLE_PROFILE.md│     Research.md   │   (from visual-style-extractor) │
+│                 │   Script.md       │                                 │
+│                 │   shotlist.json   │                                 │
+│                 │   (NEW)           │                                 │
 └─────────────────┴──────────────────┴─────────────────────────────────┘
+                                                |
+                              ┌─────────────────┘
+                              | (Phase 2)
+                              v
+┌──────────────────────────────────────────────────────────────────────┐
+│                      Asset Pipeline                                   │
+├──────────────┬──────────────┬──────────────┬────────────────────────-┤
+│  Agent 2.1   │  Agent 2.2   │  Agent 2.3   │  Agent 2.4              │
+│  Media       │  Vector Gen  │  Animation   │  Asset Manager          │
+│  Acquisition │  (ComfyUI)   │  (Remotion)  │                         │
+└──────────────┴──────────────┴──────────────┴─────────────────────────┘
 ```
 
 ### Component Responsibilities
 
 | Component | Responsibility | Classification | Status |
 |-----------|----------------|----------------|--------|
-| `channel-assistant` | Competitor intel, topic briefs, project init | DETERMINISTIC + HEURISTIC | Existing - no changes |
-| `researcher` | Two-pass web research → Research.md | DETERMINISTIC + HEURISTIC | Existing - no changes |
-| `style-extraction` skill | One-time: read reference scripts, produce STYLE_PROFILE.md | HEURISTIC only | NEW |
-| `writer` skill | Per-video: Research.md + STYLE_PROFILE.md → Script.md | HEURISTIC + minimal DETERMINISTIC | NEW |
+| `channel-assistant` | Competitor intel, topic briefs, project init | DETERMINISTIC + HEURISTIC | Existing — no changes |
+| `researcher` | Two-pass web research → Research.md | DETERMINISTIC + HEURISTIC | Existing — no changes |
+| `style-extraction` | One-time: reference scripts → STYLE_PROFILE.md | HEURISTIC only | Existing — no changes |
+| `writer` | Research.md + STYLE_PROFILE.md → Script.md | HEURISTIC + minimal CLI | Existing — no changes |
+| `visual-style-extractor` | Reference video → VISUAL_STYLE_GUIDE.md | DETERMINISTIC + HEURISTIC | Existing — no changes |
+| `visual-orchestrator` | Script.md + VISUAL_STYLE_GUIDE.md → shotlist.json | HEURISTIC only | NEW |
 
 ---
 
@@ -50,140 +65,391 @@
 .claude/skills/
 ├── channel-assistant/           # Existing - no changes
 ├── researcher/                  # Existing - no changes
-├── style-extraction/            # NEW skill (one-time, no Python code)
-│   ├── SKILL.md                 # Workflow instructions for Claude
-│   └── prompts/
-│       └── extract.md           # Style extraction prompt and output schema
-└── writer/                      # NEW skill (per-video)
-    ├── SKILL.md                 # Workflow instructions for Claude
-    ├── scripts/
-    │   └── writer/
-    │       ├── __init__.py
-    │       ├── __main__.py
-    │       └── cli.py           # Single 'load' subcommand
+├── style-extraction/            # Existing - no changes
+├── writer/                      # Existing - no changes
+├── visual-style-extractor/      # Existing - no changes
+└── visual-orchestrator/         # NEW skill (zero Python code)
+    ├── SKILL.md                 # Human-facing: how to invoke, prerequisites, output path
+    ├── CONTEXT.md               # Stage contract: inputs, process steps, checkpoint, outputs
     └── prompts/
-        └── write_script.md      # Script generation rules and output schema
-
-context/
-├── channel/
-│   ├── channel.md               # Existing - Channel DNA
-│   ├── past_topics.md           # Existing
-│   └── STYLE_PROFILE.md         # NEW - written once by style-extraction
-└── script-references/
-    └── Mexico's Most Disturbing Cult.md  # Existing reference script
-
-projects/
-└── N. [Video Title]/
-    ├── metadata.md              # Existing - from channel-assistant
-    ├── research/
-    │   ├── Research.md          # Existing - from researcher
-    │   └── media_urls.md        # Existing - from researcher
-    └── script/                  # Existing scaffold dir - writer fills it
-        └── Script.md            # NEW output
+        └── generation.md        # All shot-list generation instructions Claude follows
 ```
 
 ### Structure Rationale
 
-- **style-extraction/ has no scripts/ directory:** It is a pure [HEURISTIC] operation. Claude reads reference scripts and writes STYLE_PROFILE.md directly using the Write tool. The only implementation artifacts are SKILL.md and the extract.md prompt.
-- **writer/ has a thin scripts/ directory:** One CLI subcommand (`load`) aggregates context files and prints to stdout for Claude to reason over — identical to the `researcher write` pattern where code prepares input and Claude produces output.
-- **STYLE_PROFILE.md lives in context/channel/:** It is channel-level context, not project-specific. Written once, reused across every video. Parallel to channel.md and past_topics.md.
-- **Script.md goes into projects/N. Title/script/:** The `script/` directory is already created by `channel-assistant`'s `project_init.py` scaffold. Writer fills it without creating directories.
+- **No scripts/ directory:** Zero Python code. This is a pure [HEURISTIC] skill identical in shape to `style-extraction`. Claude reads two input files and produces one output file. No CLI is needed.
+- **Single prompt file named generation.md:** Matches the writer skill's convention (`prompts/generation.md`). Contains the complete shot-list generation instructions.
+- **CONTEXT.md as stage contract:** Mirrors the pattern in every existing skill. Orchestrator routing in CLAUDE.md references CONTEXT.md, not SKILL.md.
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: CLI Prints, Claude Reasons (established convention)
+### Pattern 1: Pure Heuristic Skill (style-extraction — the direct template)
 
-All existing skills follow the same contract: Python CLI does [DETERMINISTIC] work (file I/O, aggregation, path resolution), prints structured data to stdout, and Claude performs [HEURISTIC] reasoning natively in-context.
+**What:** A skill with zero Python code. SKILL.md describes the step-by-step invocation workflow, including any conditional logic. CONTEXT.md is the stage contract for orchestrator routing. A single prompt file in `prompts/` contains all generation instructions Claude follows at reasoning time. No CLI, no pip install, no PYTHONPATH.
 
-**What:** The `load` subcommand reads three files — Research.md, STYLE_PROFILE.md, channel.md — concatenates them with clear section headers, and prints to stdout. Claude receives this in its context window and generates the script.
+**When to use:** When the task is classification, narrative reasoning, or structured creative output — where LLM judgment produces better output than deterministic code.
 
-**Reference implementation (from researcher SKILL.md):**
+**Trade-offs:** Invocation is Claude reading SKILL.md and following the steps using Read/Write/Glob tools directly. No external tool output. Harder to unit-test. Well-suited to generation tasks with a known schema.
+
+**Existing examples:**
 ```
-researcher write "Topic"  ->  aggregates sources, prints synthesis_input.md path
-Claude reads file          ->  reads synthesis.md prompt
-Claude writes              ->  Research.md + media_urls.md
+.claude/skills/style-extraction/
+    SKILL.md          -- step-by-step invocation (8 steps with conditional logic)
+    CONTEXT.md        -- inputs table, process steps, checkpoints, outputs table
+    prompts/
+        extraction.md -- reconstruction and extraction pass instructions
+
+.claude/skills/writer/
+    SKILL.md          -- CLI command + 3-step workflow
+    CONTEXT.md        -- inputs, process, checkpoints, outputs
+    prompts/
+        generation.md -- all script-writing instructions
 ```
 
-**Writer equivalent:**
-```
-writer load "Topic"   ->  prints Research.md + STYLE_PROFILE.md + channel.md to stdout
-Claude reads          ->  reads write_script.md prompt
-Claude writes         ->  projects/N. Title/script/Script.md
-```
+Visual Orchestrator follows style-extraction's zero-code pattern (not writer's CLI pattern), because the only file resolution needed is a Glob or Bash ls — no multi-file aggregation warrants a context-loader.
 
-### Pattern 2: Prompt File Encodes Output Schema and Rules
+### Pattern 2: Single-Pass Generation
 
-Both existing skills put all generation instructions in `.claude/skills/[name]/prompts/` files. SKILL.md references them by path. Code never embeds generation logic.
+**What:** Claude reads all inputs, then generates the output in one reasoning pass. No intermediate evaluation gate, no separate synthesis step.
 
-**What:** The write_script.md prompt defines chapter structure, narration rules, word count targets, anti-patterns, and output format. The extract.md prompt defines what STYLE_PROFILE.md sections to produce and how to read reference scripts.
+**When to use:** When the task has a linear structure — iterate input sequentially, emit output per item. No branching evaluation or merge step required.
 
-**Trade-offs:** Prompts are cheap to iterate without touching Python code. They also make the reasoning contract explicit, inspectable, and versionable via git.
+**Why it applies here:** Shot generation proceeds chapter-by-chapter, beat-by-beat. Each narrative beat maps to a building block via the VISUAL_STYLE_GUIDE decision tree. There is no evaluation step between reading the script and emitting shots — the decision tree is the evaluation logic, applied inline.
 
-### Pattern 3: One-Time vs Per-Run Operations
+**Contrast with two-pass skills:** researcher (broad survey → evaluate → deep-dive) and visual-style-extractor (extract patterns → synthesize building blocks) both have genuine evaluation gates. Visual Orchestrator does not.
 
-Style extraction is a setup operation: run once when setting up the channel, re-run only when new reference scripts are added. Writer runs once per video.
+### Pattern 3: Schema-Locked JSON Output
 
-**What:** style-extraction has no CLI entry point. Its SKILL.md describes a single workflow: read all files in `context/script-references/`, apply the extract.md prompt, write `context/channel/STYLE_PROFILE.md`. No loop, no incremental state.
+**What:** The generation prompt defines the exact JSON schema. Claude outputs conforming JSON. Downstream consumers rely on field names being stable.
 
-**When to update STYLE_PROFILE.md:** Only when a new high-performing video is added to `context/script-references/` and the style profile needs to reflect it.
+**When to use:** When output is consumed by code (Agent 2.1 will read shotlist.json programmatically). Markdown is appropriate for human-read outputs; JSON is appropriate for machine-read outputs.
+
+**Trade-offs:** Schema changes require updating both the prompt and downstream consumers. More rigid than markdown. But rigidity is the point — it is a contract.
 
 ---
 
 ## Data Flow
 
-### Style Extraction Flow (one-time, channel setup)
+### Invocation Flow
 
 ```
-context/script-references/
-    [one or more reference script files]
-         |
-         | (Claude reads directly via Read tool)
-         v
-[HEURISTIC] apply prompts/extract.md
-         |
-         v
-context/channel/STYLE_PROFILE.md
-    (committed to repo, shared across all future videos)
+User triggers visual-orchestrator skill
+    |
+Claude reads SKILL.md
+    |
+Claude resolves project directory (Glob on projects/)
+Claude identifies which VISUAL_STYLE_GUIDE to use
+    |
+Claude reads Script.md                Claude reads VISUAL_STYLE_GUIDE.md
+(narration + chapter structure)       (building blocks + decision tree)
+    |______________________________________|
+                    |
+          Claude reads prompts/generation.md
+                    |
+          Claude generates shotlist.json
+          (sequential pass through chapters)
+                    |
+          Claude writes shotlist.json
+          to projects/N. [Title]/shotlist.json
 ```
 
-### Script Generation Flow (per video)
+### Shot Generation Logic (within the single pass)
 
 ```
-projects/N. Title/research/Research.md   -+
-context/channel/STYLE_PROFILE.md          +-> writer load "Topic"
-context/channel/channel.md               -+        |
-                                                    | (printed to stdout)
-                                                    v
-                                        [HEURISTIC] write_script.md prompt
-                                                    |
-                                                    v
-                                    projects/N. Title/script/Script.md
-```
-
-### Full v1.2 Pipeline (all phases combined)
-
-```
-channel-assistant -> projects/N. Title/ (metadata.md + directory scaffold)
-                                    |
-researcher        -> projects/N. Title/research/Research.md
-                                    |
-style-extraction  -> context/channel/STYLE_PROFILE.md (one-time, already done)
-                                    |
-                    writer load "Topic" (merges all context)
-                                    |
-                    [HEURISTIC] generate script
-                                    |
-                    projects/N. Title/script/Script.md
+For each chapter in Script.md:
+    |
+    Parse ## N. Chapter Title heading
+    chapter_title = verbatim heading text
+    chapter = integer N (0 for prologue — content before ## 1.)
+    |
+    For each narrative beat in chapter prose:
+        |
+        Apply VISUAL_STYLE_GUIDE Type Selection Decision Tree:
+            |
+            IF verbatim quote (quote card)     --> text_overlay, text_content populated
+            IF date/time reference             --> text_overlay, Date Card, text_content populated
+            IF single impact sentence          --> text_overlay, Keyword Stinger, text_content populated
+            IF introduces a named person       --> archival_photo (portrait) or vector
+            IF introduces a location           --> map + archival_video or archival_photo
+            IF references an official document --> archival_photo (document scan)
+            IF builds narrative tension        --> archival_video (b-roll)
+            IF statistics / funding amounts    --> animation (concept diagram)
+        |
+        Emit shot entry:
+            id: "S001" ... sequential across all chapters, never reset
+            chapter: integer (0 for prologue)
+            chapter_title: verbatim heading
+            narrative_context: concise paraphrase of what narrator says
+            visual_need: free-text visual description (intentionally loose)
+            building_block: name from VISUAL_STYLE_GUIDE (must match exactly)
+            shotlist_type: enum value (see schema below)
+            building_block_variant: variant name from guide, or null
+            text_content: verbatim text for text_overlay shots, null for media shots
+            suggested_sources: array of domain hints, [] for text_overlay
 ```
 
 ### Key Data Flows
 
-1. **Research.md is the primary writer input:** The writer consumes only Research.md from the research directory. Raw source files (src_*.json, synthesis_input.md) are not needed — Research.md already distills them into a scriptwriter-optimized dossier.
-2. **STYLE_PROFILE.md is shared, stable state:** Treat it like channel.md — stable channel-level context that does not change per video.
-3. **Project path resolution:** writer's `load` command uses the same directory-matching logic as researcher — walk `projects/` and match on topic string. This pattern is established and must be reused, not reimplemented differently.
-4. **script/ directory already exists:** `channel-assistant`'s `project_init.py` creates the `script/` subdirectory in the project scaffold. Writer writes directly into it with no directory creation logic required.
+1. **Script.md chapter parsing:** Content before `## 1.` is chapter 0 (the hook formula — opening quote, compressed overview, closing formula). Each `## N.` heading opens a new chapter. Chapter integer is N; chapter_title is the verbatim heading text after the number.
+
+2. **VISUAL_STYLE_GUIDE → building_block selection:** The guide's "Type Selection Decision Tree" section is the authoritative mapping from narrative triggers to building block names. `building_block` values in shotlist.json must match guide building block names exactly, because Agent 2.1 will look them up.
+
+3. **shotlist.json → Agent 2.1:** Agent 2.1 reads shotlist.json exclusively — it does not read Script.md. The `narrative_context`, `visual_need`, `building_block`, and `suggested_sources` fields are the acquisition signals. Shots with `shotlist_type: "text_overlay"` are editor-managed — Agent 2.1 skips them.
+
+---
+
+## Shotlist Schema (Canonical)
+
+Architecture.md defines the baseline schema (id, chapter, narrative_context, visual_need, suggested_types). The actual first shotlist generated (Duplessis Orphans, 2026-03-15) extends it with fields that proved necessary during generation. This extended schema is the one the Visual Orchestrator skill must produce:
+
+```json
+{
+  "project": "The Duplessis Orphans Quebec's Stolen Children",
+  "guide_source": "Lemmino Consumed by the Climb",
+  "generated": "2026-03-15T01:18:00Z",
+  "shots": [
+    {
+      "id": "S001",
+      "chapter": 0,
+      "chapter_title": "Prologue",
+      "narrative_context": "Opening survivor quote — being born into a garbage can.",
+      "visual_need": "Quote card with survivor testimony against dark background",
+      "building_block": "Quote Card",
+      "shotlist_type": "text_overlay",
+      "building_block_variant": null,
+      "text_content": "\"When you are a bastard...\"",
+      "suggested_sources": []
+    },
+    {
+      "id": "S002",
+      "chapter": 0,
+      "chapter_title": "Prologue",
+      "narrative_context": "Narrator introduces the scheme — orphans falsely certified as mentally deficient.",
+      "visual_need": "Dark archival footage of Quebec institutional building exterior, 1940s-1950s",
+      "building_block": "Archival Footage",
+      "shotlist_type": "archival_video",
+      "building_block_variant": "Institutional/Urban",
+      "text_content": null,
+      "suggested_sources": ["archive.org", "nfb.ca"]
+    }
+  ]
+}
+```
+
+**Top-level fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `project` | string | Project name (from directory name) |
+| `guide_source` | string | Which VISUAL_STYLE_GUIDE was used (video title) |
+| `generated` | ISO 8601 string | Generation timestamp |
+| `shots` | array | Ordered shot entries |
+
+**Per-shot fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Sequential: S001, S002, ... never reset across chapters |
+| `chapter` | integer | Yes | 0 for prologue/hook, 1+ for numbered chapters |
+| `chapter_title` | string | Yes | Verbatim chapter heading from Script.md |
+| `narrative_context` | string | Yes | What narrator is saying — concise paraphrase |
+| `visual_need` | string | Yes | Free-text visual description (intentionally loose) |
+| `building_block` | string | Yes | Named building block from VISUAL_STYLE_GUIDE (exact match) |
+| `shotlist_type` | enum | Yes | `archival_video`, `archival_photo`, `text_overlay`, `map`, `animation`, `vector` |
+| `building_block_variant` | string or null | Yes | Variant name from guide, or null |
+| `text_content` | string or null | Yes | Verbatim text for text_overlay shots; null for all media shots |
+| `suggested_sources` | array | Yes | Domain hints from Architecture.md tier list; `[]` for text_overlay |
+
+**shotlist_type values and Agent 2.1 behavior:**
+
+| shotlist_type | Agent 2.1 action |
+|---------------|-----------------|
+| `archival_video` | Acquire from Tier 1/2 domains, yt-dlp for CC footage |
+| `archival_photo` | Acquire from Tier 1/2 image domains, Wikipedia screenshots |
+| `map` | Flag for Agent 2.3 (animation) — Agent 2.1 skips |
+| `animation` | Flag for Agent 2.3 — Agent 2.1 skips |
+| `vector` | Flag for Agent 2.2 (ComfyUI) — Agent 2.1 skips |
+| `text_overlay` | Editor-managed — Agent 2.1 skips entirely |
+
+---
+
+## SKILL.md Structure Recommendation
+
+Pattern: style-extraction (zero CLI, numbered steps, prerequisites table, output section).
+
+```markdown
+---
+name: visual-orchestrator
+description: Parse Script.md into shotlist.json with per-shot visual needs.
+  Use this skill when the user wants to create a shot list, map visual needs
+  from a script, generate shotlist.json, or says "create shot list for [topic]",
+  "map visuals for [topic]", "orchestrate visuals", "director pass".
+  Requires Script.md and a VISUAL_STYLE_GUIDE.md.
+---
+
+# Visual Orchestrator
+
+Script.md + VISUAL_STYLE_GUIDE.md → shotlist.json. Pure [HEURISTIC] — zero Python.
+
+## Workflow
+
+### Step 1: Identify project and style guide
+
+- **Project:** Resolve from `projects/` by sequential number or title substring.
+- **Style guide:** List `context/visual-references/*/VISUAL_STYLE_GUIDE.md`.
+  If one guide exists, use it. If multiple exist, ask the user which to apply.
+
+### Step 2: Read inputs
+
+- `projects/N. [Title]/Script.md`
+- `context/visual-references/[Video Name]/VISUAL_STYLE_GUIDE.md`
+- `prompts/generation.md` (generation instructions — read before generating)
+
+### Step 3: Generate and write shotlist.json
+
+Follow the instructions in `prompts/generation.md`. Write to
+`projects/N. [Title]/shotlist.json`.
+
+## Prerequisites
+
+- `projects/N. [Title]/Script.md` — from the writer skill
+- `context/visual-references/[Video Name]/VISUAL_STYLE_GUIDE.md` — from visual-style-extractor
+
+## Output
+
+`projects/N. [Title]/shotlist.json` — shot list with per-shot visual needs.
+```
+
+## CONTEXT.md Structure Recommendation
+
+Pattern: writer/CONTEXT.md exactly (inputs table, numbered process steps, checkpoint section, outputs table, deferred section).
+
+```markdown
+# Visual Orchestrator — Stage Contract
+
+**Phase:** 13 — Visual Orchestrator
+**Skill:** visual-orchestrator
+**Type:** [HEURISTIC] — Claude does all reasoning; zero Python code
+
+## Inputs
+
+| File | Source | Required |
+|------|--------|----------|
+| `projects/N. [Title]/Script.md` | writer skill | Yes |
+| `context/visual-references/[Video]/VISUAL_STYLE_GUIDE.md` | visual-style-extractor | Yes |
+| `prompts/generation.md` | skill-internal | Yes |
+
+## Process
+
+1. Resolve project directory and identify which VISUAL_STYLE_GUIDE to use.
+2. Read Script.md + VISUAL_STYLE_GUIDE.md. Read prompts/generation.md.
+3. Generate shotlist.json in a single pass through the script chapters.
+4. Write shotlist.json to the project directory.
+
+## Checkpoints
+
+Human review after generation via `git diff`. No automated gate.
+
+## Outputs
+
+| File | Location | Description |
+|------|----------|-------------|
+| `shotlist.json` | `projects/N. [Title]/shotlist.json` | Per-shot visual needs, JSON |
+
+## Deferred
+
+- Shot duration and timing — editor's domain (DaVinci Resolve)
+- Priority ranking across shots — Agent 2.1 acquires all; gaps feed Agent 2.2/2.3
+- Automatic guide selection when multiple guides exist
+```
+
+---
+
+## Prompt Architecture: generation.md
+
+### Structure
+
+The prompt is a single file with these sections, in order:
+
+1. **Role and task statement** — what the Visual Orchestrator produces and why
+2. **Input structure** — how to parse Script.md (chapter detection, hook/prologue handling)
+3. **Shot granularity rules** — how many shots per paragraph/beat
+4. **Schema definition** — exact field names, types, and allowed enum values
+5. **Building block application** — how to use the VISUAL_STYLE_GUIDE Type Selection Decision Tree
+6. **Per-type rules** — text_overlay handling, suggested_sources policy, null vs empty array
+7. **ID sequencing** — S001 sequential across the entire script, never reset per chapter
+8. **Output format** — write as JSON to the path in SKILL.md using the Write tool
+
+### Shot Granularity (must be specified in the prompt)
+
+The Duplessis shotlist demonstrates the density pattern to document:
+
+| Narrative trigger | Shot count | Rationale |
+|------------------|------------|-----------|
+| Single impact sentence ("Someone did the math.") | 1 — Keyword Stinger | The sentence IS the shot |
+| Verbatim quote | 1 — Quote Card, text_content populated | Always a single card |
+| Date reference | 1 — Date Card | Single establishing card |
+| Paragraph introducing a named person | 1-2 (portrait + contextual b-roll) | Person + environment |
+| Paragraph introducing a location | 1-2 (map + archival footage/photo) | Geography + atmosphere |
+| Dense factual paragraph (statistics, policy mechanics) | 2-4 | Each data point may warrant a shot |
+| Chapter transition headings | 0 — chapter headings are not shots | Structural only |
+| Long atmospheric paragraph | 1-2 — lean toward b-roll | Avoid over-shotting description |
+
+### Text Overlay Handling (must be explicit in the prompt)
+
+Three building blocks produce text_overlay shots that are editor-managed. Agent 2.1 skips them. The prompt must instruct:
+
+- Set `shotlist_type: "text_overlay"` for: Quote Card, Date Card, Keyword Stinger
+- Populate `text_content` with the verbatim text to display on screen
+- Set `suggested_sources: []` — no acquisition needed
+- `building_block_variant` is null for Date Cards, optional for Quote Cards (e.g., "Survivor Testimony")
+
+### Building Block Vocabulary
+
+The prompt must state: building_block names must be copied exactly from the VISUAL_STYLE_GUIDE. Do not invent names. If no building block fits, use the closest match and note the gap in narrative_context.
+
+---
+
+## Integration Points
+
+### Upstream: Writer Skill
+
+| Integration | Detail |
+|-------------|--------|
+| Input file | `projects/N. [Title]/Script.md` |
+| Format | Begins with hook prose (chapter 0), then `## 1. [Chapter Title]` headings |
+| Chapter parse | Split on `## N.` headings; content before `## 1.` is chapter 0 |
+| Dependency | Script.md must be complete and approved before orchestrator runs |
+| No changes needed | Writer outputs to the correct path; orchestrator reads it as-is |
+
+### Upstream: Visual Style Extractor
+
+| Integration | Detail |
+|-------------|--------|
+| Input file | `context/visual-references/[Video Name]/VISUAL_STYLE_GUIDE.md` |
+| Which guide | Human specifies at invocation; SKILL.md step 1 handles disambiguation |
+| Key sections | "Type Selection Decision Tree" — primary mapping; building block names/variants |
+| Coupling | building_block values in shotlist.json must match guide names exactly |
+| guide_source field | Records which guide was used, enabling re-runs after guide updates |
+
+### Downstream: Agent 2.1 (Media Acquisition)
+
+| Integration | Detail |
+|-------------|--------|
+| Output file | `projects/N. [Title]/shotlist.json` |
+| Consumer reads | `visual_need`, `building_block`, `shotlist_type`, `suggested_sources` |
+| Consumer skips | All `text_overlay` shotlist_type entries |
+| Contract | shotlist.json is Agent 2.1's sole input — it does not read Script.md |
+| Shot IDs | manifest.json uses S001/S002/... to map acquired assets back to shots |
+
+### CLAUDE.md Changes Needed
+
+After the skill is built, update CLAUDE.md in two places:
+
+1. **Task Routing table:** Add row `| Create shot list | visual-orchestrator | CONTEXT.md |`
+2. **"What to Load" table:** Add row for visual planning: `projects/N/Script.md`, `context/visual-references/*/VISUAL_STYLE_GUIDE.md`
 
 ---
 
@@ -193,132 +459,103 @@ style-extraction  -> context/channel/STYLE_PROFILE.md (one-time, already done)
 
 | Component | Location | What It Is |
 |-----------|----------|------------|
-| `style-extraction/SKILL.md` | `.claude/skills/style-extraction/` | Workflow instructions — no Python code |
-| `style-extraction/prompts/extract.md` | `.claude/skills/style-extraction/prompts/` | Style extraction prompt + STYLE_PROFILE.md schema |
-| `context/channel/STYLE_PROFILE.md` | `context/channel/` | Output of style-extraction — committed to repo |
-| `writer/SKILL.md` | `.claude/skills/writer/` | Workflow instructions |
-| `writer/scripts/writer/cli.py` | `.claude/skills/writer/scripts/writer/` | `load` subcommand — context aggregation only |
-| `writer/prompts/write_script.md` | `.claude/skills/writer/prompts/` | Script generation rules + output schema |
-| `projects/N. Title/script/Script.md` | `projects/N. Title/script/` | Per-video output |
+| `visual-orchestrator/SKILL.md` | `.claude/skills/visual-orchestrator/` | Invocation workflow — zero Python |
+| `visual-orchestrator/CONTEXT.md` | `.claude/skills/visual-orchestrator/` | Stage contract for orchestrator routing |
+| `visual-orchestrator/prompts/generation.md` | `.claude/skills/visual-orchestrator/prompts/` | All shot-list generation instructions |
+| `shotlist.json` | `projects/N. [Title]/shotlist.json` | Per-video output artifact |
 
 ### Existing — No Changes Needed
 
 | Component | Reason |
 |-----------|--------|
-| `channel-assistant` | Upstream — already creates project scaffold including `script/` dir |
-| `researcher` | Upstream — already writes Research.md in correct location |
-| `projects/N. Title/research/Research.md` | Writer reads this as-is |
-| `context/channel/channel.md` | Writer reads this as-is |
-| `context/script-references/` | Style-extraction reads this as-is |
-| `project_init.py` scaffold | Already creates `script/` subdirectory |
+| `writer` skill | Upstream — already outputs Script.md in correct location |
+| `visual-style-extractor` skill | Upstream — already outputs VISUAL_STYLE_GUIDE.md in correct location |
+| `channel-assistant` project scaffold | Project directory already created; shotlist.json written directly into it |
+| `Architecture.md` shotlist schema | Already defines the baseline; the extended schema is additive |
 
----
+### Existing — Minor Update Needed
 
-## Integration Points
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| researcher → writer | File: `projects/N. Title/research/Research.md` | Writer reads directly, no modification needed |
-| style-extraction → writer | File: `context/channel/STYLE_PROFILE.md` | One-time write, per-run read |
-| channel-assistant → writer | Directory structure: `projects/N. Title/script/` already exists | Writer does not need to create directories |
-| writer → editor (DaVinci Resolve) | File: `projects/N. Title/script/Script.md` | Terminal output — no downstream agent in v1.2 |
-
-### External Services
-
-None. Both new skills operate entirely on filesystem content already in the repo. No web scraping, no API calls, no new dependencies.
+| Component | Change |
+|-----------|--------|
+| `CLAUDE.md` Task Routing table | Add visual-orchestrator row |
+| `CLAUDE.md` "What to Load" table | Add visual planning row |
 
 ---
 
 ## Build Order
 
-Sequence is determined by validation dependencies — you cannot test the writer without STYLE_PROFILE.md:
+All three skill files are independent — no code imports, no test suite. Build in this order based on validation dependency:
 
-### Step 1: style-extraction skill (SKILL.md + extract.md prompt)
+### Step 1: CONTEXT.md
 
-No Python code to write. The entire implementation is two files. Run it immediately against `context/script-references/Mexico's Most Disturbing Cult.md` to produce STYLE_PROFILE.md. Validate the output before proceeding. This is the prerequisite for meaningful writer testing.
+Defines the contract. Other files reference it. Write it first to lock inputs, outputs, and process steps before authoring the prompt.
 
-**Deliverable:** `context/channel/STYLE_PROFILE.md` committed to repo.
+### Step 2: prompts/generation.md
 
-### Step 2: writer prompts/write_script.md
+This is where the reasoning complexity lives. Write it second, with CONTEXT.md's inputs as the anchor. Validate against the Duplessis Script V1.md manually before proceeding — does the prompt produce the expected shot density and building block distribution?
 
-Write the script generation prompt before the CLI, because the prompt structure determines what context the CLI needs to load. The prompt defines: chapter structure, word count targets, narration voice rules, section schema, anti-patterns.
+### Step 3: SKILL.md
 
-**Deliverable:** Reviewable prompt that can be evaluated against STYLE_PROFILE.md for coherence before any code is written.
+Write after the prompt is validated. SKILL.md references the prompt file path and guides Claude through the invocation sequence. It is the human-facing entry point.
 
-### Step 3: writer scripts/writer/cli.py (load subcommand)
-
-Simple file aggregation: resolve project directory from topic string, read Research.md, read STYLE_PROFILE.md, read channel.md, print concatenated output to stdout with clear section headers. Write tests for path resolution logic.
-
-**Deliverable:** `writer load "Topic"` prints assembled context to stdout.
-
-### Step 4: writer SKILL.md
-
-Write complete workflow instructions after both the prompt and CLI are validated. SKILL.md references both: it tells Claude to run `writer load`, then read write_script.md, then produce Script.md.
-
-**Deliverable:** Complete skill with testable end-to-end workflow.
-
-### Step 5: End-to-end validation
-
-Run the full v1.2 pipeline against the existing Duplessis Orphans project, which already has a completed Research.md. This is the integration test — produce the first real Script.md and evaluate it against the channel's quality standards.
+All three files can be drafted and validated in a single session against the existing Duplessis project artifacts (Script V1.md and the existing shotlist.json as a quality baseline).
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Embedding Style Rules Directly in write_script.md
+### Anti-Pattern 1: Adding a Python CLI
 
-**What people do:** Hardcode narration style instructions (sentence length, vocabulary register, pacing ratios) directly in write_script.md instead of referencing STYLE_PROFILE.md.
+**What people do:** Follow the writer skill's pattern and add `scripts/visual_orchestrator/cli.py` for project directory resolution.
 
-**Why it's wrong:** Hardcoded rules drift away from actual reference scripts as the channel evolves. Updating them requires editing the prompt. STYLE_PROFILE.md is generated from actual reference scripts, so it stays grounded.
+**Why it's wrong:** The visual orchestrator reads two files from known paths. Glob/Bash ls is sufficient for project directory resolution. A CLI adds a scripts/ directory, PYTHONPATH invocation, and untested Python code for zero benefit. style-extraction proves a zero-code approach handles more complex workflows (8 steps with conditional logic).
 
-**Do this instead:** write_script.md instructs Claude to apply STYLE_PROFILE.md. All specific style rules live in STYLE_PROFILE.md, updated by re-running style-extraction when the reference library changes.
+**Do this instead:** Follow style-extraction. Document project resolution in SKILL.md step 1 as a Glob or Bash operation Claude performs directly.
 
-### Anti-Pattern 2: Passing Raw Research Sources to the Writer
+### Anti-Pattern 2: Two-Pass Shot Generation
 
-**What people do:** Give the writer access to synthesis_input.md or src_*.json files for "richer context."
+**What people do:** Design a "parse" pass (extract narrative beats) then an "assign" pass (match beats to building blocks), following the visual-style-extractor's two-pass architecture.
 
-**Why it's wrong:** Research.md already distills 40,000+ words of scraped source material into ~2,000 words of curated, scriptwriter-optimized content including narrative hooks, timeline, contradictions, and key figures. Raw sources add noise and bloat without improving script quality.
+**Why it's wrong:** Shot generation is linear, not merge-and-synthesize. The beats and building blocks emerge simultaneously as Claude reads the script. Two passes double context usage with no quality improvement — there is no evaluation gate between them.
 
-**Do this instead:** Writer reads only Research.md. If the dossier lacks something, fix the researcher's synthesis.md prompt — that is where the curation decision belongs.
+**Do this instead:** Single pass, linear read, emit shots as narrative beats are encountered.
 
-### Anti-Pattern 3: Regenerating STYLE_PROFILE.md Per Video
+### Anti-Pattern 3: Embedding the VISUAL_STYLE_GUIDE as Static Prompt Text
 
-**What people do:** Run style-extraction at the start of every video production to "stay fresh."
+**What people do:** Copy-paste the current VISUAL_STYLE_GUIDE building blocks into generation.md as hardcoded content.
 
-**Why it's wrong:** STYLE_PROFILE.md represents stable channel DNA — patterns extracted from reference scripts. Regenerating it per-run adds latency, introduces noise from per-run variation, and undermines the purpose of having a stable style guide.
+**Why it's wrong:** The guide changes when new reference videos are extracted. Embedding makes the prompt stale. It also bloats the generation.md unnecessarily and creates a maintenance hazard.
 
-**Do this instead:** Run style-extraction once. Commit STYLE_PROFILE.md. Update reactively when a new high-performing video is added to `context/script-references/`.
+**Do this instead:** The generation.md instructs Claude to apply the guide it already read in step 2 of SKILL.md. The guide is runtime context, not prompt content.
 
-### Anti-Pattern 4: Adding LLM API Calls to the Writer CLI
+### Anti-Pattern 4: Enriching the Schema Beyond Agent 2.1's Needs
 
-**What people do:** Add script generation logic to cli.py using an LLM SDK, following the naive "code for generation" pattern.
+**What people do:** Add `duration`, `priority`, `mood`, `effects`, `transition`, `color_grade` fields to the shotlist "for the editor."
 
-**Why it's wrong:** Architecture.md Rule 1 prohibits LLM API wrappers. Claude Code is the runtime. Script generation is entirely [HEURISTIC] — it requires no deterministic code beyond context loading.
+**Why it's wrong:** Architecture.md is explicit — "No duration, priority, effects, transitions, or post-production instructions — those are the editor's domain." Agent 2.1 uses only visual_need, building_block, and suggested_sources. Extra fields add generation overhead with no consumer.
 
-**Do this instead:** cli.py does one thing: aggregate and print context. Claude does all script generation natively using the write_script.md prompt.
+**Do this instead:** Lock the schema to the canonical fields documented in this file. The only editor-serving exception is `text_content`, which provides the verbatim text for text_overlay shots the editor must place.
 
-### Anti-Pattern 5: Having style-extraction Write to the Project Directory
+### Anti-Pattern 5: Using suggested_types Instead of suggested_sources
 
-**What people do:** Put STYLE_PROFILE.md in `projects/N. Title/` alongside Research.md, treating it as a per-video artifact.
+**What people do:** Follow the Architecture.md baseline schema which uses `suggested_types` (e.g., `["archival_video", "archival_photo"]`) in the baseline example.
 
-**Why it's wrong:** Writing style is a channel-level property, not a per-video property. Putting it in the project directory requires re-extraction for every new video, and breaks the separation between channel context and project context that the existing architecture maintains.
+**Why it's wrong:** The actual generated shotlist.json uses `suggested_sources` (domain names like `["archive.org", "wikimedia_commons"]`) and `shotlist_type` separately. `suggested_sources` tells Agent 2.1 where to look; `shotlist_type` tells it what kind of asset to acquire. These serve distinct purposes and must not be conflated.
 
-**Do this instead:** STYLE_PROFILE.md lives in `context/channel/`, same tier as channel.md. It is channel context, not project context.
+**Do this instead:** Use `shotlist_type` for the asset type enum; use `suggested_sources` for domain hints. Set `suggested_sources: []` when no domain is more likely than another (e.g., text_overlay shots, or generic b-roll).
 
 ---
 
 ## Sources
 
-- Direct inspection: `.claude/skills/researcher/SKILL.md` and `cli.py` (HIGH confidence)
-- Direct inspection: `.claude/skills/channel-assistant/SKILL.md` and `project_init.py` (HIGH confidence)
-- Direct inspection: `.claude/skills/researcher/prompts/synthesis.md` — output schema reference (HIGH confidence)
-- Direct inspection: `projects/1. The Duplessis Orphans.../research/Research.md` — confirmed existing dossier format (HIGH confidence)
-- Direct inspection: `context/script-references/Mexico's Most Disturbing Cult.md` — confirmed reference script format (HIGH confidence)
-- `Architecture.md` — CRITICAL ARCHITECTURE RULES (binding project constraints) (HIGH confidence)
-- `.planning/PROJECT.md` — v1.2 milestone requirements and key decisions table (HIGH confidence)
+- Direct inspection: `.claude/skills/style-extraction/SKILL.md`, `CONTEXT.md`, `prompts/extraction.md` (HIGH confidence)
+- Direct inspection: `.claude/skills/writer/SKILL.md`, `CONTEXT.md`, `prompts/generation.md` (HIGH confidence)
+- Direct inspection: `.claude/skills/visual-style-extractor/prompts/synthesis_prompt.txt` — two-pass reference (HIGH confidence)
+- Direct inspection: `Architecture.md` — Agent 1.4 spec, Phase 2 schema, asset categories, CRITICAL ARCHITECTURE RULES (HIGH confidence)
+- Direct inspection: `projects/1. The Duplessis Orphans.../shotlist.json` — actual generated schema with 60+ shots (HIGH confidence)
+- Direct inspection: `projects/1. The Duplessis Orphans.../Script V1.md` — actual Script.md format (HIGH confidence)
+- `.planning/PROJECT.md` — v1.3 milestone requirements (HIGH confidence)
 
 ---
-*Architecture research for: style extraction and script generation — Channel Automation Pipeline v1.2*
-*Researched: 2026-03-14*
+*Architecture research for: Visual Orchestrator (Agent 1.4) — pure heuristic skill integration into Channel Automation Pipeline v1.3*
+*Researched: 2026-03-15*

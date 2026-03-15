@@ -1,77 +1,25 @@
-# Visual Orchestrator Skill
+---
+name: visual-orchestrator
+description: Generate structured shot lists from finished documentary scripts. Use this skill when the user wants to create a shot list, generate a shotlist, parse a script into shots, or says things like "create shot list", "generate shotlist", "parse script into shots", "visual plan for [topic]", "shotlist for [topic]". This is a [HEURISTIC] skill — zero Python, Claude does all reasoning. Requires a completed Script.md in the project directory.
+---
 
-Transforms Script.md + VISUAL_STYLE_GUIDE.md into a structured `shotlist.json` — an ordered sequence of visual decisions with building block assignments and downstream routing types.
+# Visual Orchestrator
 
-## Quick Start
+Script -> structured shot list for the asset pipeline.
 
-### 1. Load context for generation
+## Workflow
 
-```bash
-PYTHONPATH=.claude/skills/visual-orchestrator/scripts python -m visual_orchestrator load "Duplessis Orphans"
-```
+1. **Resolve project directory** — Topic is a case-insensitive substring match against `projects/` directory names. Multiple matches: list all, ask user which one. No match: error with guidance to check spelling or use `cmd_init_project`. Found: read `projects/N. [Title]/Script.md`. If Script.md is missing: stop and tell user to run the writer skill first (trigger phrase: "write the script for [topic]").
 
-This prints the script, visual style guide, and channel DNA as labeled sections, plus the output path and generation prompt path.
+2. **Read the generation prompt** — `.claude/skills/visual-orchestrator/prompts/generation.md`
 
-**With a specific guide:**
+3. **Generate the shot list** — Follow the prompt instructions. Write output to `projects/N. [Title]/shotlist.json`, overwriting any existing file without prompt.
 
-```bash
-PYTHONPATH=.claude/skills/visual-orchestrator/scripts python -m visual_orchestrator load "Duplessis Orphans" --guide "Mexico's Most Disturbing Cult"
-```
+## Prerequisites
 
-### 2. Generate shotlist.json
+- `projects/N. [Title]/Script.md` — from the writer skill
+- `.claude/skills/visual-orchestrator/prompts/generation.md` — shot generation rules
 
-After running `load`, Claude reads the generation prompt at `.claude/skills/visual-orchestrator/prompts/generation.md` and generates `shotlist.json` in the project directory.
+## Output
 
-### 3. Validate the output
-
-```bash
-PYTHONPATH=.claude/skills/visual-orchestrator/scripts python -m visual_orchestrator validate "Duplessis Orphans"
-```
-
-Exits 0 with a success message if valid. Exits 1 with a numbered error list if validation fails.
-
-## Subcommands
-
-### `load <topic> [--guide NAME]`
-
-Aggregates context files and prints them to stdout for Claude to consume.
-
-**Arguments:**
-- `topic` — Topic string used to find the project directory (case-insensitive substring match)
-- `--guide` — (Optional) Name of the visual reference directory to use. Defaults to the first directory found in `context/visual-references/`.
-
-**Output sections:**
-- `=== Script ===` — Full Script.md content
-- `=== Visual Style Guide (Guide Name) ===` — Full VISUAL_STYLE_GUIDE.md content
-- `=== Channel DNA ===` — Full channel.md content
-- `Output path:` — Where shotlist.json should be written
-- `Generation prompt:` — Path to the generation prompt
-
-**Exit codes:**
-- `0` — Success
-- `1` — Required file missing (prints missing paths to stderr)
-
-### `validate <topic>`
-
-Reads shotlist.json from the project directory and validates it against the schema contract.
-
-**Checks performed:**
-- Required top-level keys (`project`, `guide_source`, `generated`, `shots`)
-- Required per-shot fields (`id`, `chapter`, `chapter_title`, `narrative_context`, `visual_need`, `building_block`, `shotlist_type`)
-- ID format (S001-S999, sequential)
-- Valid `shotlist_type` enum values
-- `text_content` populated iff `shotlist_type` is `text_overlay`
-- Sequencing constraints (no back-to-back glitch, max 3 consecutive text_overlay, max 3 consecutive Silhouette Figure)
-
-**Exit codes:**
-- `0` — Valid shotlist
-- `1` — Validation errors (prints numbered error list to stderr)
-
-## Schema Contract
-
-The `shotlist.json` schema is the stable contract for all downstream skills:
-- **Media acquisition** reads shots with `shotlist_type: archival_video | archival_photo | document_scan`
-- **Graphics agent** reads shots with `shotlist_type: animation | map`
-- **Text overlays** (`shotlist_type: text_overlay`) generate no assets — they guide editorial placement
-
-See `prompts/generation.md` for the full schema specification.
+`projects/N. [Title]/shotlist.json` — JSON array of shot objects. Full overwrite on re-run; previous versions preserved in git history.

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: The Director
 status: active
-stopped_at: Phase 15 context gathered
-last_updated: "2026-03-15T14:08:18.194Z"
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-15T14:22:05.478Z"
 last_activity: 2026-03-15 — v1.3 roadmap created (Phases 13-15)
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 3
+  completed_plans: 3
 ---
 
 ---
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [Phase 14-generation-prompt]: text_content MUST be populated for all text_overlay shots; null for all others — explicit hard rule
 - [Phase 14-generation-prompt]: 10 building blocks selected after user review: removed 6 production-specific/redundant blocks, merged archival subtypes under Archival Photograph and Source Screenshot
 - [Phase 14-generation-prompt]: Vocabulary consolidation principle: use building_block_variant for specificity within a block rather than creating separate blocks for each subtype
+- [Phase 15-skill-entry-point]: SKILL.md kept brief (~25 lines) matching writer/SKILL.md — not the 108-line style-extraction format
+- [Phase 15-skill-entry-point]: What to Load row lists CONTEXT.md per Stage Contracts convention; no scratch fallback added
 
 ### Pending Todos
 
@@ -77,6 +79,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T14:08:18.192Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-skill-entry-point/15-CONTEXT.md
+Last session: 2026-03-15T14:22:05.476Z
+Stopped at: Completed 15-01-PLAN.md
+Resume file: None

@@ -45,7 +45,7 @@
 
 - [x] **Phase 13: Stage Contract** — CONTEXT.md with pipeline-reset invariant and stage boundaries (completed 2026-03-15)
 - [x] **Phase 14: Generation Prompt** — generation.md with full schema, granularity rules, and anti-patterns (completed 2026-03-15)
-- [ ] **Phase 15: Skill Entry Point** — SKILL.md invocation workflow and CLAUDE.md routing update
+- [x] **Phase 15: Skill Entry Point** — SKILL.md invocation workflow and CLAUDE.md routing update (completed 2026-03-15)
 
 ## Phase Details
 
@@ -109,4 +109,4 @@ Plans:
 | 12. Writer Agent | v1.2 | 2/2 | Complete | 2026-03-15 |
 | 13. Stage Contract | 1/1 | Complete    | 2026-03-15 | - |
 | 14. Generation Prompt | 1/1 | Complete    | 2026-03-15 | - |
-| 15. Skill Entry Point | v1.3 | 0/1 | Not started | - |
+| 15. Skill Entry Point | 1/1 | Complete   | 2026-03-15 | - |

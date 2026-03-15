@@ -58,7 +58,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Media Acquisition Skill** `risk:high` `depends:[S01]`
   > After this: feed shotlist.json → bulk download assets from 10+ free sources, get manifest.json with shot mappings + gap list
 
-- [ ] **S03: Graphics Generator Skill** `risk:high` `depends:[S01]`
+- [x] **S03: Graphics Generator Skill** `risk:high` `depends:[S01]`
   > After this: feed manifest gaps → code-gen silhouettes/icons/diagrams via Pillow + ComfyUI creative assets in assets/ folder
 
 - [ ] **S04: Remotion Animation Skill** `risk:medium` `depends:[S01]`

@@ -56,7 +56,7 @@ This file is the explicit capability and coverage contract for the project.
 - Source: user
 - Primary owning slice: M002/S03
 - Supporting slices: none
-- Validation: unmapped
+- Validation: contract-tested (7 Pillow renderers with 18 tests, live validation in S06)
 - Notes: Building blocks with constrained production specs (flat black silhouette on red background, clean line art, etc.)
 
 ### R006 — ComfyUI creative asset generation
@@ -67,7 +67,7 @@ This file is the explicit capability and coverage contract for the project.
 - Source: user
 - Primary owning slice: M002/S03
 - Supporting slices: none
-- Validation: unmapped
+- Validation: contract-tested (REST client, 4 workflow templates, prompt builder — 35 mocked tests, live validation in S06)
 - Notes: ComfyUI runs locally. Code-gen handles constrained graphics; ComfyUI handles creative ones.
 
 ### R007 — Remotion animated maps and diagrams
@@ -304,8 +304,8 @@ This file is the explicit capability and coverage contract for the project.
 | R002 | core-capability | validated | M002/S01 | none | validated |
 | R003 | core-capability | active | M002/S02 | none | contract-tested |
 | R004 | core-capability | active | M002/S02 | none | contract-tested |
-| R005 | core-capability | active | M002/S03 | none | unmapped |
-| R006 | core-capability | active | M002/S03 | none | unmapped |
+| R005 | core-capability | active | M002/S03 | none | contract-tested |
+| R006 | core-capability | active | M002/S03 | none | contract-tested |
 | R007 | core-capability | active | M002/S04 | none | unmapped |
 | R008 | core-capability | active | M002/S05 | none | unmapped |
 | R009 | core-capability | active | M002/S05 | none | unmapped |

@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: The Director
 status: active
-stopped_at: Phase 14 Plan 01 Task 1 complete — awaiting checkpoint Task 2 human-verify
-last_updated: "2026-03-15T13:34:21.730Z"
+stopped_at: Completed 14-generation-prompt 14-01-PLAN.md
+last_updated: "2026-03-15T13:54:37.112Z"
 last_activity: 2026-03-15 — v1.3 roadmap created (Phases 13-15)
 progress:
   total_phases: 3
@@ -63,6 +63,8 @@ Recent decisions affecting current work:
 - [Phase 14-generation-prompt]: 25 building blocks selected: 18 Duplessis baseline + 7 additions for true crime, missing persons, modern events coverage
 - [Phase 14-generation-prompt]: Worked example uses synthetic Carol Marden case to avoid memorization of Duplessis-specific patterns
 - [Phase 14-generation-prompt]: text_content MUST be populated for all text_overlay shots; null for all others — explicit hard rule
+- [Phase 14-generation-prompt]: 10 building blocks selected after user review: removed 6 production-specific/redundant blocks, merged archival subtypes under Archival Photograph and Source Screenshot
+- [Phase 14-generation-prompt]: Vocabulary consolidation principle: use building_block_variant for specificity within a block rather than creating separate blocks for each subtype
 
 ### Pending Todos
 
@@ -75,6 +77,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T13:34:16.981Z
-Stopped at: Phase 14 Plan 01 Task 1 complete — awaiting checkpoint Task 2 human-verify
+Last session: 2026-03-15T13:54:37.111Z
+Stopped at: Completed 14-generation-prompt 14-01-PLAN.md
 Resume file: None

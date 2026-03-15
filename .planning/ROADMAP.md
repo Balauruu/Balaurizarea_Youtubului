@@ -58,10 +58,10 @@
   2. CONTEXT.md documents inputs (Script.md, VISUAL_STYLE_GUIDE.md, prompts/generation.md), numbered process steps, and outputs (shotlist.json path)
   3. CONTEXT.md explicitly documents the pipeline-reset invariant: shotlist.json and manifest.json are atomically coupled; any Script.md change requires full regeneration of both
   4. CONTEXT.md lists deferred items (shot duration, timing, camera movement, effects, transitions) so future contributors know what is out of scope by design
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 13-01: Write CONTEXT.md for visual-orchestrator skill
+- [ ] 13-01-PLAN.md — Write CONTEXT.md for visual-orchestrator skill
 
 ### Phase 14: Generation Prompt
 **Goal**: The generation prompt encodes all reasoning needed to turn a Script.md into a valid shotlist.json — schema definition, granularity rules, type routing, and anti-patterns — so Claude can generate correctly on first invocation.

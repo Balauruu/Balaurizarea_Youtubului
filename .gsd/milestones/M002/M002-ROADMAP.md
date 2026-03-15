@@ -61,7 +61,7 @@ This milestone is complete only when all are true:
 - [x] **S03: Graphics Generator Skill** `risk:high` `depends:[S01]`
   > After this: feed manifest gaps → code-gen silhouettes/icons/diagrams via Pillow + ComfyUI creative assets in assets/ folder
 
-- [ ] **S04: Remotion Animation Skill** `risk:medium` `depends:[S01]`
+- [x] **S04: Remotion Animation Skill** `risk:medium` `depends:[S01]`
   > After this: feed map/diagram shot entries from shotlist → rendered .mp4 animation clips via Remotion
 
 - [ ] **S05: Asset Manager Skill** `risk:low` `depends:[S02,S03,S04]`

@@ -78,7 +78,7 @@ This file is the explicit capability and coverage contract for the project.
 - Source: user
 - Primary owning slice: M002/S04
 - Supporting slices: none
-- Validation: unmapped
+- Validation: contract-tested (22 mocked tests for CLI/manifest, scaffold smoke render proves .mp4 output, live validation in S06)
 - Notes: Remotion (Node.js) is the sole exception to the Python-only scripting constraint. Node.js is installed.
 
 ### R008 — Sequential asset numbering and manifest consolidation
@@ -306,7 +306,7 @@ This file is the explicit capability and coverage contract for the project.
 | R004 | core-capability | active | M002/S02 | none | contract-tested |
 | R005 | core-capability | active | M002/S03 | none | contract-tested |
 | R006 | core-capability | active | M002/S03 | none | contract-tested |
-| R007 | core-capability | active | M002/S04 | none | unmapped |
+| R007 | core-capability | active | M002/S04 | none | contract-tested |
 | R008 | core-capability | active | M002/S05 | none | unmapped |
 | R009 | core-capability | active | M002/S05 | none | unmapped |
 | R010 | integration | active | M002/S05 | M002/S02,S03,S04 | unmapped |

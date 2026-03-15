@@ -1,0 +1,21 @@
+{
+  "name": "map-animations",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Animated location map compositions for dark mysteries channel",
+  "scripts": {
+    "render": "npx remotion render",
+    "studio": "npx remotion studio"
+  },
+  "dependencies": {
+    "remotion": "4.0.435",
+    "@remotion/cli": "4.0.435",
+    "@remotion/bundler": "4.0.435",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3",
+    "@types/react": "18.3.18"
+  }
+}

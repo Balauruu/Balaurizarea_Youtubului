@@ -1,0 +1,14 @@
+{
+  "variant": "connection-arc",
+  "title": "The Cult's Reach",
+  "locations": [
+    { "name": "Mexico City", "x": 0.5, "y": 0.6 },
+    { "name": "Matamoros", "x": 0.65, "y": 0.35 },
+    { "name": "Brownsville", "x": 0.7, "y": 0.3 }
+  ],
+  "connections": [
+    { "from": 0, "to": 1 },
+    { "from": 1, "to": 2 }
+  ],
+  "durationSeconds": 6
+}

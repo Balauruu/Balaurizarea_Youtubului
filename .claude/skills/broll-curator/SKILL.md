@@ -3,9 +3,9 @@ name: broll-curator
 description: "B-roll discovery pipeline for documentary video projects. Searches Internet Archive collections and the local Asset Library for atmospheric/conceptual footage matching shotlist themes. Use this skill when the user wants to find b-roll, search IA, search archive, run the b-roll curator, or find atmospheric footage for a project."
 ---
 
-# B-Roll Curator Skill
+# B-Roll Curator
 
-Two-source b-roll discovery pipeline that searches Internet Archive collections and the local Asset Library for atmospheric footage matching `broll_themes` from a project's shotlist.
+Two-source b-roll discovery: Internet Archive + local Asset Library → `broll_candidates.json`.
 
 ## Setup (first run only)
 
@@ -13,68 +13,57 @@ Two-source b-roll discovery pipeline that searches Internet Archive collections 
 pip install internetarchive
 ```
 
-> The `internetarchive` package provides `ia.search_items()` for metadata queries against IA's Advanced Search API.
-
-The Asset Library requires a LanceDB index at `D:/VideoLibrary/index/`. If the index doesn't exist, run the asset-manager-v2 `index` command first to build it from downloaded video files.
-
-## Invocation
-
-> This skill is agent-executed. The agent reads the SKILL.md and follows the workflow below, using the `internetarchive` Python package and LanceDB queries.
-
----
+The Asset Library requires a LanceDB index at `D:/VideoLibrary/index/`. If missing, run `asset-manager-v2 index` first.
 
 ## Workflow
 
-### Source 1 — Internet Archive Search
+### 1. Resolve Project
 
-1. Load `shotlist.json` from the project directory, extract the `broll_themes` array.
-2. For each theme, read its `concept`, `mood`, `search_direction`, and `cartoon_angle` fields.
-3. **[HEURISTIC] Generate IA queries** — read the prompt at `@.claude/skills/broll-curator/prompts/ia_search.md`, then build 2-4 IA Advanced Search queries per theme using collection filters, mediatype filters, and conceptual keywords derived from the theme's `search_direction` and `cartoon_angle`.
-4. Execute each query via `internetarchive` Python package: `ia.search_items(query)`. Collect item metadata (identifier, title, description, collection, mediatype).
-5. Print IA results summary per theme. Ask: "Accept IA results, refine queries, or expand search?"
+Topic is a case-insensitive substring match against `projects/` directory names. Multiple matches → list and ask. No match → error. Load `projects/N. [Title]/visuals/shotlist.json` and extract the `broll_themes` array. Missing shotlist → tell user to run visual-orchestrator first.
 
-### Source 2 — Asset Library Search
+### 2. Internet Archive Search
 
-1. For each theme, embed `concept` + `search_direction` as a text query.
-2. Search LanceDB at `D:/VideoLibrary/index/` for semantically similar indexed clips (`top_k=10` per theme).
-3. For each match, record `video_path`, `start_sec`, `end_sec`, and similarity `score`.
+For each theme, read its `concept`, `mood`, `search_direction`, and `cartoon_angle` fields.
 
-### Evaluate & Compile
+**[HEURISTIC] Generate 2–4 IA queries per theme** using the rules below:
 
-1. **[HEURISTIC] Evaluate candidates** — assess each IA item and Asset Library match for conceptual fit. The match is metaphorical, not literal — "Institutional confinement" maps to factory footage, dormitory footage, military barracks, NOT the documentary's specific subject.
-2. Recommend 1-5 IA videos/collections per theme. For Asset Library matches, include specific timestamps.
-3. Compile all recommendations into `broll_candidates.json`.
-4. Run audit checks below.
-5. Print full candidates summary. Ask: "Accept candidates?"
+**Filters:**
+- Always include `mediatype:(movies)` to restrict to video content
+- Optionally add `collection:(name)` when targeting a known collection, but don't restrict by default — let IA search broadly
 
----
+**Keyword strategy:**
+- Derive from `search_direction` — break compound descriptions into individual terms. Use `OR` for variants: `(institutional OR factory OR dormitory)`
+- For cartoon themes → use `cartoon_angle` keywords
+- Use `subject:` field for tag-specific searches: `subject:(corridor OR industrial)`
 
-## Checkpoints
+**Critical:** IA indexes titles, descriptions, and subjects — NOT video frames. Query for what items are *about*, not visual contents.
 
-| After Step | Agent Presents | Human Decides |
-|------------|---------------|---------------|
-| Source 1, Step 5 | IA search results summary: items found per theme, top 3 by relevance per theme, collection distribution | Accept results, refine queries, or expand search to additional collections |
-| Evaluate & Compile, Step 5 | Full candidates summary: all IA recommendations + Asset Library matches, organized by theme with match reasoning | Accept candidates, request more searches for under-served themes, or remove false positives |
+**Conceptual matching:** The match is metaphorical. "Institutional confinement" → factory footage, dormitories, military barracks — NOT the documentary's specific subject. The theme's mood drives the search.
 
-## Audit (after Compile, before writing final output)
+Execute each query via `ia.search_items(query)`. Collect identifier, title, description, collection, mediatype.
 
-| Check | Pass Condition |
-|-------|---------------|
-| Theme coverage | Every `broll_theme` in shotlist.json has ≥1 candidate in broll_candidates.json |
-| No prohibited sources | Zero references to commercial footage marketplaces or Media Scout domain (web crawl, YouTube) in broll_candidates.json |
-| License fields present | Every candidate has a non-empty `license` field (not fabricated — "unknown" is acceptable, blank is not) |
-| Schema compliance | broll_candidates.json validates against the output schema below |
+**Present** IA results summary per theme (items found, top 3 per theme, collection distribution). **Ask:** "Accept IA results, refine queries, or expand search?"
 
----
+### 3. Asset Library Search
 
-## Scope Boundaries
+For each theme:
+1. Embed `concept` + `search_direction` as a text query
+2. Search LanceDB at `D:/VideoLibrary/index/` (`top_k=10` per theme)
+3. Record `video_path`, `start_sec`, `end_sec`, and similarity `score`
 
-- **Owns Internet Archive search.** All IA interaction goes through this skill — no other skill queries archive.org.
-- **Owns Asset Library search.** Semantic search against the LanceDB video index for b-roll matching.
-- **No web crawl or YouTube.** Web search and YouTube discovery belong to the Media Scout skill.
-- **No stock sites.** Commercial footage marketplaces are excluded. All media must come from real-world archival sources or the local Asset Library.
-- **No video downloading.** This skill recommends sources for user scrubbing (human-in-the-loop). It does not download or extract video content.
-- **No asset extraction.** The user extracts clips manually or via the `asset-manager-v2 extract` command after reviewing recommendations.
+### 4. Evaluate & Compile
+
+**[HEURISTIC] Evaluate candidates** — assess each IA item and Asset Library match for conceptual fit (metaphorical, not literal). Recommend 1–5 IA items per theme; for Asset Library matches include timestamps.
+
+Compile into `projects/N. [Title]/broll_candidates.json` per the schema below.
+
+**Audit before writing:**
+- Every `broll_theme` has ≥1 candidate
+- Zero references to commercial stock sites or YouTube
+- Every candidate has a non-empty `license` field ("unknown" is OK, blank is not)
+- JSON validates against the schema below
+
+**Present** full candidates summary by theme with match reasoning. **Ask:** "Accept candidates?"
 
 ---
 
@@ -107,32 +96,6 @@ The Asset Library requires a LanceDB index at `D:/VideoLibrary/index/`. If the i
 }
 ```
 
-### internet_archive candidate fields
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| theme_id | string | yes | References a broll_theme `id` from shotlist.json |
-| source | string | yes | Always `"internet_archive"` |
-| source_url | string | yes | Direct URL to the IA item page |
-| title | string | yes | Item title from IA metadata |
-| collection | string | yes | IA collection the item belongs to |
-| description | string | yes | Agent-written description of what's in the item and how it maps to the theme |
-| match_reasoning | string | yes | Explains the conceptual/metaphorical connection between the item and the theme |
-| license | string | yes | License from IA metadata (e.g., "PD", "CC-BY", "unknown") |
+**internet_archive fields:** `theme_id`, `source` (always "internet_archive"), `source_url`, `title`, `collection`, `description`, `match_reasoning`, `license` — all required.
 
-### asset_library candidate fields
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| theme_id | string | yes | References a broll_theme `id` from shotlist.json |
-| source | string | yes | Always `"asset_library"` |
-| video_path | string | yes | Relative path within the Asset Library |
-| start_sec | number | yes | Start timestamp of the matching clip segment |
-| end_sec | number | yes | End timestamp of the matching clip segment |
-| score | number | yes | Semantic similarity score from LanceDB (0.0-1.0) |
-| description | string | yes | Agent-written description of the clip content |
-| license | string | yes | License of the source video |
-
-## Outputs
-
-| Artifact | Location | Format |
-|----------|----------|--------|
-| B-roll candidates | `projects/N. [Title]/broll_candidates.json` | JSON with `candidates` array (schema above) |
+**asset_library fields:** `theme_id`, `source` (always "asset_library"), `video_path` (relative within Asset Library), `start_sec`, `end_sec`, `score` (0.0–1.0), `description`, `license` — all required.

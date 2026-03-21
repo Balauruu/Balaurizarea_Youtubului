@@ -3,85 +3,80 @@ name: media-scout
 description: "Media discovery pipeline for documentary video topics. Use this skill when the user wants to find images, photos, documents, or footage for a documentary. Triggers on: 'find media', 'media scout', 'search for images', 'search for footage', 'find visuals for [topic]', or any request to discover visual assets for the channel."
 ---
 
-# Media Scout Skill
+# Media Scout
 
-Two-pass media discovery pipeline that finds web images, document screenshots, and YouTube footage leads for documentary scripts.
+Two-pass media discovery: web images/documents (Pass 1) → YouTube footage leads (Pass 2) → compiled `media_leads.json`.
 
 ## Setup (first run only)
 
 ```bash
-pip install crawl4ai==0.8.0 ddgs
+pip install crawl4ai==0.8.0 ddgs yt-dlp
 python -m playwright install chromium
-pip install yt-dlp
 export PYTHONUTF8=1
 ```
 
-> crawl4ai and yt-dlp are already installed if you've run the researcher skill.
-
-## Invocation
-
-```bash
-# Future implementation — not yet available
-PYTHONPATH=.claude/skills/media-scout/scripts python -m media_scout search "Topic"
-PYTHONPATH=.claude/skills/media-scout/scripts python -m media_scout compile "Topic"
-```
-
-> Until implemented, the agent executes the workflow below manually using crawl4ai and yt-dlp directly.
-
----
-
 ## Workflow
 
-### Pass 1 — Web Crawl (images, documents, screenshots)
+### Pass 1 — Web Crawl (images + document screenshots)
 
-1. Load `entity_index.json` and `Research.md` from the project's `research/` directory.
-2. **[HEURISTIC] Generate search queries** — read the prompt at `@.claude/skills/media-scout/prompts/search_queries.md`, then build 15-30 targeted queries using entity cross-products from entity_index.json.
-3. Execute queries via crawl4ai. For each result page:
+1. **Resolve project** — Topic is a case-insensitive substring match against `projects/` directory names. Load `entity_index.json` and `Research.md` from the project's `research/` directory.
+
+2. **[HEURISTIC] Generate search queries** — Build 15-30 queries using entity cross-products from `entity_index.json`. Read `@.claude/skills/media-scout/prompts/search_queries.md` for the strategy and templates.
+
+3. **Execute queries via crawl4ai.** For each result page:
    - Extract embedded images from `CrawlResult.media["images"]` (use `image_score_threshold` to filter noise).
-   - Capture screenshots of document-like pages via `CrawlerRunConfig(screenshot=True)` — newspaper articles, government reports, Wikipedia sections with useful layouts.
-   - Skip screenshots for pages where the embedded images are the real asset.
-4. **[HEURISTIC] Evaluate web assets** — classify media_type, note license signals, write relevance descriptions.
-5. Print web assets summary table. Ask: "Proceed to Pass 2?"
+   - **Screenshot document-like pages** (newspaper articles, government reports, official documents) via `CrawlerRunConfig(screenshot=True)` — only when the page layout itself conveys information (headlines, letterheads, timelines). If the page is just a container for photos, extract the image URLs instead.
+
+4. **[HEURISTIC] Evaluate web assets** — For each asset, classify `media_type` (image/document), note license signals (see table below), and write a relevance description explaining why it matters to the documentary.
+
+   | Source Type | License Signal |
+   |-------------|---------------|
+   | Government sites (.gc.ca, .gouv.qc.ca) | Likely PD-Canada / Crown copyright |
+   | News sites (cbc.ca, radio-canada.ca) | Fair dealing review needed |
+   | Wikimedia Commons | Check individual file page |
+   | Academic/research | Check page footer — often CC-BY |
+   | Personal blogs, memorial sites | Unknown — flag for review |
+   | Social media | Skip entirely |
+
+5. **Present summary table** (count by media_type, top 5 by relevance). Ask: "Proceed to Pass 2?"
 
 ### Pass 2 — YouTube Search (footage leads)
 
-1. Build YouTube search queries from entity_index.json key entities (persons, institutions, events).
+1. Build YouTube search queries from `entity_index.json` key entities — persons, institutions, events. Focus on combining entity names with terms like `documentary`, `interview`, `archival footage`, `news report`.
+
 2. Run `yt-dlp "ytsearch5:query" --flat-playlist --dump-json` for each query. Collect structured metadata.
-3. **[HEURISTIC] Evaluate YouTube leads** — read the prompt at `@.claude/skills/media-scout/prompts/youtube_evaluation.md`, then score each result for documentary relevance.
-4. Print YouTube leads summary table. Ask: "Accept leads?"
+
+3. **[HEURISTIC] Evaluate YouTube results** — Read `@.claude/skills/media-scout/prompts/youtube_evaluation.md` for scoring criteria. Skip content farms, re-uploads, reaction videos, and clips under 30 seconds. Score remaining results 1-4 (primary source → marginal).
+
+4. **Present summary table** (count, top 5 by relevance). Ask: "Accept leads?"
 
 ### Compile
 
-1. Merge `web_assets` and `youtube_urls` arrays into `media_leads.json`.
+1. Merge web assets and YouTube leads into `media_leads.json` (schema below).
 2. Write to `projects/N. [Title]/research/media_leads.json`.
-3. Run audit checks below.
+3. Run audit checks.
 
 ---
 
 ## Checkpoints
 
-| After Step | Agent Presents | Human Decides |
-|------------|---------------|---------------|
-| Pass 1, Step 4 | Web assets summary table (count by media_type, top 5 by relevance) | Accept web assets, request additional queries, or remove false positives |
-| Pass 2, Step 3 | YouTube leads summary table (count, top 5 by relevance, total estimated footage) | Accept leads, request additional searches, or flag duplicates/low-quality |
+| After | Agent Presents | Human Decides |
+|-------|---------------|---------------|
+| Pass 1 | Web assets summary (count by type, top 5) | Accept, request more queries, remove false positives |
+| Pass 2 | YouTube leads summary (count, top 5) | Accept, request more searches, flag low-quality |
 
-## Audit (after Compile, before writing final output)
+## Audit
 
 | Check | Pass Condition |
 |-------|---------------|
-| Entity coverage | ≥3 of 5 entity_index.json categories produced at least one media lead |
-| No prohibited sources | Zero references to IA/archive sites (B-Roll Curator domain) or commercial image marketplaces in media_leads.json |
-| License signals present | Every web_assets entry has a non-empty `license` field (not fabricated — "unknown" is acceptable, blank is not) |
-| Schema compliance | media_leads.json validates against the output schema below |
+| No prohibited sources | Zero IA/archive sites (B-Roll Curator domain) or commercial image marketplaces |
+| License signals present | Every `web_assets` entry has a non-empty `license` field ("unknown" is acceptable, blank is not) |
+| Schema compliance | `media_leads.json` validates against the output schema below |
 
----
+## Scope
 
-## Scope Boundaries
-
-- **Web crawl + YouTube only.** This skill searches the open web and YouTube.
-- **No IA/archive site search** — that belongs to the B-Roll Curator skill, which has specialized IA API integration.
-- **No commercial image marketplaces** — all media must be sourced from real-world references, not licensed asset libraries.
-- **No video downloading** — Pass 2 produces a URL list with metadata. The user handles actual extraction and trimming of YouTube content.
+- **Web + YouTube only.** No Internet Archive (that's the B-Roll Curator's domain). No commercial marketplaces.
+- **No video downloading** — Pass 2 produces URL leads with metadata. The user handles extraction.
 
 ---
 
@@ -92,51 +87,26 @@ PYTHONPATH=.claude/skills/media-scout/scripts python -m media_scout compile "Top
   "web_assets": [
     {
       "url": "https://example.com/image.jpg",
-      "description": "Description of what the asset shows",
       "source_page": "https://example.com/article",
-      "media_type": "image",
-      "license": "PD-Canada",
+      "media_type": "image | document",
+      "description": "What the asset shows in documentary context",
+      "license": "PD-Canada | fair dealing review | unknown | ...",
       "relevance": "Why this matters to the documentary"
-    },
-    {
-      "url": "https://example.com/report",
-      "capture_type": "screenshot",
-      "description": "Screenshot of document page",
-      "media_type": "document",
-      "relevance": "Resolution chapter visual"
     }
   ],
   "youtube_urls": [
     {
       "url": "https://youtube.com/watch?v=...",
       "title": "Video title from yt-dlp",
-      "description": "Agent-written description with timestamps if identifiable",
-      "relevance": "Why this video matters, what footage is usable",
+      "description": "What usable footage exists, with timestamps if identifiable",
+      "relevance": "Score N — brief justification",
       "license_notes": "Channel type + licensing consideration"
     }
   ]
 }
 ```
 
-### web_assets fields
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| url | string | yes | Direct URL to image/document or screenshot file path |
-| description | string | yes | What the asset shows, in documentary context |
-| source_page | string | for images | Page the image was extracted from |
-| capture_type | string | for documents | "screenshot" when page was captured as document asset |
-| media_type | string | yes | "image" or "document" |
-| license | string | yes | License signal — PD-Canada, fair dealing review, unknown, etc. |
-| relevance | string | yes | Why this asset matters to the documentary narrative |
-
-### youtube_urls fields
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| url | string | yes | YouTube video URL |
-| title | string | yes | Video title from yt-dlp metadata |
-| description | string | yes | Agent-written description of usable content with timestamps if identifiable |
-| relevance | string | yes | Why this video matters, what footage is usable |
-| license_notes | string | yes | Channel type + licensing consideration |
+For document screenshots, add `"capture_type": "screenshot"` to the web_assets entry.
 
 ## Outputs
 

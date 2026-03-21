@@ -1,0 +1,1 @@
+- **The Duplessis Orphans: Quebec's Stolen Children** | 2026-03-12 | For decades, the Catholic Church and Quebec government conspired to falsely certify thousands of healthy orphans as mentally ill, locking them in psychiatric institutions for higher federal subsidies, where they were subjected to abuse, forced labor, and medical experimentation.

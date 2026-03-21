@@ -1,0 +1,71 @@
+{
+  "persons": [
+    "Alyssa Ryvers",
+    "Daniel Jacoby",
+    "Denis Lazure",
+    "Hervé Bertrand",
+    "Jean-Charles Pagé",
+    "Léo-Paul Lauzon",
+    "Louis-Joseph Hébert",
+    "Lucien Bouchard",
+    "Martin Lécuyer",
+    "Martin Poirier",
+    "Maurice Duplessis",
+    "Pauline Gill"
+  ],
+  "institutions": [
+    "Brothers of Charity",
+    "Brothers of Notre-Dame-de-la-Misericorde",
+    "Catholic Church",
+    "Collège des médecins",
+    "Duplessis Orphans Committee",
+    "Grey Nuns of Montreal",
+    "Law Commission of Canada",
+    "Little Franciscans of Mary",
+    "Quebec Class Action Fund",
+    "Quebec Provincial Police",
+    "Sisters of Charity of Quebec",
+    "Sisters of Mercy",
+    "Sisters of Providence",
+    "Superior Court of Quebec",
+    "Union Nationale",
+    "United Nations Human Rights Council"
+  ],
+  "locations": [
+    "Baie-Saint-Paul",
+    "Huberdeau",
+    "Montreal",
+    "Mount Providence orphanage",
+    "Notre-Dame-de-la-Merci Orphanage",
+    "Quebec",
+    "Trois-Rivières"
+  ],
+  "events": [
+    "Bédard Report",
+    "Duplessis Orphans class action suits",
+    "La Grande Noirceur",
+    "National Reconciliation Program for Duplessis Orphans",
+    "Quiet Revolution"
+  ],
+  "dates": [
+    "1909",
+    "1935-1964",
+    "1936-1939",
+    "1940s-1950s",
+    "1944-1959",
+    "1948",
+    "1961",
+    "1962",
+    "1991",
+    "1992",
+    "1995",
+    "1999-03-04",
+    "2001-07-01",
+    "2004",
+    "2007",
+    "2010-11",
+    "2012",
+    "2018",
+    "2020"
+  ]
+}

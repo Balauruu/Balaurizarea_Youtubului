@@ -1,0 +1,6 @@
+.claude/scratch/
+__pycache__/
+*.pyc
+*.pyo
+.gsd/
+*.db-journal

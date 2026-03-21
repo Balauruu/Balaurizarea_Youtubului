@@ -1,0 +1,25 @@
+{
+  "channels": [
+    {
+      "name": "Barely Sociable",
+      "youtube_id": "@BarelySociable",
+      "url": "https://www.youtube.com/@BarelySociable",
+      "notes": "1.38M subscribers. Dark web + true crime crossover. Investigative journalist tone. Top performer: The Dark Side of the Silk Road (13.1M views).",
+      "added": "2026-03-11"
+    },
+    {
+      "name": "Unnamed TV",
+      "youtube_id": "@unnamedTV",
+      "url": "https://www.youtube.com/@unnamedTV",
+      "notes": "Cinematic, narrative-driven, tight pacing. Short-to-medium form (8-20 min). Top video: Mexico's Most Disturbing Cult (2.2M views).",
+      "added": "2026-03-11"
+    },
+    {
+      "name": "Fredrik Knudsen",
+      "youtube_id": "@FredrikKnudsen",
+      "url": "https://www.youtube.com/@FredrikKnudsen",
+      "notes": "1.26M subscribers, 39 videos, 111.4M total views. Clinically neutral, deadpan deep dives into weird internet history and obscure real-world events. 20-60 min.",
+      "added": "2026-03-11"
+    }
+  ]
+}

@@ -1,0 +1,402 @@
+{
+  "project": "The Duplessis Orphans Quebec's Stolen Children",
+  "generated": "2026-03-15T02:05:43Z",
+  "updated": "2026-03-15T02:06:21.948723+00:00",
+  "assets": [
+    {
+      "filename": "034_06M_P833S3D0722_0001_1.jpg",
+      "folder": "archival_photos",
+      "source": "direct_url",
+      "source_url": "https://d3d0lqu00lnqvz.cloudfront.net/06M_P833S3D0722_0001_1.jpg",
+      "description": "Direct download from d3d0lqu00lnqvz.cloudfront.net",
+      "license": "Unknown",
+      "mapped_shots": [
+        "S034"
+      ],
+      "acquired_by": "media_acquisition"
+    },
+    {
+      "filename": "007_06M_P833S3D0722_0002_1.jpg",
+      "folder": "archival_photos",
+      "source": "direct_url",
+      "source_url": "https://d3d0lqu00lnqvz.cloudfront.net/06M_P833S3D0722_0002_1.jpg",
+      "description": "Direct download from d3d0lqu00lnqvz.cloudfront.net",
+      "license": "Unknown",
+      "mapped_shots": [
+        "S007"
+      ],
+      "acquired_by": "media_acquisition"
+    },
+    {
+      "filename": "053_Embajador_del_Perú_en_Canadá_efectuó_una_visita_oficial_al_gobierno_de_Quebec_(10692169503).jpg",
+      "folder": "archival_photos",
+      "source": "wikimedia_commons",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Embajador_del_Per%C3%BA_en_Canad%C3%A1_efectu%C3%B3_una_visita_oficial_al_gobierno_de_Quebec_%2810692169503%29.jpg",
+      "description": "Jacques Chagnon (standing) and José Antonio Raymundo Bellina Acevedo (seated), in the building of the National Assembly of Quebec, in Québec, October 22, 2013",
+      "license": "CC BY-SA 2.0",
+      "mapped_shots": [
+        "S053",
+        "S068"
+      ],
+      "acquired_by": "media_acquisition"
+    },
+    {
+      "filename": "005_Maurice_Duplessis.jpg",
+      "folder": "archival_photos",
+      "source": "direct_url",
+      "source_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Maurice_Duplessis.jpg",
+      "description": "Direct download from commons.wikimedia.org",
+      "license": "Unknown",
+      "mapped_shots": [
+        "S005"
+      ],
+      "acquired_by": "media_acquisition"
+    },
+    {
+      "filename": "045_Maitres_chez_nous_1962.jpg",
+      "folder": "archival_photos",
+      "source": "direct_url",
+      "source_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Maitres_chez_nous_1962.jpg",
+      "description": "Direct download from commons.wikimedia.org",
+      "license": "Unknown",
+      "mapped_shots": [
+        "S045"
+      ],
+      "acquired_by": "media_acquisition"
+    },
+    {
+      "filename": "011_S011_silhouette_figure.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/silhouette_figure",
+      "description": "Silhouette Figure graphic for Silhouette of children in institutional setting, conveying transformation from orphans to 'patients'",
+      "license": "generated",
+      "mapped_shots": [
+        "S011"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "018_S018_silhouette_figure.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/silhouette_figure",
+      "description": "Silhouette Figure graphic for Silhouette of a child behind institutional bars or walls, representing trapped potential",
+      "license": "generated",
+      "mapped_shots": [
+        "S018"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "022_S022_silhouette_figure.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/silhouette_figure",
+      "description": "Silhouette Figure graphic for Silhouette of a solitary adult figure, head bowed, in stark empty environment",
+      "license": "generated",
+      "mapped_shots": [
+        "S022"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "026_S026_abstract_texture.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/abstract_texture",
+      "description": "Abstract Texture graphic for Abstract texture representing institutional violence — dark, oppressive visual treatment",
+      "license": "generated",
+      "mapped_shots": [
+        "S026"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "027_S027_symbolic_icon.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/symbolic_icon",
+      "description": "Symbolic Icon graphic for Symbolic icon representing institutional power — restraints, medical cross, or institutional seal",
+      "license": "generated",
+      "mapped_shots": [
+        "S027"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "029_S029_glitch_stinger.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/glitch_stinger",
+      "description": "Glitch Stinger graphic for Glitch stinger transitioning to the chapter about destroyed evidence",
+      "license": "generated",
+      "mapped_shots": [
+        "S029"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "035_S035_static_noise.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/static_noise___corruption",
+      "description": "Static Noise / Corruption graphic for Static noise corruption effect representing destroyed/missing records",
+      "license": "generated",
+      "mapped_shots": [
+        "S035"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "036_S036_symbolic_icon.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/symbolic_icon",
+      "description": "Symbolic Icon graphic for Symbolic icon representing missing records — empty file folder, redacted document",
+      "license": "generated",
+      "mapped_shots": [
+        "S036"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "039_S039_glitch_stinger.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/glitch_stinger",
+      "description": "Glitch Stinger graphic for Glitch stinger transitioning between chapters",
+      "license": "generated",
+      "mapped_shots": [
+        "S039"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "041_S041_silhouette_figure.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/silhouette_figure",
+      "description": "Silhouette Figure graphic for Silhouette of a political figure fading or receding, representing the end of an era",
+      "license": "generated",
+      "mapped_shots": [
+        "S041"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "049_S049_silhouette_figure.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/silhouette_figure",
+      "description": "Silhouette Figure graphic for Silhouette group of middle-aged figures, representing survivors decades later",
+      "license": "generated",
+      "mapped_shots": [
+        "S049"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "059_S059_silhouette_figure.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/silhouette_figure",
+      "description": "Silhouette Figure graphic for Silhouette of a large institutional Church building, imposing and silent",
+      "license": "generated",
+      "mapped_shots": [
+        "S059"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "066_S066_abstract_texture.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/abstract_texture",
+      "description": "Abstract Texture graphic for Abstract texture representing legal finality — heavy, oppressive, closed-door visual",
+      "license": "generated",
+      "mapped_shots": [
+        "S066"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "067_S067_glitch_stinger.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/glitch_stinger",
+      "description": "Glitch Stinger graphic for Glitch stinger transitioning to the conclusion",
+      "license": "generated",
+      "mapped_shots": [
+        "S067"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "069_S069_static_noise.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/static_noise___corruption",
+      "description": "Static Noise / Corruption graphic for Static noise corruption representing the permanent absence of records",
+      "license": "generated",
+      "mapped_shots": [
+        "S069"
+      ],
+      "acquired_by": "agent_graphics"
+    },
+    {
+      "filename": "072_S072_silhouette_figure.png",
+      "folder": "vectors",
+      "source": "code_gen",
+      "source_url": "local://graphics_generator/silhouette_figure",
+      "description": "Silhouette Figure graphic for Silhouette of a church steeple against dark sky — silence and absence of accountability",
+      "license": "generated",
+      "mapped_shots": [
+        "S072"
+      ],
+      "acquired_by": "agent_graphics"
+    }
+  ],
+  "gaps": [
+    {
+      "shot_id": "S002",
+      "visual_need": "Dark archival footage of a Quebec institutional building exterior, 1940s-1950s era",
+      "shotlist_type": "archival_video",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S010",
+      "visual_need": "Document scan of an official government order or decree, with aged paper treatment",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S012",
+      "visual_need": "Wiki-style text block listing the seven religious orders involved",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S013",
+      "visual_need": "Document scan of psychiatric admission forms or medical records, with clinical bureaucratic formatting",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S014",
+      "visual_need": "Archival footage or document showing the old Quebec asylum law text",
+      "shotlist_type": "archival_video",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S015",
+      "visual_need": "Credential card for researchers Leo-Paul Lauzon and Martin Poirier, UQAM",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S025",
+      "visual_need": "Archival footage of a psychiatric institution interior, showing long corridors or ward rooms",
+      "shotlist_type": "archival_video",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S028",
+      "visual_need": "Document scan showing civil records or official files with psychiatric classification stamps",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S031",
+      "visual_need": "Newspaper clipping or legislative document showing the 1942 provision",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S040",
+      "visual_need": "Document scan of book cover 'Les fous crient au secours'",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S043",
+      "visual_need": "Wiki text block showing the Bedard Report findings with highlighted key statistics",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S048",
+      "visual_need": "Book cover or newspaper review of Les enfants de Duplessis",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S050",
+      "visual_need": "Newspaper clipping or court document representing the class action attempts and rejections",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S051",
+      "visual_need": "Credential card for Daniel Jacoby, Quebec Ombudsman",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S052",
+      "visual_need": "Wiki text block presenting the comparative study findings with data highlights",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S056",
+      "visual_need": "Document scan representing the legal waiver — an official document with signature line",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S060",
+      "visual_need": "Document scan of official medical institution letterhead expressing regret",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S061",
+      "visual_need": "Newspaper clipping about the class action lawsuits against religious communities",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S065",
+      "visual_need": "Wiki text block showing the Church's official defensive position with keywords highlighted",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S070",
+      "visual_need": "Landscape shot of an abandoned cemetery or unmarked burial ground",
+      "shotlist_type": "archival_video",
+      "status": "unfilled"
+    },
+    {
+      "shot_id": "S071",
+      "visual_need": "Document scan representing uncorrected psychiatric files — aged institutional paperwork",
+      "shotlist_type": "document_scan",
+      "status": "unfilled"
+    }
+  ],
+  "source_summary": {
+    "direct_url": {
+      "searched": 10,
+      "downloaded": 6
+    },
+    "wikimedia_commons": {
+      "searched": 2,
+      "downloaded": 2
+    },
+    "archive_org": {
+      "searched": 0,
+      "downloaded": 0
+    }
+  }
+}

@@ -31,8 +31,8 @@
 
 ## Topic Clusters
 
-<!-- HEURISTIC: To be completed by Claude reasoning over video_data_for_analysis.md -->
+
 
 ## Title Patterns
 
-<!-- HEURISTIC: To be completed by Claude reasoning over video_data_for_analysis.md -->
+

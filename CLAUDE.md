@@ -24,6 +24,7 @@ Channel-automation V4/
 │       └── topic_briefs.md       # Generated topic briefs
 ├── reference/                    # Stable reference material (loaded on demand)
 │   ├── CONTEXT.md
+│   ├── Architecture.md           # Pipeline architecture, infrastructure, Asset Library
 │   ├── voice/
 │   │   └── WRITTING_STYLE_PROFILE.md   # Channel voice behavioral ruleset
 │   ├── scripts/                  # Full reference scripts (style extraction source)
@@ -88,9 +89,22 @@ Every piece of information has ONE home. Other files point to it — they don't 
 - Return only a 1-2 line summary in conversation context
 - Files in `.claude/scratch/` are transient — not committed, can be deleted between sessions
 
+## Architecture Rules
+
+1. **ZERO LLM API WRAPPERS:** Never write code that initializes LLM SDKs (`@anthropic-ai/sdk`, `openai`, etc.). All reasoning and orchestration is handled natively by Claude Code. LLM API wrappers are allowed only if part of an essential external tool.
+
+2. **SEPARATION OF CONCERNS — PROMPT VS. CODE:**
+   Before executing any task, classify it as:
+   - **[HEURISTIC]:** Requires logic, narrative design, or evaluation → solved via Claude Code skills and prompt files. No code written.
+   - **[DETERMINISTIC]:** Requires structured data manipulation, scraping, or media rendering → solved via code.
+
+3. **CONTEXT.MD MAINTENANCE:** When any structural change is made to a directory (files added, removed, renamed, or moved), update that directory's `CONTEXT.md` to reflect the new state. This applies to all directories that have a `CONTEXT.md` file.
+
+4. **FOLDER MAP MAINTENANCE:** When a structural change affects a directory or file that is represented in the `CLAUDE.md` Folder Map, update the Folder Map to match. New projects and skills are NOT relevant (they are dynamic content). Relevant changes include adding, removing, or renaming persistent reference files, data stores, or top-level directories.
+
 ## Coding Standards
 
-- **Language:** All scripts must be written in Python. Do not use Node.js or JavaScript.
+- **Language:** All scripts must be written in Python. Do not use Node.js or JavaScript unless it is absolutely necessary.
 
 ## Other Notes
 

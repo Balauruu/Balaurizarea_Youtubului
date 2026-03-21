@@ -6,6 +6,7 @@ Stable factory files — configured once, used across every video project. These
 
 | Folder | Contents | Used By |
 |--------|----------|---------|
+| `Architecture.md` | Pipeline architecture: infrastructure stack, parallelism model, Asset Library design, Vector Generation spec, source policy | On-demand reference for system design decisions |
 | `voice/WRITTING_STYLE_PROFILE.md` | Channel voice behavioral ruleset (rules, arc templates, transitions) | writer skill |
 | `scripts/*.md` | Full reference scripts from existing videos | style-extraction skill (source material) |
 | `visuals/VISUAL_STYLE_GUIDE.md` | Visual building blocks, register definitions, equilibrium rules | visual-orchestrator, broll-curator |
@@ -14,6 +15,7 @@ Stable factory files — configured once, used across every video project. These
 
 | Need | Go To |
 |------|-------|
+| Pipeline architecture, Asset Library, infrastructure | `Architecture.md` |
 | Writing voice rules | `voice/WRITTING_STYLE_PROFILE.md` |
 | Source material for style extraction | `scripts/` (all .md files) |
 | Visual vocabulary and building blocks | `visuals/VISUAL_STYLE_GUIDE.md` |

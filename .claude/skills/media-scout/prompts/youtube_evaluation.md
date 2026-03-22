@@ -17,7 +17,7 @@ Assign each result a relevance score:
 
 **Duration** — Videos under 2 min rarely have usable footage. 10-30 min mini-documentaries and news reports are the sweet spot. Long documentaries (30+ min) are high-value but time-intensive to review.
 
-**Channel reputation** — Official news (CBC, BBC, Reuters), documentary producers (PBS, NFB, Vice), and archival/educational channels are high-trust. News aggregators are medium. Random re-uploads and content farms are low/skip.
+**Channel reputation** — Official news, documentary producers, and archival/educational channels are high-trust. News aggregators are medium. Random re-uploads and content farms are low/skip.
 
 **Title patterns** — "documentary", "interview", "archival", "[topic] history" are high-value. "reaction", "Top 10", ALL CAPS clickbait are low-value.
 
@@ -29,7 +29,6 @@ Assign each result a relevance score:
 - Content farm signals (AI narration, slideshow format, clickbait)
 - Re-uploads of content already captured from original channel
 - Reaction/commentary videos with no original footage
-- Unusable language (unless footage works without audio)
 
 ## Output
 

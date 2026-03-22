@@ -80,7 +80,6 @@ Compile into `projects/N. [Title]/broll_candidates.json` per the schema below.
       "collection": "collection_name",
       "description": "What's in the item and how it maps to the theme",
       "match_reasoning": "Conceptual/metaphorical connection",
-      "license": "PD"
     },
     {
       "theme_id": "T1",
@@ -90,7 +89,6 @@ Compile into `projects/N. [Title]/broll_candidates.json` per the schema below.
       "end_sec": 52.8,
       "score": 0.82,
       "description": "Clip content description",
-      "license": "PD"
     }
   ]
 }

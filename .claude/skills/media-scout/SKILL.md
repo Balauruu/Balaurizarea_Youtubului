@@ -12,7 +12,6 @@ Two-pass media discovery: web images/documents (Pass 1) → YouTube footage lead
 ```bash
 pip install crawl4ai==0.8.0 ddgs yt-dlp
 python -m playwright install chromium
-export PYTHONUTF8=1
 ```
 
 ## Workflow
@@ -26,29 +25,36 @@ export PYTHONUTF8=1
 3. **Execute queries via crawl4ai.** For each result page:
    - Extract embedded images from `CrawlResult.media["images"]` (use `image_score_threshold` to filter noise).
    - **Screenshot document-like pages** (newspaper articles, government reports, official documents) via `CrawlerRunConfig(screenshot=True)` — only when the page layout itself conveys information (headlines, letterheads, timelines). If the page is just a container for photos, extract the image URLs instead.
+   - **Saving screenshots:** When `screenshot=True` is used, the screenshot data is in `CrawlResult.screenshot` (base64-encoded PNG). Decode and save it to `projects/N. [Title]/research/screenshots/{sanitized_source_name}.png`. Set the `local_path` field in the web_assets entry to the relative path (e.g., `screenshots/change_org_duplessis_petition.png`). Create the `screenshots/` directory if it doesn't exist.
 
-4. **[HEURISTIC] Evaluate web assets** — For each asset, classify `media_type` (image/document), note license signals (see table below), and write a relevance description explaining why it matters to the documentary.
+4. **[HEURISTIC] Evaluate web assets** — For each asset, classify `media_type` (image/document) and write a relevance description explaining why it matters to the documentary.
 
-   | Source Type | License Signal |
+   | Source Type | Description |
    |-------------|---------------|
-   | Government sites (.gc.ca, .gouv.qc.ca) | Likely PD-Canada / Crown copyright |
-   | News sites (cbc.ca, radio-canada.ca) | Fair dealing review needed |
-   | Wikimedia Commons | Check individual file page |
-   | Academic/research | Check page footer — often CC-BY |
-   | Personal blogs, memorial sites | Unknown — flag for review |
-   | Social media | Skip entirely |
+   | Government sites (.gc.ca, .gouv.qc.ca) | |
+   | News sites (cbc.ca, radio-canada.ca) | |
+   | Wikimedia Commons | |
+   | Academic/research | |
+   | Personal blogs, memorial sites | |
+   | Social media | |
 
-5. **Present summary table** (count by media_type, top 5 by relevance). Ask: "Proceed to Pass 2?"
+5. **Present summary table**. Ask: "Proceed to Pass 2?"
 
 ### Pass 2 — YouTube Search (footage leads)
 
 1. Build YouTube search queries from `entity_index.json` key entities — persons, institutions, events. Focus on combining entity names with terms like `documentary`, `interview`, `archival footage`, `news report`.
 
-2. Run `yt-dlp "ytsearch5:query" --flat-playlist --dump-json` for each query. Collect structured metadata.
+2. Run `yt-dlp "ytsearch5:query" --flat-playlist --dump-json` for each query. Collect structured metadata (title, duration, channel, view count).
 
-3. **[HEURISTIC] Evaluate YouTube results** — Read `@.claude/skills/media-scout/prompts/youtube_evaluation.md` for scoring criteria. Skip content farms, re-uploads, reaction videos, and clips under 30 seconds. Score remaining results 1-4 (primary source → marginal).
+3. **Re-resolve URLs by title.** The `--flat-playlist` flag returns video IDs from YouTube's search index, which can be stale — videos get taken down and re-uploaded under different IDs. For every result, re-resolve the URL using the exact title:
+   ```bash
+   yt-dlp "ytsearch1:<exact video title>" --dump-json --no-download
+   ```
+   This fetches the current live URL for that title. Confirm it's the same video by checking that the duration and channel match the original metadata. If no match is found, drop the entry.
 
-4. **Present summary table** (count, top 5 by relevance). Ask: "Accept leads?"
+4. **[HEURISTIC] Evaluate YouTube results** — Read `@.claude/skills/media-scout/prompts/youtube_evaluation.md` for scoring criteria. Skip content farms, re-uploads, reaction videos, and clips under 30 seconds. Score remaining results 1-4 (primary source → marginal).
+
+5. **Present summary table** (count, top 5 by relevance). Ask: "Accept leads?"
 
 ### Compile
 
@@ -69,8 +75,6 @@ export PYTHONUTF8=1
 
 | Check | Pass Condition |
 |-------|---------------|
-| No prohibited sources | Zero IA/archive sites (B-Roll Curator domain) or commercial image marketplaces |
-| License signals present | Every `web_assets` entry has a non-empty `license` field ("unknown" is acceptable, blank is not) |
 | Schema compliance | `media_leads.json` validates against the output schema below |
 
 ## Scope
@@ -90,7 +94,7 @@ export PYTHONUTF8=1
       "source_page": "https://example.com/article",
       "media_type": "image | document",
       "description": "What the asset shows in documentary context",
-      "license": "PD-Canada | fair dealing review | unknown | ...",
+      "local_path": "screenshots/filename.png (only for capture_type: screenshot)",
       "relevance": "Why this matters to the documentary"
     }
   ],
@@ -98,15 +102,16 @@ export PYTHONUTF8=1
     {
       "url": "https://youtube.com/watch?v=...",
       "title": "Video title from yt-dlp",
+      "duration": "43:12",
+      "channel": "Channel name",
       "description": "What usable footage exists, with timestamps if identifiable",
-      "relevance": "Score N — brief justification",
-      "license_notes": "Channel type + licensing consideration"
+      "relevance": "Score N — brief justification"
     }
   ]
 }
 ```
 
-For document screenshots, add `"capture_type": "screenshot"` to the web_assets entry.
+For document screenshots, add `"capture_type": "screenshot"` and `"local_path"` to the web_assets entry. The `local_path` is relative to the project's `research/` directory.
 
 ## Outputs
 

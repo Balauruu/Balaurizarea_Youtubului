@@ -10,9 +10,22 @@ Two-pass media discovery: web images/documents (Pass 1) → YouTube footage lead
 ## Setup (first run only)
 
 ```bash
-pip install crawl4ai==0.8.0 ddgs yt-dlp
+pip install crawl4ai==0.8.0 yt-dlp
 python -m playwright install chromium
 ```
+
+
+## Windows Encoding
+
+crawl4ai produces Unicode errors on Windows. Prefix every Python/crawl4ai bash command with:
+
+```
+set PYTHONUTF8=1 && set PYTHONIOENCODING=utf-8 && python ...
+```
+
+Always open files with `encoding='utf-8'`. This is non-negotiable on Windows.
+
+---
 
 ## Workflow
 
@@ -22,44 +35,69 @@ python -m playwright install chromium
 
 2. **[HEURISTIC] Generate search queries** — Build 15-30 queries using entity cross-products from `entity_index.json`. Read `@.claude/skills/media-scout/prompts/search_queries.md` for the strategy and templates.
 
-3. **Execute queries via crawl4ai.** For each result page:
-   - Extract embedded images from `CrawlResult.media["images"]` (use `image_score_threshold` to filter noise).
-   - **Screenshot document-like pages** (newspaper articles, government reports, official documents) via `CrawlerRunConfig(screenshot=True)` — only when the page layout itself conveys information (headlines, letterheads, timelines). If the page is just a container for photos, extract the image URLs instead.
-   - **Saving screenshots:** When `screenshot=True` is used, the screenshot data is in `CrawlResult.screenshot` (base64-encoded PNG). Decode and save it to `projects/N. [Title]/research/screenshots/{sanitized_source_name}.png`. Set the `local_path` field in the web_assets entry to the relative path (e.g., `screenshots/change_org_duplessis_petition.png`). Create the `screenshots/` directory if it doesn't exist.
+3. **Discover source pages** — For each query, use crawl4ai (via the `crawl4ai` skill) to crawl search engine result pages and extract relevant source URLs. You can also use `web_search` (Claude's built-in tool) as a supplement. The goal is to collect URLs of relevant source pages — news articles, Wikipedia, archives, encyclopedias — that are likely to contain images or documents.
 
-4. **[HEURISTIC] Evaluate web assets** — For each asset, classify `media_type` (image/document) and write a relevance description explaining why it matters to the documentary.
+4. **Crawl source pages via crawl4ai** — For each promising URL from step 3, use the `crawl4ai` skill or crawl4ai directly to extract images from `CrawlResult.media["images"]`. Use `image_score_threshold` to filter decorative noise. Never use `ddgs` for image search — the pipeline is always: discover source page URLs → crawl4ai extracts images from those pages.
 
-   | Source Type | Description |
-   |-------------|---------------|
-   | Government sites (.gc.ca, .gouv.qc.ca) | |
-   | News sites (cbc.ca, radio-canada.ca) | |
-   | Wikimedia Commons | |
-   | Academic/research | |
-   | Personal blogs, memorial sites | |
-   | Social media | |
+5. **[HEURISTIC] Curate screenshots** — Screenshots are only for two specific cases:
 
-5. **Present summary table**. Ask: "Proceed to Pass 2?"
+   **Wikipedia articles** — Always screenshot relevant Wikipedia article pages. They render reliably, contain structured info + embedded images, and make excellent documentary B-roll.
+
+   **PDF primary sources** — If a crawled page links to downloadable PDFs (government reports, court filings, academic papers), download the PDF directly instead of screenshotting the web page.
+
+   **Do not screenshot** petition sites, government info pages, archive catalog metadata pages, or any general web page. These produce useless captures (blank pages from JS-heavy sites, or 10MB+ generic web UI). Extract their images via crawl4ai instead.
+
+   **After saving any screenshot**, check file size: discard if under 10KB (blank) or over 10MB (generic full-page capture).
+
+6. **[HEURISTIC] Evaluate and deduplicate** — This is the most important step. Evaluate every asset individually as if briefing a documentary editor. For each image, answer two questions:
+
+   **"What specifically does this image show?"** — Write a concrete description. If you can only write "Image from [domain]" or "A building", the image is not specific enough to include. Discard it.
+
+   **"Why does the documentary need this specific image?"** — Write a relevance justification tied to the narrative. "Requires manual review" is never acceptable — it means you skipped evaluation.
+
+   **Deduplication rules:**
+   - Remove exact URL duplicates
+   - When crawling a page with many images (e.g., a Wikipedia biography), do not bulk-import everything. Select only images directly relevant to the documentary topic
+   - Keep at most 2-3 portraits of any single person — pick the most iconic ones for the documentary era
+   - Infrastructure named after the subject (highways, bridges, parks, street signs) is not relevant
+   - Aerial/geographic photos of cities or regions are not relevant unless they show a specific institution involved in the events
+   - If multiple images from the same source have identical or near-identical descriptions, you are bulk-importing — stop and evaluate each individually
+
+   | Source Type | Priority |
+   |-------------|----------|
+   | Wikimedia Commons | High |
+   | News sites (cbc.ca, radio-canada.ca) | High |
+   | Government sites (.gc.ca, .gouv.qc.ca) | High |
+   | Academic/research | Medium |
+   | Personal blogs, memorial sites | Medium |
+   | Social media | Low |
+
+7. **Present summary table** (count by type, top 5 by relevance). Ask: "Proceed to Pass 2?"
 
 ### Pass 2 — YouTube Search (footage leads)
 
-1. Build YouTube search queries from `entity_index.json` key entities — persons, institutions, events. Focus on combining entity names with terms like `documentary`, `interview`, `archival footage`, `news report`.
+YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**. This separation exists because `yt-dlp "ytsearch"` returns stale video IDs (90% broken URL rate in testing), while crawl4ai extracts current live URLs from YouTube's rendered search pages.
 
-2. Run `yt-dlp "ytsearch5:query" --flat-playlist --dump-json` for each query. Collect structured metadata (title, duration, channel, view count).
+1. **Build search queries** from `entity_index.json` key entities — persons, institutions, events. Combine entity names with terms like `documentary`, `interview`, `archival footage`, `news report`.
 
-3. **Re-resolve URLs by title.** The `--flat-playlist` flag returns video IDs from YouTube's search index, which can be stale — videos get taken down and re-uploaded under different IDs. For every result, re-resolve the URL using the exact title:
-   ```bash
-   yt-dlp "ytsearch1:<exact video title>" --dump-json --no-download
-   ```
-   This fetches the current live URL for that title. Confirm it's the same video by checking that the duration and channel match the original metadata. If no match is found, drop the entry.
+2. **Crawl YouTube search results via crawl4ai** — For each query, crawl `youtube.com/results?search_query=...`. Parse the returned markdown for video URLs (`/watch?v=` links), titles (from heading text), and durations (from `[MM:SS` patterns). Strip `&pp=` tracking parameters. Deduplicate by video ID.
 
-4. **[HEURISTIC] Evaluate YouTube results** — Read `@.claude/skills/media-scout/prompts/youtube_evaluation.md` for scoring criteria. Skip content farms, re-uploads, reaction videos, and clips under 30 seconds. Score remaining results 1-4 (primary source → marginal).
+3. **Validate each URL with yt-dlp** — Run `yt-dlp --dump-json --no-download "URL"` to confirm the video is live and extract metadata (title, duration, channel, view_count, upload_date). Drop dead URLs. Never use `yt-dlp` for search/discovery.
+
+4. **[HEURISTIC] Evaluate YouTube results** — Read `@.claude/skills/media-scout/prompts/youtube_evaluation.md` for detailed scoring criteria, hard filters, and AI content detection. Key rules:
+
+   - **Discard videos with < 1,000 views** (exception: verified survivor personal channels)
+   - **Discard AI-generated content** — new channels + clickbait titles + very low views
+   - **Discard wrong-topic matches** — videos that mention the search terms but aren't actually about the documentary subject
+   - **Score 1 is rare** — reserve it for 3-7 videos maximum. It requires: the video is primarily about the topic, contains original footage, and comes from a credible producer
+   - Write descriptions as if briefing a video editor — what to look for, where, and why it matters
 
 5. **Present summary table** (count, top 5 by relevance). Ask: "Accept leads?"
 
 ### Compile
 
 1. Merge web assets and YouTube leads into `media_leads.json` (schema below).
-2. Write to `projects/N. [Title]/research/media_leads.json`.
+2. Write to `projects/N. [Title]/research/media_leads.json` with `encoding='utf-8'`.
 3. Run audit checks.
 
 ---
@@ -75,11 +113,17 @@ python -m playwright install chromium
 
 | Check | Pass Condition |
 |-------|---------------|
-| Schema compliance | `media_leads.json` validates against the output schema below |
+| Schema compliance | `media_leads.json` validates against the output schema |
+| No blank screenshots | All files in `screenshots/` are > 10KB |
+| YouTube URLs live | Every entry was validated with `yt-dlp --dump-json` |
+| No duplicates | No two web_assets share the same URL or filename |
+| No lazy descriptions | Zero entries with "requires manual review" or "Image from [domain]" |
+| YouTube view threshold | All entries have view_count ≥ 1,000 (unless survivor channel exception documented) |
+| Score 1 budget | At most 7 videos scored as Score 1 |
 
 ## Scope
 
-- **Web + YouTube only.** No Internet Archive (that's the B-Roll Curator's domain). No commercial marketplaces.
+- **Web + YouTube only.** No Internet Archive (B-Roll Curator's domain). No commercial marketplaces.
 - **No video downloading** — Pass 2 produces URL leads with metadata. The user handles extraction.
 
 ---
@@ -93,30 +137,32 @@ python -m playwright install chromium
       "url": "https://example.com/image.jpg",
       "source_page": "https://example.com/article",
       "media_type": "image | document",
-      "description": "What the asset shows in documentary context",
-      "local_path": "screenshots/filename.png (only for capture_type: screenshot)",
-      "relevance": "Why this matters to the documentary"
+      "description": "What the asset specifically shows in documentary context",
+      "local_path": "screenshots/filename.png (only for screenshot/pdf captures)",
+      "capture_type": "screenshot | pdf_download (only for documents)",
+      "relevance": "Why this specific image matters to the documentary"
     }
   ],
   "youtube_urls": [
     {
       "url": "https://youtube.com/watch?v=...",
-      "title": "Video title from yt-dlp",
+      "title": "Video title from yt-dlp validation",
       "duration": "43:12",
       "channel": "Channel name",
-      "description": "What usable footage exists, with timestamps if identifiable",
-      "relevance": "Score N — brief justification"
+      "view_count": 12345,
+      "description": "What usable footage exists — briefing for video editor",
+      "relevance": "Score N — brief justification",
+      "validated": true
     }
   ]
 }
 ```
 
-For document screenshots, add `"capture_type": "screenshot"` and `"local_path"` to the web_assets entry. The `local_path` is relative to the project's `research/` directory.
-
 ## Outputs
 
 | Artifact | Location | Format |
 |----------|----------|--------|
-| Media leads | `projects/N. [Title]/research/media_leads.json` | JSON with `web_assets` + `youtube_urls` arrays |
+| Media leads | `projects/N. [Title]/research/media_leads.json` | JSON (UTF-8) with `web_assets` + `youtube_urls` arrays |
+| Screenshots | `projects/N. [Title]/research/screenshots/` | PNG (Wikipedia), PDF (primary sources) |
 
 Falls back to `.claude/scratch/media-scout/` if no project directory matches.

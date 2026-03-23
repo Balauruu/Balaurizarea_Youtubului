@@ -25,6 +25,7 @@ Channel-automation V4/
 ├── reference/                    # Stable reference material (loaded on demand)
 │   ├── CONTEXT.md
 │   ├── Architecture.md           # Pipeline architecture, infrastructure, Asset Library
+│   ├── SKILL_CRAFTING_GUIDE.md   # Handbook for creating/improving skills
 │   ├── voice/
 │   │   └── WRITTING_STYLE_PROFILE.md   # Channel voice behavioral ruleset
 │   ├── scripts/                  # Full reference scripts (style extraction source)

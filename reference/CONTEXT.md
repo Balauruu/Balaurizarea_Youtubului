@@ -10,6 +10,7 @@ Stable factory files — configured once, used across every video project. These
 | `voice/WRITTING_STYLE_PROFILE.md` | Channel voice behavioral ruleset (rules, arc templates, transitions) | writer skill |
 | `scripts/*.md` | Full reference scripts from existing videos | style-extraction skill (source material) |
 | `visuals/VISUAL_STYLE_GUIDE.md` | Visual building blocks, register definitions, equilibrium rules | visual-orchestrator, broll-curator |
+| `SKILL_CRAFTING_GUIDE.md` | Living handbook for creating/improving skills — tested principles, anti-patterns, structural guidance | skill creation and revision |
 
 ## Routing
 
@@ -19,6 +20,7 @@ Stable factory files — configured once, used across every video project. These
 | Writing voice rules | `voice/WRITTING_STYLE_PROFILE.md` |
 | Source material for style extraction | `scripts/` (all .md files) |
 | Visual vocabulary and building blocks | `visuals/VISUAL_STYLE_GUIDE.md` |
+| Skill writing best practices | `SKILL_CRAFTING_GUIDE.md` |
 
 ## Key Principle
 

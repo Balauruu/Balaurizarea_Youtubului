@@ -2,7 +2,57 @@
 __pycache__/
 *.pyc
 *.pyo
-.gsd/
 *.db-journal
 .bg-shell/
 projects/
+
+# ── GSD: Runtime / Ephemeral (per-developer, per-session) ──────────────────
+# Crash detection sentinel — PID lock, written per auto-mode session
+.gsd/auto.lock
+# Auto-mode dispatch tracker — prevents re-running completed units
+.gsd/completed-units.json
+# Derived state cache — regenerated from plan/roadmap files on disk
+.gsd/STATE.md
+# Per-developer token/cost accumulator
+.gsd/metrics.json
+# Raw JSONL session dumps — crash recovery forensics, auto-pruned
+.gsd/activity/
+# Unit execution records — dispatch phase, timeouts, recovery tracking
+.gsd/runtime/
+# Git worktree working copies
+.gsd/worktrees/
+# Parallel orchestration IPC and worker status
+.gsd/parallel/
+# Generated HTML reports (regenerable via /gsd export --html)
+.gsd/reports/
+# Session-specific interrupted-work markers
+.gsd/milestones/**/continue.md
+.gsd/milestones/**/*-CONTINUE.md
+
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+dist/
+build/
+.venv/
+venv/
+target/
+vendor/
+*.log
+coverage/
+.cache/
+tmp/
+
+# ── GSD baseline (auto-generated) ──
+.gsd

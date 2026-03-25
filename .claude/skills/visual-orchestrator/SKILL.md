@@ -220,8 +220,3 @@ After writing `shotlist.json`, enrich each b-roll theme with Internet Archive se
 
 ---
 
-## Deferred
-
-- **SHOT-08:** Two-pass generation — annotate narrative beats first, then assign shot types
-- **SHOT-10:** Shot density calibration proportional to chapter word count
-- Chapter-level regeneration without full re-run

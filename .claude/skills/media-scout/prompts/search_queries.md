@@ -34,4 +34,3 @@ Single-entity searches return obvious results. **Cross-product queries combine e
 ## Output
 
 Return a numbered query list grouped by strategy: cross-products first, category-specific second, screenshot-targeted last. Each query should be search-engine-ready.
-

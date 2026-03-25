@@ -23,7 +23,7 @@ Analyze video files, identify relevant segments, catalog them in SQLite, and ext
 - Resolve project directory (case-insensitive substring match against `projects/`)
 - Load `visuals/media_leads.json` for context (why each video was downloaded, what to look for)
 - Load `visuals/shotlist.json` for visual needs (what shots are still needed)
-- Process all videos in `D:/Youtube/D. Mysteries Channel/3. Assets/_staging/{project_slug}/`
+- Process all videos in `projects/N. [Title]/assets/staging/`
 - Relevance scoring informed by shotlist and media_leads
 - Clips route to project assets or global assets based on scope
 
@@ -79,7 +79,7 @@ From the frame analysis, identify **usable segments** — contiguous ranges of f
   "analyzed_at": "2026-03-25T14:30:00Z",
   "videos": [
     {
-      "source_file": "D:/Youtube/.../3. Assets/_staging/duplessis-orphans/cbc_documentary.mp4",
+      "source_file": "projects/1. The Duplessis Orphans/assets/staging/cbc_documentary.mp4",
       "source_url": "https://youtube.com/...",
       "duration_sec": 2847,
       "segments": [
@@ -220,7 +220,7 @@ When the user asks "what clips do I have for X" or "search the catalog for Y", u
 
 | What | Path |
 |------|------|
-| Staging area | `D:/Youtube/D. Mysteries Channel/3. Assets/_staging/{project_slug}/` |
+| Staging area | `projects/N. [Title]/assets/staging/` |
 | Global assets | `D:/Youtube/D. Mysteries Channel/3. Assets/{category}/` |
 | Project assets | `projects/N/assets/{category}/` |
 | Catalog DB | `data/asset_catalog.db` |

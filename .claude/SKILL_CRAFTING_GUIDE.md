@@ -430,6 +430,164 @@ Use before publishing any skill:
 
 ---
 
+## 14. Using the Skill-Creator Tool
+
+The `/skill-creator` skill is a complete testing and iteration harness. This section covers how to use it effectively, including known blind spots that the tool doesn't catch automatically.
+
+### The core loop
+
+```
+1. Define intent → 2. Draft skill → 3. Run test cases → 4. Review in viewer
+    ↑                                                           ↓
+    └──────────── 5. Improve skill based on feedback ←──────────┘
+```
+
+Every iteration follows this cycle. Don't skip the viewer step — human review catches things quantitative evals miss.
+
+### Phase 1: Capture intent
+
+Before the skill-creator writes anything, it will ask four questions:
+1. What should this skill do?
+2. When should it trigger?
+3. What's the expected output format?
+4. Should we set up test cases?
+
+**How to get the most out of this phase:**
+- Bring a concrete example. "I want a skill that does X" is weaker than "Here's what I did manually last session — turn this into a skill." The skill-creator can extract steps, tools used, and corrections from your conversation history.
+- Describe the *output* you want, not just the *process*. "I want a JSON file with scored YouTube leads" is more useful than "I want to search YouTube."
+- Mention known failure modes upfront. If yt-dlp search is broken, say so now — don't wait for it to fail during testing.
+
+### Phase 2: Draft the skill
+
+The skill-creator will produce a SKILL.md and possibly supporting files. **Review the draft before testing.** Things to check:
+
+| Check | Why |
+|-------|-----|
+| Are heuristic sections free of code blocks? | Code in evaluation sections triggers execution mode (see Section 4) |
+| Is SKILL.md under 200 lines? | Longer skills cause the model to skim and skip steps |
+| Are deterministic tasks separated from judgment tasks? | Mixed steps get sloppy evaluation |
+| Does it reference `scripts/` for reusable tools? | If not, the model will regenerate throwaway scripts each run |
+
+### Phase 3: Run test cases
+
+The skill-creator will propose 2-3 test prompts. **Push back on weak test cases:**
+
+- ❌ "Find media for a documentary" (too generic — won't stress-test edge cases)
+- ✅ "Find archival images and footage for a documentary about the Duplessis Orphans in Quebec" (specific topic, tests real entity resolution, multiple source types)
+
+**What happens during a run:**
+- Two subagents per test case: one **with the skill**, one **without** (baseline)
+- Both run in parallel — launched in the same turn
+- Results go to `<skill-name>-workspace/iteration-N/eval-ID/{with_skill,without_skill}/outputs/`
+- While runs execute, the skill-creator drafts quantitative assertions (grading criteria)
+
+**Tip:** If a test case involves external tools (crawl4ai, yt-dlp), expect longer runtimes. The skill-creator should set appropriate timeouts.
+
+### Phase 4: Review in the viewer
+
+After runs complete, the skill-creator:
+1. Grades each run against assertions → `grading.json`
+2. Aggregates into benchmark stats → `benchmark.json`
+3. Launches an HTML viewer with two tabs: **Outputs** (qualitative) and **Benchmark** (quantitative)
+
+**How to review effectively:**
+
+| Tab | What to look for |
+|-----|-----------------|
+| **Outputs** | Read the actual outputs, not just the grades. Look for lazy descriptions, bulk imports, skipped steps. Compare with-skill vs without-skill side by side. |
+| **Benchmark** | Check pass_rate delta (with vs without skill). If both are similar, the skill isn't helping. Check token usage — a skill that costs 3x more tokens for 5% improvement may not be worth it. |
+
+**Leave feedback in the viewer.** Click through each test case and type comments. Empty feedback = "looks good." The skill-creator reads `feedback.json` to plan improvements.
+
+### Phase 5: Improve and iterate
+
+The skill-creator reads your feedback and revises the skill. This is where most value is created — and where most blind spots hide.
+
+**Known blind spots to watch for:**
+
+#### Blind spot 1: Script regeneration (the media-scout problem)
+
+**What happens:** Every test run independently generates similar Python scripts in scratch (e.g., `crawl_images.py`, `wiki_screenshots.py`). The skill-creator evaluates the *output* quality but doesn't notice that the *process* is wasteful.
+
+**Why it's missed:** The evaluation focuses on final artifacts (did `media_leads.json` come out right?). Scratch scripts are intermediate — they don't appear in the graded outputs.
+
+**How to catch it:** After iteration 1, ask: *"Did the test runs generate any Python scripts? If so, are they similar across runs?"* If yes, bundle them into `scripts/` and make the skill reference them with parameterized input.
+
+**Rule of thumb:** If a skill uses an external tool (crawl4ai, yt-dlp, ffmpeg) and the test runs wrote Python scripts to call it, those scripts should be bundled.
+
+#### Blind spot 2: Assertion quality
+
+**What happens:** Assertions check surface properties ("output file exists", "JSON is valid") but not semantic quality ("descriptions are specific, not generic").
+
+**How to catch it:** Review the assertions the skill-creator proposes. For heuristic output, add assertions like:
+- "No description field contains 'requires manual review'"
+- "At most N items scored as top tier"
+- "Each description is > 20 words" (catches lazy one-liners)
+
+#### Blind spot 3: Baseline comparison gap
+
+**What happens:** The without-skill baseline may perform poorly, making the skill look great by comparison — even if the skill's output is mediocre in absolute terms.
+
+**How to catch it:** Don't just look at the *delta*. Look at the with-skill output on its own. Would you accept this output for a real project?
+
+#### Blind spot 4: Overfitting to test cases
+
+**What happens:** After 3+ iterations on the same 2-3 test prompts, the skill becomes perfectly tuned for those topics but fragile on new ones.
+
+**How to catch it:** After iteration 2, add 1-2 new test cases with different topics or edge cases. If the skill degrades on new cases, recent changes are overfitting.
+
+### Phase 6: Description optimization (optional)
+
+After the skill itself is stable, the skill-creator can optimize the `description` field for better triggering. This uses a separate automated loop:
+
+1. You create 20 eval queries (10 should-trigger, 10 should-not-trigger)
+2. The skill-creator runs `scripts/run_loop.py` which iteratively tests and improves the description
+3. It uses a train/test split to prevent overfitting
+4. Returns the best description found
+
+**Tips for eval queries:**
+- Make queries realistic and detailed, not abstract ("Find me archival footage of..." not "Find media")
+- Should-not-trigger queries should be near-misses (shares keywords but needs a different skill)
+- Don't use trivially obvious negative examples ("write a fibonacci function" is useless as a negative for a media skill)
+
+### Toolkit reference
+
+The skill-creator has bundled scripts you can invoke directly:
+
+| Script | Purpose | When to use |
+|--------|---------|-------------|
+| `scripts/quick_validate.py` | Validates SKILL.md structure | Before testing — catches missing frontmatter |
+| `scripts/aggregate_benchmark.py` | Aggregates run results into stats | After grading — produces benchmark.json |
+| `scripts/run_eval.py` | Tests skill triggering on queries | Description optimization phase |
+| `scripts/run_loop.py` | Full eval + improve loop for description | Description optimization phase |
+| `scripts/improve_description.py` | LLM-based description improvement | Called by run_loop.py |
+| `scripts/package_skill.py` | Packages skill into .skill file | When skill is finished |
+| `eval-viewer/generate_review.py` | Launches HTML review viewer | After every iteration |
+
+Agent specs in `agents/`:
+
+| Agent | Purpose | Key output |
+|-------|---------|------------|
+| `grader.md` | Evaluates assertions against outputs | `grading.json` with pass/fail verdicts |
+| `comparator.md` | Blind A/B comparison of two outputs | `comparison.json` with winner + rubric scores |
+| `analyzer.md` | Post-hoc analysis of why one version won | `analysis.json` with improvement suggestions |
+
+### Checklist for each iteration
+
+Use this before marking an iteration complete:
+
+- [ ] All test runs finished (check for timeouts or crashes)
+- [ ] Both with-skill and baseline runs exist
+- [ ] Grading ran and produced `grading.json` for each run
+- [ ] Benchmark aggregated into `benchmark.json`
+- [ ] Viewer launched and reviewed by human
+- [ ] **Process audit**: Did runs generate throwaway scripts? → Bundle them
+- [ ] **Assertion audit**: Do assertions test semantic quality, not just structure?
+- [ ] **Overfitting check**: Would this change help on a different topic?
+- [ ] Feedback saved and read by skill-creator
+
+---
+
 ## Appendix: Adding to This Guide
 
 When you discover a new principle through testing, add it to the appropriate section with:

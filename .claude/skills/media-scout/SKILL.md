@@ -26,17 +26,24 @@ Two-pass media discovery: web images/documents (Pass 1) → YouTube footage lead
 
    WebSearch handles search engine interaction reliably. crawl4ai is used in the next step to extract content from the discovered pages — not for search itself.
 
-4. **Extract images from source pages** — For each promising URL from step 3, use crawl4ai to crawl the page and extract images from `CrawlResult.media["images"]`.
+4. **Extract images from source pages** — Use the bundled `scripts/crawl_images.py` to batch-crawl pages and extract scored images. Do not write a new crawl script — the bundled script handles crawl4ai configuration (image scoring, cache bypass, timeouts, concurrent processing).
 
-   **crawl4ai configuration for image extraction:**
-   - Set `image_score_threshold=3` in `CrawlerRunConfig` to auto-filter decorative images (logos, icons, UI elements)
-   - Set `cache_mode=CacheMode.BYPASS` (import from `crawl4ai`) for fresh results
-   - Set `page_timeout=30000` (30s default, increase to 60000 for JS-heavy sites)
-   - For pages with dynamic content, add `wait_for="css:img"` to ensure images load before extraction
-   - For batch processing multiple URLs, use the Python SDK's `arun_many()` for concurrent extraction rather than sequential crawls
-   - For a quick single-page crawl, the CLI (`crwl URL -o json`) is faster than writing a script
+   **How to use:**
+   1. Write the list of discovered URLs to a JSON file in `.claude/scratch/`:
+      ```json
+      ["https://en.wikipedia.org/wiki/Topic", "https://example.com/article"]
+      ```
+   2. Run the bundled script (activate crawl4ai venv first):
+      ```bash
+      C:/Users/iorda/venvs/crawl4ai/Scripts/python .claude/skills/media-scout/scripts/crawl_images.py \
+        --input .claude/scratch/image_urls.json \
+        --output .claude/scratch/crawl_results.json
+      ```
+   3. Read `crawl_results.json` — each URL maps to `{success, images: [{src, alt, score, desc}], error}`.
 
-   If crawl4ai raises import errors or unexpected API errors, update it (`pip install -U crawl4ai`) and retry. The API evolves across versions — don't hard-code version-specific patterns.
+   For a quick single-page crawl (1-2 URLs), the CLI (`crwl URL -o json`) is still faster than running the batch script.
+
+   If crawl4ai raises import errors or unexpected API errors, update it (`pip install -U crawl4ai`) and retry. The API evolves across versions.
 
    Never use `ddgs` for image search — the pipeline is always: WebSearch discovers URLs → crawl4ai extracts images from those pages.
 
@@ -44,16 +51,27 @@ Two-pass media discovery: web images/documents (Pass 1) → YouTube footage lead
 
    **Wikipedia articles (mandatory)** — For every Wikipedia page crawled in Step 4, add a `document` entry with `capture_type: "screenshot"`. Wikipedia pages render reliably, contain structured info + embedded images in context, and make excellent documentary B-roll. The full-page screenshot captures layout and context that individual extracted images lose.
 
-   **Wikipedia screenshot sizing** — Full-page Wikipedia screenshots routinely exceed 15MB because articles are very long. To keep them within the size limit:
-   - Take viewport-height screenshots (not full-page) OR crop to the top ~3000px of the page (captures the lead section, infobox, and key content)
-   - Convert PNG screenshots to JPEG at quality 85 — this achieves ~95% size reduction
-   - Target final size: 500KB–2MB per screenshot
+   **Taking Wikipedia screenshots** — Use the bundled `scripts/wiki_screenshots.py`. Do not write a new screenshot script — the bundled script handles viewport sizing, PNG-to-JPEG conversion (quality 85), and size validation (discards < 10KB, skips existing).
+
+   1. Write the URL + filename pairs to a JSON file in `.claude/scratch/`:
+      ```json
+      [
+        ["https://en.wikipedia.org/wiki/Topic", "wiki-topic-en.jpg"],
+        ["https://fr.wikipedia.org/wiki/Sujet", "wiki-sujet-fr.jpg"]
+      ]
+      ```
+      Use `.jpg` extension to get automatic JPEG conversion (smaller files). Use `.png` if you need lossless.
+   2. Run the bundled script:
+      ```bash
+      C:/Users/iorda/venvs/crawl4ai/Scripts/python .claude/skills/media-scout/scripts/wiki_screenshots.py \
+        --input .claude/scratch/wiki_pages.json \
+        --output-dir "projects/N. [Title]/assets/documents"
+      ```
+   3. The script prints results per file and writes a `.results.json` summary next to the input.
 
    **PDF primary sources** — If a crawled page links to downloadable PDFs (government reports, court filings, academic papers), download the PDF directly and add a `document` entry with `capture_type: "pdf_download"`.
 
    **Do not screenshot** petition sites, government info pages, archive catalog metadata pages, or any general web page. These produce useless captures (blank pages from JS-heavy sites, or oversized generic web UI). Extract their images via crawl4ai (Step 4) instead.
-
-   **After saving any screenshot**, check file size: discard if under 10KB (blank) or over 15MB (wrong asset).
 
 6. **[HEURISTIC] Evaluate and deduplicate** — The most important step. Evaluate every asset individually as if briefing a documentary editor. For each image, answer two questions:
 

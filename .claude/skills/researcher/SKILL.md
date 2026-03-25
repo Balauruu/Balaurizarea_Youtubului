@@ -7,20 +7,20 @@ description: "Research pipeline for documentary video topics. Use this skill whe
 
 Three-pass research pipeline that scrapes web sources and produces a factual dossier for documentary scripts.
 
-## Setup (first run only)
+## Setup
+
+crawl4ai is installed in a dedicated venv at `C:/Users/iorda/venvs/crawl4ai`. Also needs `ddgs`:
 
 ```bash
-pip install crawl4ai==0.8.0 ddgs
-python -m playwright install chromium
-export PYTHONUTF8=1
+C:/Users/iorda/venvs/crawl4ai/Scripts/pip install ddgs
 ```
 
 ## Invocation
 
 ```bash
-PYTHONPATH=.claude/skills/researcher/scripts python -m researcher survey "Topic"
-PYTHONPATH=.claude/skills/researcher/scripts python -m researcher deepen "Topic"
-PYTHONPATH=.claude/skills/researcher/scripts python -m researcher write "Topic"
+PYTHONPATH=.claude/skills/researcher/scripts C:/Users/iorda/venvs/crawl4ai/Scripts/python -m researcher survey "Topic"
+PYTHONPATH=.claude/skills/researcher/scripts C:/Users/iorda/venvs/crawl4ai/Scripts/python -m researcher deepen "Topic"
+PYTHONPATH=.claude/skills/researcher/scripts C:/Users/iorda/venvs/crawl4ai/Scripts/python -m researcher write "Topic"
 ```
 
 ---

@@ -51,10 +51,10 @@ Skip scraping if competitor data is recent (< 7 days old — analyze warns if st
 
 ## Commands
 
-All commands require PYTHONPATH set to the scripts directory:
+All commands require PYTHONPATH set to the scripts directory. Use the crawl4ai venv Python for trend scanning support:
 
 ```bash
-PYTHONPATH=.claude/skills/channel-assistant/scripts python -m channel_assistant.cli <command> [args]
+PYTHONPATH=.claude/skills/channel-assistant/scripts C:/Users/iorda/venvs/crawl4ai/Scripts/python -m channel_assistant.cli <command> [args]
 ```
 
 ### `add <url>`

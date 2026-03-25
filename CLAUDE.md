@@ -41,10 +41,10 @@ Channel-automation V4/
 │   ├── Architecture.md           # Pipeline architecture, infrastructure
 │   ├── SKILL_CRAFTING_GUIDE.md   # Handbook for creating/improving skills
 │   ├── skills/                   # Agent skills
-│   ├── tests/                    # pytest test suite
 │   └── scratch/                  # Transient data (gitignored)
 └── data/
-    └── channel_assistant.db      # SQLite: competitors & videos
+    ├── channel_assistant.db      # SQLite: competitors & videos
+    └── asset_catalog.db          # SQLite: video clip catalog
 ```
 
 ## Skill Routing
@@ -59,7 +59,8 @@ Channel-automation V4/
 | Write script | writer | `load` + Claude heuristic |
 | Create shot list | visual-orchestrator | SKILL.md (heuristic, no CLI) |
 | Discover media assets | media-scout | Manual workflow (crawl4ai + yt-dlp) |
-| Find b-roll candidates | broll-curator | Manual workflow (IA + LanceDB) |
+| Find b-roll candidates | visual-orchestrator | IA search step in shotlist generation |
+| Analyze/catalog video assets | asset-analyzer | standalone or project mode |
 
 **For detailed task routing with load/skip tables, read `CONTEXT.md`.**
 
@@ -73,9 +74,9 @@ research (researcher)
 writing (writer)
     ↓ script/Script.md
 visual planning (visual-orchestrator + media-scout)
-    ↓ visuals/shotlist.json + visuals/media_leads.json
-asset discovery (broll-curator)
-    ↓ broll_candidates.json
+    ↓ visuals/shotlist.json + visuals/media_leads.json + downloads
+asset acquisition (asset-analyzer)
+    ↓ video_analysis.json + extracted clips + catalog entries
 ```
 
 ## Conventions

@@ -57,9 +57,9 @@ Channel-automation V4/
 | Research a topic | researcher | `survey` → evaluate → `deepen` → `write` |
 | Extract channel voice style | style-extraction | SKILL.md (heuristic, no CLI) |
 | Write script | writer | `load` + Claude heuristic |
-| Create shot list | visual-orchestrator | SKILL.md (heuristic, no CLI) |
+| Create shot list | shot-planner | SKILL.md (heuristic, no CLI) |
 | Discover media assets | media-scout | Manual workflow (crawl4ai + yt-dlp) |
-| Find b-roll candidates | visual-orchestrator | IA search step in shotlist generation |
+| Find b-roll candidates | shot-planner | B-roll discovery step in shotlist generation |
 | Analyze/catalog video assets | asset-analyzer | standalone or project mode |
 
 **For detailed task routing with load/skip tables, read `CONTEXT.md`.**
@@ -73,7 +73,7 @@ research (researcher)
     ↓ Research.md + entity_index.json
 writing (writer)
     ↓ script/Script.md
-visual planning (visual-orchestrator + media-scout)
+visual planning (shot-planner + media-scout)
     ↓ visuals/shotlist.json + visuals/media_leads.json + downloads
 asset acquisition (asset-analyzer)
     ↓ video_analysis.json + extracted clips + catalog entries
@@ -88,9 +88,30 @@ Reference docs (`channel/`) are authoritative sources of truth. Previous project
 Every piece of information has ONE home. Other files point to it — they don't duplicate it.
 
 ### Scratch Pad
-- When tool output exceeds ~1500 tokens, write it to `.claude/scratch/` with a descriptive filename
+`.claude/scratch/` is **disposable by definition** — any file there can be deleted at any time without consequence. This is enforced by routing files to the right home based on purpose, not size.
+
+**Decision tree — where does this file go?**
+
+| Purpose | Location | Example |
+|---------|----------|---------|
+| Intermediate data consumed once this session | `.claude/scratch/` | `crawl_results.json`, `image_urls.json` |
+| Per-run input for bundled scripts | `.claude/scratch/` | `wiki_pages.json` (fed to `scripts/wiki_screenshots.py`) |
+| Cache that must survive across sessions | `data/` | `ia_cache.json`, any API response cache |
+| Reusable tool script | Skill's `scripts/` directory | `crawl_images.py`, `wiki_screenshots.py` |
+| Project artifact (research, plans, media leads) | `projects/N. [Title]/` | `Research.md`, `media_leads.json` |
+| Reference doc for a skill | Skill's `references/` directory | Domain knowledge, API docs |
+
+**Rules:**
+- Never put caches, persistent state, or reusable scripts in scratch
+- When tool output exceeds ~1500 tokens, write to scratch only if it's truly disposable — otherwise route to the correct home above
 - Return only a 1-2 line summary in conversation context
-- Files in `.claude/scratch/` are transient — not committed, can be deleted between sessions
+
+### Plans and Context Hygiene
+Plans are session-scoped coordination tools. They should use **tasks** (TaskCreate/TaskUpdate), not files. A 15KB plan file that gets re-read 3 times burns 45KB of context for information that fits in 10 task entries.
+
+- **Simple plans** (< 10 steps): Use tasks directly, no file needed
+- **Complex plans** (needs human review before execution): Write a short bullet-point plan to the **project directory** (it's a project artifact), present it for approval, then convert approved steps to tasks. Do not re-read the plan file — tasks track position from that point forward
+- **Never write plans to scratch** — if a plan is worth writing, it's a project artifact; if it's not, use tasks
 
 ## Architecture Rules
 

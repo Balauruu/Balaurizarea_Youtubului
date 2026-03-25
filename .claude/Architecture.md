@@ -31,17 +31,17 @@ The pipeline has parallel pairs to minimize total time:
 ```
 Phase 1: Narrative Engineering
 
-  channel-assistant → researcher ─┬─► writer ──────────┬─► visual-orchestrator
+  channel-assistant → researcher ─┬─► writer ──────────┬─► shot-planner
                                   └─► media-scout ─────┘
 
 Phase 2: Asset Pipeline
 
-  shotlist.json ─┬─► broll-curator
+  shotlist.json ─┬─► asset-analyzer
                  └─► vector-generation (planned)
 ```
 
 - After Research completes, **Media Scout** and **Writer** run in parallel — both depend on Research.md but not on each other.
-- After the Visual Orchestrator produces the shotlist, **B-Roll Curator** and **Vector Generation** run in parallel — both read the shotlist but serve different shot types.
+- After the Shot Planner produces the shotlist, **Asset Analyzer** and **Vector Generation** run in parallel — both read the shotlist but serve different shot types.
 
 ---
 
@@ -95,8 +95,8 @@ Per-project asset directories under `projects/N. [Title]/assets/`:
 |-----------|----------|--------|
 | `archival/` | Real footage AND photos from the era/event — news clips, home video, portraits, mugshots, press photos | Media Scout → asset-analyzer |
 | `documents/` | Newspaper clippings, document scans, wiki screenshots, web page captures | Media Scout downloads |
-| `broll/` | Atmospheric/conceptual footage (non-cartoon) — industrial films, nature, urban atmosphere | IA search (Visual Orchestrator) → asset-analyzer |
-| `cartoon_broll/` | Old cartoon clips used as conceptual b-roll | IA search (Visual Orchestrator) → asset-analyzer |
+| `broll/` | Atmospheric/conceptual footage (non-cartoon) — industrial films, nature, urban atmosphere | B-roll discovery (Shot Planner) → asset-analyzer |
+| `cartoon_broll/` | Old cartoon clips used as conceptual b-roll | B-roll discovery (Shot Planner) → asset-analyzer |
 | `vectors/` | Flat silhouette compositions | Vector Generation (planned — ComfyUI) |
 
 **Editor handles manually (DaVinci Resolve):**

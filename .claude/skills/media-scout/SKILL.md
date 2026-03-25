@@ -72,7 +72,19 @@ Always open files with `encoding='utf-8'`. This is non-negotiable on Windows.
    | Personal blogs, memorial sites | Medium |
    | Social media | Low |
 
-7. **Present summary table** (count by type, top 5 by relevance). Ask: "Proceed to Pass 2?"
+7. **Download discovered assets** — After curation, download the actual image and document files:
+
+   **Images** (photos, portraits, mugshots) → `projects/N. [Title]/assets/archival/`
+   **Documents** (document images, web page captures, PDFs) → `projects/N. [Title]/assets/documents/`
+
+   For each curated web_asset:
+   - If `media_type` is `image`: download the image URL directly using crawl4ai or HTTP GET to `assets/archival/{descriptive_filename}.{ext}`
+   - If `media_type` is `document` or `capture_type` is `screenshot`/`pdf_download`: save to `assets/documents/{descriptive_filename}.{ext}`
+   - After download, update the entry's `local_path` field with the path relative to the project directory (e.g., `assets/archival/victim-portrait.jpg`)
+   - Skip files that already exist at the target path (idempotent)
+   - Validate downloaded files: discard if under 5KB (likely broken) or over 15MB (likely wrong asset)
+
+8. **Present summary table** (count by type, top 5 by relevance, download success rate). Ask: "Proceed to Pass 2?"
 
 ### Pass 2 — YouTube Search (footage leads)
 
@@ -92,7 +104,21 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
    - **Score 1 is rare** — reserve it for 3-7 videos maximum. It requires: the video is primarily about the topic, contains original footage, and comes from a credible producer
    - Write descriptions as if briefing a video editor — what to look for, where, and why it matters
 
-5. **Present summary table** (count, top 5 by relevance). Ask: "Accept leads?"
+5. **Download approved YouTube videos** — Downloads are ON by default. Skip this step only if the user says "skip downloads" or if files already exist in staging.
+
+   **Staging directory:** `D:/Youtube/D. Mysteries Channel/3. Assets/_staging/{project_slug}/`
+   where `project_slug` is the project folder name lowercased with spaces replaced by hyphens (e.g., `3. The Duplessis Orphans` → `3.-the-duplessis-orphans`).
+
+   For each approved YouTube entry:
+   - Check if a file matching the video ID already exists in the staging directory — if so, skip (idempotent)
+   - Download via yt-dlp with these settings:
+     ```bash
+     set PYTHONUTF8=1 && yt-dlp -f "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]" --merge-output-format mp4 -o "{staging_dir}/%(id)s - %(title)s.%(ext)s" "URL"
+     ```
+   - After download, update the entry's `local_path` field with the absolute path to the downloaded file (e.g., `D:/Youtube/D. Mysteries Channel/3. Assets/_staging/3.-the-duplessis-orphans/dQw4w9WgXcQ - Video Title.mp4`)
+   - If download fails (geo-blocked, private, removed), keep the entry but set `local_path` to `null` and add `"download_error": "reason"` to the entry
+
+6. **Present summary table** (count, top 5 by relevance, download status). Ask: "Accept leads?"
 
 ### Compile
 
@@ -106,25 +132,28 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 
 | After | Agent Presents | Human Decides |
 |-------|---------------|---------------|
-| Pass 1 | Web assets summary (count by type, top 5) | Accept, request more queries, remove false positives |
-| Pass 2 | YouTube leads summary (count, top 5) | Accept, request more searches, flag low-quality |
+| Pass 1 | Web assets summary (count by type, top 5, download success rate) | Accept, request more queries, remove false positives |
+| Pass 2 | YouTube leads summary (count, top 5, download status) | Accept, request more searches, flag low-quality |
 
 ## Audit
 
 | Check | Pass Condition |
 |-------|---------------|
 | Schema compliance | `media_leads.json` validates against the output schema |
-| No blank screenshots | All files in `screenshots/` are > 10KB |
+| No blank screenshots | All files in `documents/` are > 10KB |
 | YouTube URLs live | Every entry was validated with `yt-dlp --dump-json` |
 | No duplicates | No two web_assets share the same URL or filename |
 | No lazy descriptions | Zero entries with "requires manual review" or "Image from [domain]" |
 | YouTube view threshold | All entries have view_count ≥ 1,000 (unless survivor channel exception documented) |
 | Score 1 budget | At most 7 videos scored as Score 1 |
+| Downloads tracked | Every web_asset has a `local_path` (non-null if download succeeded) |
+| YouTube downloads staged | Every youtube_url has `local_path` or `download_error` (unless downloads skipped) |
+| No orphan files | Every file in `assets/archival/` and `assets/documents/` has a matching `media_leads.json` entry |
 
 ## Scope
 
 - **Web + YouTube only.** No Internet Archive (B-Roll Curator's domain). No commercial marketplaces.
-- **No video downloading** — Pass 2 produces URL leads with metadata. The user handles extraction.
+- **Downloads included** — Pass 1 downloads images/documents to project `assets/`. Pass 2 downloads YouTube videos to `D:/Youtube/D. Mysteries Channel/3. Assets/_staging/`. Downloads are on by default, skippable per user request.
 
 ---
 
@@ -138,7 +167,7 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
       "source_page": "https://example.com/article",
       "media_type": "image | document",
       "description": "What the asset specifically shows in documentary context",
-      "local_path": "screenshots/filename.png (only for screenshot/pdf captures)",
+      "local_path": "assets/archival/victim-portrait.jpg (relative to project dir, null if download failed)",
       "capture_type": "screenshot | pdf_download (only for documents)",
       "relevance": "Why this specific image matters to the documentary"
     }
@@ -152,7 +181,9 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
       "view_count": 12345,
       "description": "What usable footage exists — briefing for video editor",
       "relevance": "Score N — brief justification",
-      "validated": true
+      "validated": true,
+      "local_path": "D:/Youtube/.../3. Assets/_staging/slug/id - title.mp4 (absolute path, null if download failed or skipped)",
+      "download_error": "reason (only present if download failed)"
     }
   ]
 }
@@ -163,6 +194,8 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 | Artifact | Location | Format |
 |----------|----------|--------|
 | Media leads | `projects/N. [Title]/visuals/media_leads.json` | JSON (UTF-8) with `web_assets` + `youtube_urls` arrays |
-| Screenshots | `projects/N. [Title]/assets/screenshots/` | PNG (Wikipedia), PDF (primary sources) |
+| Archival images | `projects/N. [Title]/assets/archival/` | JPG/PNG (photos, portraits, mugshots) |
+| Documents | `projects/N. [Title]/assets/documents/` | PNG (screenshots), PDF (primary sources), JPG/PNG (document images) |
+| YouTube videos | `D:/Youtube/D. Mysteries Channel/3. Assets/_staging/{project_slug}/` | MP4 (720p max) |
 
 Falls back to `.claude/scratch/media-scout/` if no project directory matches.

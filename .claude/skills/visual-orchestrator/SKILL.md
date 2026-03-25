@@ -178,6 +178,48 @@ Before assigning sources, check `visuals/media_leads.json` for what primary asse
 }
 ```
 
+## Step 4 — IA B-Roll Search (Optional)
+
+After writing `shotlist.json`, enrich each b-roll theme with Internet Archive search results. This step is **optional** — if no results are found for a theme, its `ia_results` array stays empty.
+
+**Procedure:**
+
+1. **Derive queries** — For each entry in `broll_themes`, generate 2–4 search queries by combining the theme's `concept`, `mood`, and `search_direction` fields into short archive-friendly phrases (e.g., for a theme about institutional confinement with mood "oppressive, cold" and search direction mentioning corridors: queries might be `"institutional corridors"`, `"hospital dormitory interior"`, `"bureaucratic office filing"`).
+
+2. **Run searches** — Execute the helper script for each query:
+   ```bash
+   python .claude/skills/visual-orchestrator/scripts/ia_search.py "<query>" --limit 5
+   ```
+   Add `--collection prelinger` when the theme's search direction suggests archival/historical footage.
+
+3. **Evaluate results [HEURISTIC]** — Claude reviews each result's title and description for **conceptual and metaphorical fit** with the theme. Literal matches are not required — a film about factory regimentation can serve a theme about institutional control. Discard results that are clearly irrelevant, broken, or too short to be useful.
+
+4. **Append to shotlist** — Add an `ia_results` array to each b-roll theme object in `shotlist.json`. Write the file again (full overwrite).
+
+**`ia_results` schema per theme:**
+
+```json
+{
+  "ia_results": [
+    {
+      "url": "https://archive.org/details/...",
+      "title": "Industrial Safety Film (1952)",
+      "collection": "prelinger",
+      "description": "Factory interior, workers in regimented lines",
+      "match_reasoning": "Factory regimentation mirrors the theme of institutional control and dehumanization"
+    }
+  ]
+}
+```
+
+**Rules:**
+- This step does NOT download anything — URLs only, for human review.
+- Empty `ia_results: []` is perfectly valid when no good matches exist.
+- Maximum 5 results per theme (quality over quantity).
+- `match_reasoning` must explain the conceptual link, not just restate the title.
+
+---
+
 ## Deferred
 
 - **SHOT-08:** Two-pass generation — annotate narrative beats first, then assign shot types

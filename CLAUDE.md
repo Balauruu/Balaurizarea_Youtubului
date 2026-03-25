@@ -12,33 +12,34 @@ Agentic documentary video generation pipeline for a YouTube channel focused on d
 Channel-automation V4/
 ├── CLAUDE.md                     # You are here (always loaded)
 ├── CONTEXT.md                    # Task router — start here for any task
-├── strategy/                     # Channel intel, competitors, topic ideation
-│   ├── CONTEXT.md
-│   ├── channel/
-│   │   ├── channel.md            # Channel DNA: voice, tone, pillars, audience
-│   │   └── past_topics.md        # Previously covered topics (dedup safety)
-│   ├── competitors/
-│   │   ├── competitors.json      # Registered channel registry
-│   │   └── analysis.md           # Stats, outliers, trends, topic clusters
-│   └── topics/
-│       └── topic_briefs.md       # Generated topic briefs
-├── reference/                    # Stable reference material (loaded on demand)
-│   ├── CONTEXT.md
-│   ├── Architecture.md           # Pipeline architecture, infrastructure, Asset Library
-│   ├── SKILL_CRAFTING_GUIDE.md   # Handbook for creating/improving skills
+├── channel/                      # Channel identity: voice, style, visual rules
+│   ├── channel.md                # Channel DNA: voice, tone, pillars, audience
+│   ├── past_topics.md            # Previously covered topics (dedup safety)
 │   ├── voice/
 │   │   └── WRITTING_STYLE_PROFILE.md   # Channel voice behavioral ruleset
 │   ├── scripts/                  # Full reference scripts (style extraction source)
 │   └── visuals/
 │       └── VISUAL_STYLE_GUIDE.md # Visual building blocks + register definitions
+├── strategy/                     # Competitive intel and topic generation
+│   ├── CONTEXT.md
+│   ├── competitors/
+│   │   ├── competitors.json      # Registered channel registry
+│   │   └── analysis.md           # Stats, outliers, trends, topic clusters
+│   └── topic_briefs.md           # Generated topic briefs
 ├── projects/                     # Per-video working directories
 │   └── N. [Video Title]/
 │       ├── metadata.md           # Topic brief, title variants, description
 │       ├── research/             # researcher skill output
-│       ├── script/               # writer skill output (new projects)
-│       ├── visuals/              # visual-orchestrator + broll-curator output (new projects)
+│       ├── script/               # writer skill output
+│       │   └── Script.md
+│       ├── visuals/              # visual planning output
+│       │   ├── shotlist.json
+│       │   └── media_leads.json
 │       └── assets/               # Acquired media assets
+│           └── screenshots/
 ├── .claude/
+│   ├── Architecture.md           # Pipeline architecture, infrastructure
+│   ├── SKILL_CRAFTING_GUIDE.md   # Handbook for creating/improving skills
 │   ├── skills/                   # Agent skills
 │   ├── tests/                    # pytest test suite
 │   └── scratch/                  # Transient data (gitignored)
@@ -70,9 +71,9 @@ strategy (channel-assistant)
 research (researcher)
     ↓ Research.md + entity_index.json
 writing (writer)
-    ↓ Script.md
+    ↓ script/Script.md
 visual planning (visual-orchestrator + media-scout)
-    ↓ shotlist.json + media_leads.json
+    ↓ visuals/shotlist.json + visuals/media_leads.json
 asset discovery (broll-curator)
     ↓ broll_candidates.json
 ```
@@ -80,7 +81,7 @@ asset discovery (broll-curator)
 ## Conventions
 
 ### Docs Over Outputs
-Reference docs (`prompts/`, `reference/`) are authoritative sources of truth. Previous project outputs are artifacts, NOT templates. Agents never read other projects' outputs to learn patterns.
+Reference docs (`channel/`) are authoritative sources of truth. Previous project outputs are artifacts, NOT templates. Agents never read other projects' outputs to learn patterns.
 
 ### Canonical Sources
 Every piece of information has ONE home. Other files point to it — they don't duplicate it.
@@ -102,6 +103,8 @@ Every piece of information has ONE home. Other files point to it — they don't 
 3. **CONTEXT.MD MAINTENANCE:** When any structural change is made to a directory (files added, removed, renamed, or moved), update that directory's `CONTEXT.md` to reflect the new state. This applies to all directories that have a `CONTEXT.md` file.
 
 4. **FOLDER MAP MAINTENANCE:** When a structural change affects a directory or file that is represented in the `CLAUDE.md` Folder Map, update the Folder Map to match. New projects and skills are NOT relevant (they are dynamic content). Relevant changes include adding, removing, or renaming persistent reference files, data stores, or top-level directories.
+
+5. **PIPELINE PRIORITY:** End-to-end flow over per-skill perfection. Each skill should produce output that the next skill can consume (unless end of pipeline). Optimize for completing the full pipeline, not for polishing individual skills. Human review checkpoints gate quality; the pipeline doesn't need to be perfect, it needs to be runnable.
 
 ## Coding Standards
 

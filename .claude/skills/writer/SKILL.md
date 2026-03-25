@@ -22,12 +22,12 @@ Research dossier → narrated chapter script. Pure prose, read aloud as-is.
 ## Prerequisites
 
 - `projects/N. [Title]/research/Research.md` — from the researcher skill
-- `reference/voice/WRITTING_STYLE_PROFILE.md` — from the style-extraction skill
-- `strategy/channel/channel.md` — channel DNA
+- `channel/voice/WRITTING_STYLE_PROFILE.md` — from the style-extraction skill
+- `channel/channel.md` — channel DNA
 
 ## Output
 
-`projects/N. [Title]/Script.md` — starts with `## 1. [Chapter Title]`, no header or metadata.
+`projects/N. [Title]/script/Script.md` — starts with `## 1. [Chapter Title]`, no header or metadata.
 
 Script format:
 - Starts directly with `## 1. [Chapter Title]`

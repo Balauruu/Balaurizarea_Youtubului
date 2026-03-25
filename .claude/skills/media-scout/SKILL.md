@@ -97,7 +97,7 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 ### Compile
 
 1. Merge web assets and YouTube leads into `media_leads.json` (schema below).
-2. Write to `projects/N. [Title]/research/media_leads.json` with `encoding='utf-8'`.
+2. Write to `projects/N. [Title]/visuals/media_leads.json` with `encoding='utf-8'`.
 3. Run audit checks.
 
 ---
@@ -162,7 +162,7 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 
 | Artifact | Location | Format |
 |----------|----------|--------|
-| Media leads | `projects/N. [Title]/research/media_leads.json` | JSON (UTF-8) with `web_assets` + `youtube_urls` arrays |
-| Screenshots | `projects/N. [Title]/research/screenshots/` | PNG (Wikipedia), PDF (primary sources) |
+| Media leads | `projects/N. [Title]/visuals/media_leads.json` | JSON (UTF-8) with `web_assets` + `youtube_urls` arrays |
+| Screenshots | `projects/N. [Title]/assets/screenshots/` | PNG (Wikipedia), PDF (primary sources) |
 
 Falls back to `.claude/scratch/media-scout/` if no project directory matches.

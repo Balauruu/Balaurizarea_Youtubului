@@ -93,15 +93,15 @@ Per-project asset directories under `projects/N. [Title]/assets/`:
 
 | Directory | Contents | Source |
 |-----------|----------|--------|
-| `archival_photos/` | Photographs, portraits, mugshots, press photos from the era/event | Media Scout leads → user downloads |
-| `archival_footage/` | Real archival video clips (news broadcasts, home video, institutional) | Media Scout YouTube leads → user extracts and trims |
-| `documents/` | Newspaper clippings, document scans, wiki screenshots, web page captures | Media Scout web crawl screenshots |
-| `broll/` | Atmospheric/illustrative footage including old cartoons | B-Roll Curator (IA + Asset Library) → user reviews and extracts |
-| `animations/` | Old cartoon clips used as conceptual b-roll | B-Roll Curator (IA cartoon collections) → user extracts |
+| `archival/` | Real footage AND photos from the era/event — news clips, home video, portraits, mugshots, press photos | Media Scout → asset-analyzer |
+| `documents/` | Newspaper clippings, document scans, wiki screenshots, web page captures | Media Scout downloads |
+| `broll/` | Atmospheric/conceptual footage (non-cartoon) — industrial films, nature, urban atmosphere | IA search (Visual Orchestrator) → asset-analyzer |
+| `cartoon_broll/` | Old cartoon clips used as conceptual b-roll | IA search (Visual Orchestrator) → asset-analyzer |
 | `vectors/` | Flat silhouette compositions | Vector Generation (planned — ComfyUI) |
 
 **Editor handles manually (DaVinci Resolve):**
 - All text elements (quote cards, testimony cards, date cards, keyword stingers, warning cards)
+- Motion graphics (animated diagrams, kinetic typography)
 - Backgrounds, overlays, effects
 - Color grading, film grain, vignettes, CRT/VHS effects
 - All glitch/distortion effects

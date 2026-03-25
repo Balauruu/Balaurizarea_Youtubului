@@ -159,7 +159,7 @@ Produce two outputs: formatted markdown cards (displayed directly in chat), and 
 
 ### Format 2: Full Topic Brief Schema
 
-Write the full briefs to `strategy/topics/topic_briefs.md` using `write_topic_briefs()` from `channel_assistant.topics`. Each brief must conform to this dict schema:
+Write the full briefs to `strategy/topic_briefs.md` using `write_topic_briefs()` from `channel_assistant.topics`. Each brief must conform to this dict schema:
 
 ```python
 {

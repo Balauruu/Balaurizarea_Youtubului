@@ -82,9 +82,9 @@ def cmd_load(topic: str) -> None:
     project_dir = resolve_project_dir(root, topic)
 
     research_path = project_dir / "research" / "Research.md"
-    style_path = root / "reference" / "voice" / "WRITTING_STYLE_PROFILE.md"
-    channel_path = root / "strategy" / "channel" / "channel.md"
-    output_path = project_dir / "Script.md"
+    style_path = root / "channel" / "voice" / "WRITTING_STYLE_PROFILE.md"
+    channel_path = root / "channel" / "channel.md"
+    output_path = project_dir / "script" / "Script.md"
     prompt_path = root / ".claude" / "skills" / "writer" / "prompts" / "generation.md"
 
     # Validate all required input files exist

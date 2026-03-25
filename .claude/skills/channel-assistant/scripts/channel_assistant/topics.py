@@ -98,8 +98,8 @@ def load_topic_inputs(root: Path) -> dict:
     Returns:
         {
             "analysis": str,           # contents of strategy/competitors/analysis.md
-            "channel_dna": str,        # contents of strategy/channel/channel.md
-            "past_topics": list[str],  # titles from strategy/channel/past_topics.md
+            "channel_dna": str,        # contents of channel/channel.md
+            "past_topics": list[str],  # titles from channel/past_topics.md
             "trends": str,             # ## Trending Topics section from analysis.md (empty if absent)
             "content_gaps": str,       # ## Content Gaps section from analysis.md (empty if absent)
         }
@@ -109,8 +109,8 @@ def load_topic_inputs(root: Path) -> dict:
     Returns empty strings for trends/content_gaps if trends has not been run yet.
     """
     analysis_path = root / "strategy" / "competitors" / "analysis.md"
-    channel_dna_path = root / "strategy" / "channel" / "channel.md"
-    past_topics_path = root / "strategy" / "channel" / "past_topics.md"
+    channel_dna_path = root / "channel" / "channel.md"
+    past_topics_path = root / "channel" / "past_topics.md"
 
     if not analysis_path.exists():
         raise FileNotFoundError(f"Analysis file not found: {analysis_path}")
@@ -263,7 +263,7 @@ def format_chat_cards(briefs: list[dict]) -> str:
 
         cards.append("\n".join(card_lines))
 
-    footer = f"\n**{len(briefs)} topics generated.** Full briefs with timelines and justifications: `strategy/topics/topic_briefs.md`\n"
+    footer = f"\n**{len(briefs)} topics generated.** Full briefs with timelines and justifications: `strategy/topic_briefs.md`\n"
     footer += "\nReply with a topic number (e.g. **1**) to start a project."
 
     return "\n\n".join(cards) + "\n\n" + footer

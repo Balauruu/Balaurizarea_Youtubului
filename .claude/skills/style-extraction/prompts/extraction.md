@@ -43,7 +43,7 @@ If reconstruction is needed, apply these rules in order:
 - Short beats (under 10 words) have been absorbed into surrounding sentences
 - The reconstructed version "reads better" in a generic editorial sense
 
-**Save the output** as `reference/scripts/[Original Title]_clean.md` alongside the original. All extraction work in Pass 2 is performed on this clean version.
+**Save the output** as `channel/scripts/[Original Title]_clean.md` alongside the original. All extraction work in Pass 2 is performed on this clean version.
 
 ---
 
@@ -51,8 +51,8 @@ If reconstruction is needed, apply these rules in order:
 
 Before extracting, read these two files to understand what NOT to include:
 
-- `strategy/channel/channel.md` — Channel DNA (voice, tone, pillars, audience). Identity statements that already appear here should NOT be duplicated in STYLE_PROFILE.md. Translate them into syntax rules instead.
-- `reference/voice/WRITTING_STYLE_PROFILE.md` — 6 existing rules to be absorbed and expanded. Do not simply copy them — expand each into the full rule format (see below).
+- `channel/channel.md` — Channel DNA (voice, tone, pillars, audience). Identity statements that already appear here should NOT be duplicated in STYLE_PROFILE.md. Translate them into syntax rules instead.
+- `channel/voice/WRITTING_STYLE_PROFILE.md` — 6 existing rules to be absorbed and expanded. Do not simply copy them — expand each into the full rule format (see below).
 
 ### Existing Rules Absorption
 
@@ -220,9 +220,9 @@ After drafting the complete STYLE_PROFILE.md content, present a summary to the h
 **Summary of absorbed existing rules:**
 [One line per existing rule: "Rule X: [name] — absorbed as [where it appears in STYLE_PROFILE.md]"]
 
-**Clean reconstruction created:** [Yes — saved as reference/scripts/[Title]_clean.md | No — script was already clean]
+**Clean reconstruction created:** [Yes — saved as channel/scripts/[Title]_clean.md | No — script was already clean]
 
-Approve to write reference/voice/WRITTING_STYLE_PROFILE.md, or request changes.
+Approve to write channel/voice/WRITTING_STYLE_PROFILE.md, or request changes.
 ```
 
 **Wait for explicit human approval before writing any files.**

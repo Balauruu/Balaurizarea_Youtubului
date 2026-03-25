@@ -139,7 +139,7 @@ When a command prints structured data to stdout (for Claude to reason over), do 
 |------|---------|
 | `strategy/competitors/competitors.json` | Competitor channel registry |
 | `strategy/competitors/analysis.md` | Full analysis report (stats + outliers + trends) |
-| `strategy/topics/topic_briefs.md` | Generated topic briefs |
+| `strategy/topic_briefs.md` | Generated topic briefs |
 | `data/channel_assistant.db` | SQLite database (channels + videos tables) |
 | `.claude/scratch/video_data_for_analysis.md` | Serialized video data for heuristic analysis |
 

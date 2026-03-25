@@ -7,13 +7,13 @@ description: Extract channel voice and style from reference scripts into a reusa
 
 ## How It Works
 
-This skill is a [HEURISTIC] skill — zero Python code, no CLI commands. Claude does all reasoning natively. One-shot invocation that reads all scripts in `reference/scripts/`, performs a reconstruct pass (if needed) then an extract pass, and writes `reference/voice/WRITTING_STYLE_PROFILE.md`.
+This skill is a [HEURISTIC] skill — zero Python code, no CLI commands. Claude does all reasoning natively. One-shot invocation that reads all scripts in `channel/scripts/`, performs a reconstruct pass (if needed) then an extract pass, and writes `channel/voice/WRITTING_STYLE_PROFILE.md`.
 
 ## Workflow
 
 ### Step 1: Read all reference scripts
 
-Read every `.md` file in `reference/scripts/`. These are the source material. Process all scripts found — no file path arguments needed.
+Read every `.md` file in `channel/scripts/`. These are the source material. Process all scripts found — no file path arguments needed.
 
 ### Step 2: Detect format
 
@@ -43,7 +43,7 @@ If reconstruction is needed:
 
 Read the full reconstruction and extraction instructions: `prompts/extraction.md`
 
-Save the clean version as `[Original Title]_clean.md` in `reference/scripts/` alongside the original.
+Save the clean version as `[Original Title]_clean.md` in `channel/scripts/` alongside the original.
 
 ### Step 4: Skip reconstruction (if already clean)
 
@@ -62,7 +62,7 @@ Using the instructions in `prompts/extraction.md`, extract:
 - Transition Phrase Library (10-20 verbatim phrases, categorized by function)
 - Open Ending Template (when to use, structure, crafted examples)
 
-Also read `strategy/channel/channel.md` — know what NOT to duplicate. Identity statements belong in channel.md, not in WRITTING_STYLE_PROFILE.md.
+Also read `channel/channel.md` — know what NOT to duplicate. Identity statements belong in channel.md, not in WRITTING_STYLE_PROFILE.md.
 
 ### Step 7: Draft and present for review
 
@@ -78,7 +78,7 @@ Wait for human approval before writing the file.
 
 ### Step 8: Write WRITTING_STYLE_PROFILE.md (after approval)
 
-Write `reference/voice/WRITTING_STYLE_PROFILE.md` with the approved content.
+Write `channel/voice/WRITTING_STYLE_PROFILE.md` with the approved content.
 
 ## Checkpoints
 
@@ -90,21 +90,21 @@ Write `reference/voice/WRITTING_STYLE_PROFILE.md` with the approved content.
 
 | File | Purpose |
 |------|---------|
-| `reference/scripts/*.md` | Input reference scripts (all .md files processed) |
-| `reference/scripts/[Title]_clean.md` | Reconstructed clean prose (created if input is auto-caption) |
-| `reference/voice/WRITTING_STYLE_PROFILE.md` | Output: behavioral ruleset |
-| `strategy/channel/channel.md` | Channel DNA — read to avoid duplication |
+| `channel/scripts/*.md` | Input reference scripts (all .md files processed) |
+| `channel/scripts/[Title]_clean.md` | Reconstructed clean prose (created if input is auto-caption) |
+| `channel/voice/WRITTING_STYLE_PROFILE.md` | Output: behavioral ruleset |
+| `channel/channel.md` | Channel DNA — read to avoid duplication |
 | `prompts/extraction.md` | Extraction instructions Claude follows during Step 6 |
 
 ## Outputs
 
 | Artifact | Location | Format |
 |----------|----------|--------|
-| Behavioral ruleset | `reference/voice/WRITTING_STYLE_PROFILE.md` | Markdown with 4 mandatory sections |
-| Clean reconstruction | `reference/scripts/[Title]_clean.md` | Plain markdown prose (only created if input is auto-caption) |
+| Behavioral ruleset | `channel/voice/WRITTING_STYLE_PROFILE.md` | Markdown with 4 mandatory sections |
+| Clean reconstruction | `channel/scripts/[Title]_clean.md` | Plain markdown prose (only created if input is auto-caption) |
 
 ## Re-Run Behavior
 
-Full overwrite on re-run. Each invocation reads all current scripts in `reference/scripts/` and produces a fresh profile from scratch. Previous version is preserved in git history.
+Full overwrite on re-run. Each invocation reads all current scripts in `channel/scripts/` and produces a fresh profile from scratch. Previous version is preserved in git history.
 
-To add a new reference script: drop a `.md` file into `reference/scripts/` and re-run the skill.
+To add a new reference script: drop a `.md` file into `channel/scripts/` and re-run the skill.

@@ -146,7 +146,7 @@ def init_project(
     3. Create ``projects/N. Title/`` plus ``research/``, ``assets/``,
        ``script/`` subdirectories.
     4. Write ``metadata.md`` into the project directory.
-    5. Append the selected topic to ``strategy/channel/past_topics.md``
+    5. Append the selected topic to ``channel/past_topics.md``
        to close the dedup loop for future topic generation runs.
 
     Args:
@@ -165,7 +165,7 @@ def init_project(
 
     Side effect:
         Appends the selected topic to
-        ``strategy/channel/past_topics.md``.
+        ``channel/past_topics.md``.
     """
     # Warn about title variants that exceed the 70-char channel convention
     for v in title_variants:
@@ -189,7 +189,7 @@ def init_project(
     _write_metadata(metadata_path, title, title_variants, description, brief_markdown)
 
     # Append to past_topics.md
-    past_topics_path = root / "strategy" / "channel" / "past_topics.md"
+    past_topics_path = root / "channel" / "past_topics.md"
     _append_past_topic(past_topics_path, title, hook)
 
     return project_dir
@@ -198,7 +198,7 @@ def init_project(
 def load_project_inputs(root: Path, topic_number: int) -> dict:
     """Load context needed for project initialization.
 
-    Reads the selected topic brief from ``strategy/topics/topic_briefs.md``
+    Reads the selected topic brief from ``strategy/topic_briefs.md``
     and extracts the Title Patterns section from
     ``strategy/competitors/analysis.md`` (if present).
 
@@ -217,7 +217,7 @@ def load_project_inputs(root: Path, topic_number: int) -> dict:
     Raises:
         FileNotFoundError: if ``topic_briefs.md`` does not exist.
     """
-    briefs_path = root / "strategy" / "topics" / "topic_briefs.md"
+    briefs_path = root / "strategy" / "topic_briefs.md"
     analysis_path = root / "strategy" / "competitors" / "analysis.md"
 
     if not briefs_path.exists():

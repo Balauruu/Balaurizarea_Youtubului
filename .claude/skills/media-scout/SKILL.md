@@ -1,11 +1,11 @@
 ---
 name: media-scout
-description: "Media discovery pipeline for documentary video topics. Use this skill when the user wants to find images, photos, documents, or footage for a documentary. Triggers on: 'find media', 'media scout', 'search for images', 'search for footage', 'find visuals for [topic]', or any request to discover visual assets for the channel."
+description: "Media discovery pipeline for documentary video topics — discovers and downloads images and documents, discovers YouTube footage leads (URLs only, no video downloads). Use this skill when the user wants to find images, photos, documents, or footage leads for a documentary. Triggers on: 'find media', 'media scout', 'search for images', 'find visuals for [topic]', or any request to discover visual assets for the channel."
 ---
 
 # Media Scout
 
-Two-pass media discovery: web images/documents (Pass 1) → YouTube footage leads (Pass 2) → compiled `media_leads.json`.
+Two-pass media discovery: web images/documents with downloads (Pass 1) → YouTube footage leads as URLs only (Pass 2) → compiled `media_leads.json`. Video downloads are handled by asset-downloader.
 
 ## Dependencies
 
@@ -160,30 +160,11 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
    | URL | Title | Channel | Views | Duration | Description |
    |-----|-------|---------|-------|----------|-------------|
 
-   The URL column must contain the full clickable YouTube link so the user can verify each video before approving. Without the link, the user cannot make informed approval decisions.
+   The URL column must contain the full clickable YouTube link so the user can verify each video. Without the link, the user cannot make informed decisions about each lead.
 
    Also show: total count by tier, any flagged issues (borderline AI content, geo-restricted videos, failed validations with reasons).
 
-   Ask: **"Approve leads for download?"**
-
-   The user may:
-   - Approve all leads
-   - Remove specific entries before download
-   - Request additional searches
-   - Skip downloads entirely
-
-7. **Download approved leads** — After human approval. Skip this step only if the user says "skip downloads" or if files already exist in staging.
-
-   **Staging directory:** `projects/N. [Title]/assets/staging/`
-
-   For each approved lead:
-   - Check if a file matching the video ID already exists in the staging directory — if so, skip (idempotent)
-   - Download via yt-dlp with rate limiting:
-     ```bash
-     yt-dlp --sleep-interval 5 -f "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]" --merge-output-format mp4 -o "{staging_dir}/%(id)s - %(title)s.%(ext)s" "URL"
-     ```
-   - After download, update the entry's `local_path` field with the path relative to the project directory (e.g., `assets/staging/dQw4w9WgXcQ - Video Title.mp4`)
-   - If download fails (geo-blocked, private, removed, rate-limited), keep the entry but set `local_path` to `null` and add `"download_error": "reason"` to the entry
+   This is the final step of Pass 2. All YouTube URLs are included as leads in `media_leads.json` — asset-downloader handles downloads.
 
 ### Compile
 
@@ -192,12 +173,6 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 3. Run audit checks.
 
 ---
-
-## Checkpoints
-
-| After | Agent Presents | Human Decides |
-|-------|---------------|---------------|
-| Pass 2 Step 6 | Per-entry scored table with URLs, count by tier, flagged issues, failed validations | Approve for download, remove entries, request more searches, or skip downloads |
 
 ## Audit
 
@@ -210,9 +185,8 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 | No lazy descriptions | Zero entries with "requires manual review" or "Image from [domain]" |
 | YouTube view threshold | All entries have view_count ≥ 1,000 (unless survivor channel exception documented) |
 | Score 1 budget | At most 7 videos scored as Score 1 |
-| Downloads tracked | Every web_asset has a `local_path` (non-null if download succeeded) |
-| YouTube downloads staged | Every approved lead has `local_path` or `download_error` (unless downloads skipped) |
-| No orphan files | Every file in `assets/archival/`, `assets/documents/`, and `assets/staging/` has a matching `media_leads.json` entry |
+| Web asset downloads tracked | Every web_asset has a `local_path` (non-null if download succeeded) |
+| No orphan files | Every file in `assets/archival/` and `assets/documents/` has a matching `media_leads.json` web_assets entry |
 
 ---
 
@@ -236,13 +210,13 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
       "url": "https://youtube.com/watch?v=...",
       "title": "Video title from yt-dlp validation",
       "duration": "43:12",
+      "duration_sec": 2592,
       "channel": "Channel name",
       "view_count": 12345,
+      "score": 2,
       "description": "What usable footage exists — briefing for video editor",
       "relevance": "Score N — brief justification",
-      "validated": true,
-      "local_path": "assets/staging/id - title.mp4 (relative to project dir, null if download failed or skipped)",
-      "download_error": "reason (only present if download failed)"
+      "validated": true
     }
   ]
 }
@@ -255,4 +229,3 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 | Media leads | `projects/N. [Title]/visuals/media_leads.json` | JSON (UTF-8) with `web_assets` + `youtube_urls` arrays |
 | Archival images | `projects/N. [Title]/assets/archival/` | JPG/PNG (photos, portraits, mugshots) |
 | Documents | `projects/N. [Title]/assets/documents/` | PNG (screenshots), PDF (primary sources), JPG/PNG (document images) |
-| YouTube videos | `projects/N. [Title]/assets/staging/` | MP4 (720p max) |

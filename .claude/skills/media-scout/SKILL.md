@@ -143,7 +143,7 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
    - Add `--sleep-interval 2` to each yt-dlp validation call (2-second pause between requests)
    - Process in batches of 20 — pause 10 seconds between batches
    - If a 429 error occurs mid-validation, **stop immediately**. Do not retry. The remaining unvalidated URLs can be marked `"validated": false` and included in the output for manual review, but do not burn more API calls trying to push through a rate limit.
-   - For downloads (Step 7), use `--sleep-interval 5` (longer pause, fewer total calls)
+   - Video downloads are handled by asset-downloader with its own rate limiting — a 429 during validation here will also block asset-downloader later
 
    **Cookie fallback:** If rate-limited, try `--cookies-from-browser BROWSER` (chrome, edge, firefox, brave). This authenticates yt-dlp as the user's logged-in YouTube session and often bypasses bot detection.
 

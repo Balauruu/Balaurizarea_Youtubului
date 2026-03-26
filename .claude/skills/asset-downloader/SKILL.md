@@ -36,13 +36,20 @@ python .claude/skills/asset-downloader/scripts/download.py \
   --project "projects/N. [Title]"
 ```
 
+To skip 24fps re-encoding (keep original frame rate):
+```bash
+python .claude/skills/asset-downloader/scripts/download.py \
+  --project "projects/N. [Title]" --no-reencode
+```
+
 The script:
 1. Reads both input files
 2. Collects all video URLs (YouTube from media_leads, archive.org from shotlist broll_leads)
 3. Deduplicates by URL
 4. Downloads to `assets/staging/` with site-specific rate limiting
-5. Writes `visuals/download_manifest.json`
-6. Prints summary to stdout
+5. Re-encodes videos above 24fps to 24fps (default behavior — fits the channel's cinematic aesthetic and reduces frames for downstream analysis)
+6. Writes `visuals/download_manifest.json`
+7. Prints summary to stdout
 
 ### Step 3 — Present Results
 
@@ -97,6 +104,19 @@ For failures, show the URL and error reason. Offer to retry failed downloads by 
 - `shot_refs`: shotlist entry IDs this video serves (empty for YouTube leads)
 - `context`: why this video matters — from media_leads description or broll_leads match_reasoning
 - `status`: `"completed"`, `"failed"`, or `"skipped"`
+
+## 24fps Re-encoding (Default)
+
+By default, videos with frame rates above 24fps are re-encoded to 24fps after download. This:
+- Fits the channel's cinematic documentary aesthetic
+- Reduces frames for downstream analysis (asset-analyzer processes fewer frames)
+- Produces smaller files on disk
+
+The re-encode uses `ffmpeg -r 24 -c:v libx264 -crf 23 -preset fast -c:a copy`. If re-encoding fails, the original file is kept.
+
+The manifest records both `original_fps` and `fps` (the actual FPS of the staged file) so asset-analyzer knows what it's working with.
+
+To disable: pass `--no-reencode` to the script, or when invoking the skill say "download at original fps" / "skip re-encoding".
 
 ## Resume Logic
 

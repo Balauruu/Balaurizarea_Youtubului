@@ -15,6 +15,7 @@ VOLUME_CAP_MB = 200 * 1024  # 200 GB
 YT_DLP = "yt-dlp"
 YOUTUBE_BATCH_SIZE = 10
 YOUTUBE_BATCH_PAUSE = 15  # seconds between batches
+TARGET_FPS = 24
 
 
 def load_json(path):
@@ -45,6 +46,55 @@ def ffprobe_validate(file_path):
 
 def get_file_size_mb(path):
     return os.path.getsize(path) / (1024 * 1024)
+
+
+def get_video_fps(file_path):
+    """Return the FPS of a video file, or None on failure."""
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-select_streams", "v:0",
+             "-show_entries", "stream=r_frame_rate", "-of", "json", file_path],
+            capture_output=True, text=True, timeout=15
+        )
+        if result.returncode != 0:
+            return None
+        streams = json.loads(result.stdout).get("streams", [])
+        if not streams:
+            return None
+        fps_str = streams[0].get("r_frame_rate", "0/1")
+        num, den = fps_str.split("/")
+        return round(float(num) / float(den), 3)
+    except Exception:
+        return None
+
+
+def reencode_to_24fps(file_path):
+    """Re-encode a video to 24fps. Returns (new_path, original_fps, error)."""
+    fps = get_video_fps(file_path)
+    if fps is None:
+        return file_path, None, None
+    if fps <= TARGET_FPS:
+        return file_path, fps, None
+
+    tmp_path = file_path + ".24fps.mp4"
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", file_path,
+        "-r", str(TARGET_FPS),
+        "-c:v", "libx264", "-crf", "23", "-preset", "fast",
+        "-c:a", "copy",
+        tmp_path,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+    if result.returncode != 0:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        return file_path, fps, f"Re-encode failed: {result.stderr[-200:]}"
+
+    # Replace original with re-encoded version
+    os.remove(file_path)
+    os.rename(tmp_path, file_path)
+    return file_path, fps, None
 
 
 def collect_urls(project_dir):
@@ -204,7 +254,7 @@ def download_archive_org(url, staging_dir):
     return local_path, None
 
 
-def run(project_dir):
+def run(project_dir, reencode_fps=True):
     staging_dir = os.path.join(project_dir, "assets", "staging")
     os.makedirs(staging_dir, exist_ok=True)
     manifest_path = os.path.join(project_dir, "visuals", "download_manifest.json")
@@ -273,6 +323,18 @@ def run(project_dir):
                 os.remove(local_path)
                 local_path, error = None, "ffprobe validation failed"
             else:
+                # Re-encode to 24fps if enabled and source is higher
+                original_fps = None
+                if reencode_fps:
+                    local_path, original_fps, reencode_err = reencode_to_24fps(local_path)
+                    if reencode_err:
+                        print(f"  WARN {dl_id} re-encode failed, keeping original: {reencode_err}")
+                    elif original_fps and original_fps > TARGET_FPS:
+                        size_mb = get_file_size_mb(local_path)  # update size after re-encode
+                        print(f"  RE-ENCODED {dl_id} {original_fps}fps → {TARGET_FPS}fps")
+                else:
+                    original_fps = get_video_fps(local_path)
+
                 total_size_mb += size_mb
                 rel_path = os.path.relpath(local_path, project_dir).replace("\\", "/")
                 # Get duration from ffprobe
@@ -300,6 +362,8 @@ def run(project_dir):
                     "status": "completed",
                     "shot_refs": entry["shot_refs"],
                     "context": entry["context"],
+                    "original_fps": original_fps,
+                    "fps": TARGET_FPS if (reencode_fps and original_fps and original_fps > TARGET_FPS) else original_fps,
                 })
                 print(f"  OK  {dl_id} [{entry['source']}] {entry['title'][:60]} ({size_mb:.0f}MB)")
                 continue
@@ -372,10 +436,12 @@ def run(project_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", required=True, help="Path to project directory")
+    parser.add_argument("--no-reencode", action="store_true",
+                        help="Skip 24fps re-encoding (default: re-encode videos above 24fps)")
     args = parser.parse_args()
 
     if not os.path.isdir(args.project):
         print(f"Error: project directory not found: {args.project}", file=sys.stderr)
         sys.exit(1)
 
-    run(args.project)
+    run(args.project, reencode_fps=not args.no_reencode)

@@ -14,6 +14,7 @@ What's your task? Find it below, load the right files, skip the rest.
 | **Discover media** | media-scout | project's `research/entity_index.json`, project's `research/Research.md` | All full files | `strategy/`, `channel/` — entity-driven search |
 | **Download video assets** | asset-downloader | `visuals/media_leads.json`, `visuals/shotlist.json` | media_leads.json: `youtube_urls[]`. shotlist.json: `broll_leads[]` on `curate` shots | `strategy/`, `channel/` — downloader reads URL sources only |
 | **Analyze assets** | asset-analyzer | project's `visuals/shotlist.json`, project's `visuals/download_manifest.json`, project's `assets/staging/` | All full files | `strategy/`, `channel/` — analyzer uses shotlist + manifest + staged videos |
+| **Compile edit sheet** | edit-sheet-compiler | project's `visuals/shotlist.json`, `visuals/media_leads.json`, `visuals/download_manifest.json`, `visuals/video_analysis.json` | All full files | `strategy/`, `channel/` — compiler reads all upstream outputs |
 | **Add/scrape competitors** | channel-assistant | `strategy/competitors/competitors.json` | Full file | Everything else |
 
 ## Cross-Phase Handoffs

@@ -62,6 +62,7 @@ Channel-automation V4/
 | Find b-roll candidates | shot-planner | B-roll discovery step in shotlist generation |
 | Download video assets | asset-downloader | `download.py` via SKILL.md |
 | Analyze/catalog video assets | asset-analyzer | two-pass: scene_detect → vision triage → full analysis |
+| Compile edit sheet | edit-sheet-compiler | SKILL.md (heuristic) + `organize_assets.py` |
 
 **For detailed task routing with load/skip tables, read `CONTEXT.md`.**
 
@@ -80,6 +81,8 @@ video download (asset-downloader)
     ↓ assets/staging/ + visuals/download_manifest.json
 video analysis (asset-analyzer)
     ↓ video_analysis.json + extracted clips + catalog entries
+edit sheet compilation (edit-sheet-compiler)
+    ↓ edit_sheet.md + organized assets/ folder
 ```
 
 ## Conventions

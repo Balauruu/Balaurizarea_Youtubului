@@ -36,13 +36,13 @@ Phase 1: Narrative Engineering
 
 Phase 2: Asset Pipeline
 
-  media_leads.json ─┬─► asset-downloader ─► asset-analyzer
+  media_leads.json ─┬─► asset-downloader ─► asset-analyzer ─► edit-sheet-compiler
   shotlist.json ────┘
   shotlist.json ────────► vector-generation (planned)
 ```
 
 - After Research completes, **Media Scout** and **Writer** run in parallel — both depend on Research.md but not on each other.
-- After the Shot Planner produces the shotlist, **Asset Downloader** downloads all video assets (YouTube + archive.org), then **Asset Analyzer** processes staged videos. **Vector Generation** can run in parallel with asset download/analysis — it reads the shotlist but serves different shot types.
+- After the Shot Planner produces the shotlist, **Asset Downloader** downloads all video assets (YouTube + archive.org), then **Asset Analyzer** processes staged videos. **Edit Sheet Compiler** compiles all assets into a numbered project folder with a formatted edit sheet. **Vector Generation** can run in parallel with the asset pipeline — it reads the shotlist but serves different shot types.
 
 ---
 

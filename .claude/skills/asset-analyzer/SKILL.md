@@ -5,7 +5,7 @@ description: Use when analyzing video files for documentary asset extraction —
 
 # Asset Analyzer
 
-Analyze video files, identify relevant segments, catalog them in SQLite, and extract approved clips. Wraps the `claude-video-analyzer` skill as the analysis engine, adding project context awareness and asset cataloging.
+Analyze video files, identify relevant segments, catalog them in SQLite, and extract approved clips. Self-contained two-pass workflow: PySceneDetect triage filters irrelevant footage cheaply, then full vision analysis runs only on relevant scenes.
 
 ## Two Modes
 
@@ -21,15 +21,15 @@ Analyze video files, identify relevant segments, catalog them in SQLite, and ext
 **Trigger:** User references a project (e.g., "Analyze staging videos for Duplessis Orphans")
 
 - Resolve project directory (case-insensitive substring match against `projects/`)
-- Load `visuals/media_leads.json` for context (why each video was downloaded, what to look for)
+- Load `visuals/download_manifest.json` for video context (source URLs, titles, contexts, shot_refs)
 - Load `visuals/shotlist.json` for visual needs (what shots are still needed)
 - Process all videos in `projects/N. [Title]/assets/staging/`
-- Relevance scoring informed by shotlist and media_leads
+- Relevance scoring informed by shotlist and download manifest
 - Clips route to project assets or global assets based on scope
 
 ---
 
-## V1 Workflow — Analysis + Timestamps + Cataloging
+## V1 Workflow — Two-Pass Analysis + Timestamps + Cataloging
 
 ### Step 1: Resolve context
 
@@ -37,39 +37,99 @@ Analyze video files, identify relevant segments, catalog them in SQLite, and ext
 
 **Project mode:**
 1. Resolve project directory from topic substring
-2. Read `visuals/media_leads.json` — extract YouTube entries with `local_path` pointing to staging
+2. Read `visuals/download_manifest.json` — extract video entries with `local_path`, `source_url`, `title`, `context`, `shot_refs`
 3. Read `visuals/shotlist.json` — extract shot visual needs and b-roll themes
-4. Build a context brief: for each staged video, pair it with its media_leads entry (source URL, title, description, relevance notes)
+4. Build a context brief: for each staged video, pair it with its manifest entry (source URL, title, context, shot_refs pointing to shotlist entries)
 
-### Step 2: Analyze videos
+### Step 2: Probe videos
 
-For each video file, use the `claude-video-analyzer` skill:
+For each video file:
 
-1. **Probe** — Run the video-analyzer probe step to get duration, resolution, FPS
-2. **Estimate** — Run cost estimation. Present to user. Wait for approval before proceeding.
-3. **Extract frames** — Use `standard` mode (2 fps) for videos under 10 minutes. Use `quick` mode (1 fps) for longer videos.
-4. **Analyze frames** — Send frame batches to Claude vision with this context prompt:
+```bash
+python .claude/skills/asset-analyzer/scripts/probe_video.py <video_path>
+```
 
-**Standalone context prompt:**
-> Describe what you see in each frame. Note: era/decade, mood/atmosphere, visual content (people, places, objects, text), and potential documentary use.
+Get duration, resolution, FPS.
 
-**Project context prompt:**
-> You are analyzing footage for the documentary "[project name]". Context for this video: [media_leads entry description and relevance]. The shotlist needs these visuals: [relevant shot visual_need descriptions]. For each frame, describe what you see and rate its relevance to the project's visual needs. Note: era, mood, specific content, and which shotlist entries it could serve.
+### Step 3: Scene detection (triage)
 
-### Step 3: Identify segments
+For each video:
 
-From the frame analysis, identify **usable segments** — contiguous ranges of frames that show something useful. For each segment:
+```bash
+python .claude/skills/asset-analyzer/scripts/scene_detect.py --input <video> --output <temp_dir>
+```
+
+Outputs:
+- `scenes.json` — scene boundaries (start/end timestamps)
+- `triage_manifest.json` — one mid-scene frame per scene at 512px width
+
+### Step 4: Estimate cost
+
+```bash
+python .claude/skills/asset-analyzer/scripts/estimate_cost.py --video-name <name> --duration <sec> --scenes <count>
+```
+
+Shows two-pass token/cost estimate (triage frames + projected full-analysis frames). **Wait for user approval before proceeding.**
+
+### Step 5: Triage vision analysis (Pass 1)
+
+Send triage frames to Claude vision in batches of 15 frames per batch.
+
+Use the **triage prompt** from `references/vision_prompts.md`:
+- `[PROJECT_NAME]` — project name (project mode) or "Standalone Analysis" (standalone)
+- `[CONTEXT]` — download_manifest `context` field (project mode) or user-provided description (standalone)
+- `[SHOT_REFS_OR_GENERAL_NEEDS]` — shotlist entries referenced by the manifest's `shot_refs` (project mode) or "Describe what you see" (standalone)
+
+Prepend the **batch context template** from `references/vision_prompts.md` to each batch.
+
+Claude classifies each scene: **relevant** / **irrelevant** / **maybe**.
+
+### Step 6: Present triage results
+
+Show scene classification table per video:
+
+| Video | Total Scenes | Relevant | Maybe | Irrelevant | Relevant Duration |
+|-------|-------------|----------|-------|------------|-------------------|
+
+Then show per-scene detail: scene number, timestamp range, classification, brief description.
+
+User can:
+- Override classifications before deep analysis
+- Approve proceeding to Pass 2
+
+**Show token estimate for the deep analysis pass** based on the number and duration of relevant+maybe scenes.
+
+### Step 7: Full analysis (Pass 2) on relevant scenes
+
+For each scene marked **relevant** or **maybe**, extract frames:
+
+```bash
+python .claude/skills/asset-analyzer/scripts/extract_frames.py --input <video> --output <temp_dir> --mode full --start <scene_start> --end <scene_end> --max-width 512
+```
+
+Send frame batches to Claude vision with:
+- **Project mode:** Full analysis prompt (project) from `references/vision_prompts.md`
+- **Standalone mode:** Full analysis prompt (standalone) from `references/vision_prompts.md`
+
+Prepend the **batch context template** to each batch.
+
+Identify usable segments with precise timestamps.
+
+### Step 8: Identify segments
+
+From the full analysis, identify **usable segments** — contiguous ranges of frames that show something useful. For each segment:
 
 - `start_sec` / `end_sec` — timestamp boundaries
 - `description` — what the segment shows
 - `mood` — atmospheric quality
 - `era` — time period depicted
 - `relevance` — why it's useful (reference specific shotlist entries in project mode)
-- `scope` — `project` (topic-specific footage) or `global` (atmospheric/b-roll reusable across projects). Claude decides based on content: interviews, specific locations, named people → project. Generic corridors, nature, industrial footage → global.
+- `scope` — `project` (topic-specific footage) or `global` (atmospheric/b-roll reusable across projects). Claude decides based on content: interviews, specific locations, named people -> project. Generic corridors, nature, industrial footage -> global.
 - `category` — `archival`, `broll`, or `cartoon_broll`
 - `tags` — comma-separated searchable terms
+- `approved` — null (pending human review)
 
-### Step 4: Write analysis output
+### Step 9: Write video_analysis.json
 
 **Project mode:** Write `visuals/video_analysis.json`:
 
@@ -104,7 +164,7 @@ From the frame analysis, identify **usable segments** — contiguous ranges of f
 
 **Standalone:** Write to `.claude/scratch/video_analysis_{filename}.json` with the same schema (minus `project` field).
 
-### Step 5: Catalog in SQLite
+### Step 10: Catalog in SQLite
 
 For each identified segment, insert a row into `data/asset_catalog.db` using `data/catalog.py`:
 
@@ -115,10 +175,10 @@ conn = get_connection()
 insert_clip(
     conn=conn,
     path=source_file_path,       # staging path for now
-    source_url=source_url,
     source_type="youtube",        # or "internet_archive", "web"
     scope="project",              # or "global"
-    project="The Duplessis Orphans",  # null for global
+    source_url=source_url,
+    project="The Duplessis Orphans",  # None for global
     category="archival",
     description=segment_description,
     mood=segment_mood,
@@ -130,7 +190,7 @@ insert_clip(
 
 Status defaults to `'analyzed'` — clips are cataloged but not yet extracted.
 
-### Step 6: Present for review
+### Step 11: Present for review
 
 Present a summary table to the user:
 
@@ -144,27 +204,27 @@ Then for each video, show the segments with timestamps and descriptions. Ask the
 - Adjust timestamps if needed
 - Change scope/category if misclassified
 
-**V1 stops here.** The user now has timestamped descriptions and catalog entries. They can manually extract clips using the timestamps, or wait for V2.
+**V1 stops here.** The user now has timestamped descriptions and catalog entries. They can manually extract clips using the timestamps, or proceed to V2.
 
 ---
 
 ## V2 Workflow — Clip Extraction (after human review)
 
-### Step 7: Extract approved clips
+### Step 1: Extract approved clips
 
 For each segment where `approved: true`:
 
 ```bash
-ffmpeg -ss {start_sec} -to {end_sec} -i "{source_file}" -c copy "{output_path}"
+python .claude/skills/asset-analyzer/scripts/export_clips.py --input "{source_file}" --start {start_sec} --end {end_sec} --output "{output_path}"
 ```
 
 **Output path logic:**
-- `scope: "project"` → `projects/N/assets/{category}/{descriptive_name}.mp4`
-- `scope: "global"` → `D:/Youtube/D. Mysteries Channel/3. Assets/{category}/{descriptive_name}.mp4`
+- `scope: "project"` -> `projects/N/assets/{category}/{descriptive_name}.mp4`
+- `scope: "global"` -> `D:/Youtube/D. Mysteries Channel/3. Assets/{category}/{descriptive_name}.mp4`
 
 Filename: `{source_slug}_{start_sec}s_{brief_description}.mp4` (e.g., `cbc_doc_22s_institutional_exterior.mp4`)
 
-### Step 8: Update catalog
+### Step 2: Update catalog
 
 For each extracted clip:
 ```python
@@ -174,7 +234,7 @@ conn = get_connection()
 update_clip(conn, clip_id, path=new_clip_path, status="extracted")
 ```
 
-### Step 9: Clean staging
+### Step 3: Clean staging
 
 After all clips are extracted from a staging video, offer to delete the source file:
 > "All approved clips extracted from cbc_documentary.mp4. Delete staging file? (Y/n)"
@@ -185,11 +245,12 @@ Only delete with user confirmation.
 
 ## Checkpoints
 
-| After step | Agent presents | User decides |
-|------------|---------------|--------------|
-| Step 2 (estimate) | Token/cost estimate | Approve or adjust mode |
-| Step 6 (analysis) | Segment table with timestamps | Approve/reject segments, adjust scope/category |
-| Step 9 (cleanup) | Extraction complete | Delete staging files or keep |
+| After | Agent Presents | Human Decides |
+|-------|---------------|---------------|
+| Step 4 (estimate) | Two-pass token/cost estimate | Approve or stop |
+| Step 6 (triage) | Scene classification table per video, token estimate for deep pass | Override classifications, approve deep analysis |
+| Step 11 (analysis) | Segment table with timestamps | Approve/reject segments, adjust scope/category |
+| V2 Step 3 (cleanup) | Extraction complete | Delete staging files or keep |
 
 ---
 
@@ -216,6 +277,17 @@ When the user asks "what clips do I have for X" or "search the catalog for Y", u
 
 ---
 
+## Frame Extraction Modes
+
+Only two modes exist:
+
+| Mode | Use | FPS | Resolution | When |
+|------|-----|-----|------------|------|
+| `triage` | 1 frame per scene via PySceneDetect | N/A (scene-based) | 512px wide | Pass 1 — scene classification |
+| `full` | 2fps on selected time ranges | 2 | 512px wide | Pass 2 — detailed analysis of relevant scenes |
+
+---
+
 ## Key Locations
 
 | What | Path |
@@ -224,13 +296,21 @@ When the user asks "what clips do I have for X" or "search the catalog for Y", u
 | Global assets | `D:/Youtube/D. Mysteries Channel/3. Assets/{category}/` |
 | Project assets | `projects/N/assets/{category}/` |
 | Catalog DB | `data/asset_catalog.db` |
+| Catalog CRUD | `data/catalog.py` |
 | Analysis output | `visuals/video_analysis.json` (project) or `.claude/scratch/` (standalone) |
+| Probe script | `.claude/skills/asset-analyzer/scripts/probe_video.py` |
+| Scene detect script | `.claude/skills/asset-analyzer/scripts/scene_detect.py` |
+| Frame extraction script | `.claude/skills/asset-analyzer/scripts/extract_frames.py` |
+| Cost estimation script | `.claude/skills/asset-analyzer/scripts/estimate_cost.py` |
+| Clip export script | `.claude/skills/asset-analyzer/scripts/export_clips.py` |
+| Still export script | `.claude/skills/asset-analyzer/scripts/export_stills.py` |
+| Vision prompts | `.claude/skills/asset-analyzer/references/vision_prompts.md` |
 
 ---
 
 ## Dependencies
 
-- `claude-video-analyzer` skill — frame extraction and vision analysis engine
-- `ffmpeg` — video probing and clip extraction
+- `scenedetect` (venv at `C:\Users\iorda\venvs\scenedetect`) — scene boundary detection
+- `ffmpeg` — video probing, frame extraction, clip cutting
 - `data/catalog.py` — SQLite CRUD for asset catalog
-- `opencv-python-headless`, `numpy` — frame processing (via claude-video-analyzer)
+- `opencv-python-headless`, `numpy` — frame processing

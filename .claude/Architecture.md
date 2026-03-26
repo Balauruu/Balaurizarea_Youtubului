@@ -36,12 +36,13 @@ Phase 1: Narrative Engineering
 
 Phase 2: Asset Pipeline
 
-  shotlist.json ─┬─► asset-analyzer
-                 └─► vector-generation (planned)
+  media_leads.json ─┬─► asset-downloader ─► asset-analyzer
+  shotlist.json ────┘
+  shotlist.json ────────► vector-generation (planned)
 ```
 
 - After Research completes, **Media Scout** and **Writer** run in parallel — both depend on Research.md but not on each other.
-- After the Shot Planner produces the shotlist, **Asset Analyzer** and **Vector Generation** run in parallel — both read the shotlist but serve different shot types.
+- After the Shot Planner produces the shotlist, **Asset Downloader** downloads all video assets (YouTube + archive.org), then **Asset Analyzer** processes staged videos. **Vector Generation** can run in parallel with asset download/analysis — it reads the shotlist but serves different shot types.
 
 ---
 
@@ -93,10 +94,10 @@ Per-project asset directories under `projects/N. [Title]/assets/`:
 
 | Directory | Contents | Source |
 |-----------|----------|--------|
-| `archival/` | Real footage AND photos from the era/event — news clips, home video, portraits, mugshots, press photos | Media Scout → asset-analyzer |
+| `archival/` | Real footage AND photos from the era/event — news clips, home video, portraits, mugshots, press photos | Media Scout (images) → asset-downloader (videos) → asset-analyzer |
 | `documents/` | Newspaper clippings, document scans, wiki screenshots, web page captures | Media Scout downloads |
-| `broll/` | Atmospheric/conceptual footage (non-cartoon) — industrial films, nature, urban atmosphere | B-roll discovery (Shot Planner) → asset-analyzer |
-| `cartoon_broll/` | Old cartoon clips used as conceptual b-roll | B-roll discovery (Shot Planner) → asset-analyzer |
+| `broll/` | Atmospheric/conceptual footage (non-cartoon) — industrial films, nature, urban atmosphere | Shot Planner (leads) → asset-downloader → asset-analyzer |
+| `cartoon_broll/` | Old cartoon clips used as conceptual b-roll | Shot Planner (leads) → asset-downloader → asset-analyzer |
 | `vectors/` | Flat silhouette compositions | Vector Generation (planned — ComfyUI) |
 
 **Editor handles manually (DaVinci Resolve):**

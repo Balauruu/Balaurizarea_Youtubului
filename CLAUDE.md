@@ -60,7 +60,8 @@ Channel-automation V4/
 | Create shot list | shot-planner | SKILL.md (heuristic, no CLI) |
 | Discover media assets | media-scout | Manual workflow (crawl4ai + yt-dlp) |
 | Find b-roll candidates | shot-planner | B-roll discovery step in shotlist generation |
-| Analyze/catalog video assets | asset-analyzer | standalone or project mode |
+| Download video assets | asset-downloader | `download.py` via SKILL.md |
+| Analyze/catalog video assets | asset-analyzer | two-pass: scene_detect → vision triage → full analysis |
 
 **For detailed task routing with load/skip tables, read `CONTEXT.md`.**
 
@@ -71,11 +72,13 @@ strategy (channel-assistant)
     ↓ topic brief + metadata.md
 research (researcher)
     ↓ Research.md + entity_index.json
-writing (writer)
-    ↓ script/Script.md
-visual planning (shot-planner + media-scout)
-    ↓ visuals/shotlist.json + visuals/media_leads.json + downloads
-asset acquisition (asset-analyzer)
+writing (writer) + media-scout (images/docs + YouTube leads)
+    ↓ script/Script.md + visuals/media_leads.json
+visual planning (shot-planner)
+    ↓ visuals/shotlist.json (with broll_leads)
+video download (asset-downloader)
+    ↓ assets/staging/ + visuals/download_manifest.json
+video analysis (asset-analyzer)
     ↓ video_analysis.json + extracted clips + catalog entries
 ```
 

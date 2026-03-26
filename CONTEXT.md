@@ -12,7 +12,8 @@ What's your task? Find it below, load the right files, skip the rest.
 | **Write script** | writer | `channel/voice/WRITTING_STYLE_PROFILE.md`, `channel/scripts/`, `channel/channel.md`, project's `research/Research.md` | All full files | `strategy/competitors/`, `channel/visuals/` — writer needs voice + research, not strategy |
 | **Create shot list** | shot-planner | project's `Script.md`, `channel/visuals/VISUAL_STYLE_GUIDE.md`, project's `visuals/media_leads.json` | All full files | `strategy/`, `channel/voice/`, `channel/scripts/` — planner needs script + visual rules only |
 | **Discover media** | media-scout | project's `research/entity_index.json`, project's `research/Research.md` | All full files | `strategy/`, `channel/` — entity-driven search |
-| **Analyze assets** | asset-analyzer | project's `visuals/shotlist.json`, project's `visuals/media_leads.json`, project's `assets/staging/` | All full files | `strategy/`, `channel/` — analyzer uses shotlist + staged videos |
+| **Download video assets** | asset-downloader | `visuals/media_leads.json`, `visuals/shotlist.json` | media_leads.json: `youtube_urls[]`. shotlist.json: `broll_leads[]` on `curate` shots | `strategy/`, `channel/` — downloader reads URL sources only |
+| **Analyze assets** | asset-analyzer | project's `visuals/shotlist.json`, project's `visuals/download_manifest.json`, project's `assets/staging/` | All full files | `strategy/`, `channel/` — analyzer uses shotlist + manifest + staged videos |
 | **Add/scrape competitors** | channel-assistant | `strategy/competitors/competitors.json` | Full file | Everything else |
 
 ## Cross-Phase Handoffs

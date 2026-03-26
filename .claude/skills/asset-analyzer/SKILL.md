@@ -95,6 +95,15 @@ From the analysis, identify **usable segments** — contiguous frame ranges show
 | `category` | `archival`, `broll`, or `cartoon_broll` |
 | `tags` | Comma-separated searchable terms |
 
+**Scope assignment rules:**
+
+Assign `scope: "project"` (default) unless ALL of these are true:
+- Content is generic — no named people, specific locations, or topic-specific events from this documentary
+- Clearly reusable across multiple unrelated projects
+- Falls into a recognizable global category: atmospheric footage (corridors, weather, textures, urban/rural environments), cartoon clips with broad metaphorical use, generic institutional or industrial footage
+
+When in doubt, assign `project`. Global scope is strict — the clip must be useful to a documentary about a completely different topic.
+
 ### Step 5: Write analysis + catalog + present for review
 
 1. **Write `video_analysis.json`** — project mode: `visuals/video_analysis.json`; standalone: `.claude/scratch/video_analysis_{filename}.json`
@@ -139,12 +148,19 @@ insert_clip(conn, path=source_file_path, source_type="youtube",
             duration_sec=end_sec - start_sec)
 ```
 
-3. **Present summary** for user review:
+3. **Present for review** in two tiers:
 
-| Video | Segments | Scope | Category | Key content |
-|-------|----------|-------|----------|-------------|
+**Tier 1 — Shot-matched segments** (segments whose `relevance` cites a specific shot ID):
 
-Show each segment with timestamps and descriptions. User approves/rejects segments, adjusts timestamps or scope/category.
+| Video | Segment | Shot | Timestamps | Description | Scope |
+|-------|---------|------|------------|-------------|-------|
+
+**Tier 2 — Unmatched global candidates** (segments with `scope: "global"` that don't cite any shot ID):
+
+| Video | Segment | Timestamps | Description | Category | Tags |
+|-------|---------|------------|-------------|----------|------|
+
+Present Tier 1 first — these are the clips the shotlist needs. Tier 2 follows — these are potential additions to the global asset library. User approves/rejects from both tiers, adjusts timestamps or scope/category.
 
 ### Step 6: Extract approved clips
 
@@ -160,7 +176,16 @@ python .claude/skills/asset-analyzer/scripts/export_clips.py \
 
 **Output path:**
 - `scope: "project"` → `projects/N/assets/{category}/`
-- `scope: "global"` → `D:/Youtube/D. Mysteries Channel/3. Assets/{category}/`
+- `scope: "global"` → `D:/Youtube/D. Mysteries Channel/3. Assets/{subject_category}/{subcategory}/`
+
+For global clips, determine the subject category from the segment's description and tags:
+- Locations (urban, rural, interiors, aerial)
+- Nature (weather, water, forests, landscapes)
+- People (crowds, silhouettes, hands_details)
+- Objects (documents, artifacts, symbols)
+- Textures (film_grain, light, particles, surfaces)
+- Cartoons (PD animation clips)
+- Transitions (establishing, time_passage, movement)
 
 **Filename:** `{source_slug}_{start_sec}s_{brief_description}.mp4`
 

@@ -76,7 +76,6 @@ For each `curate` shot, find specific archive.org footage that serves that shot'
 - **archive.org only** — no stock footage sites. The channel aesthetic demands aged, archival material.
 - **`broll_cartoon` shots must have a specific cartoon episode** — point to a particular film by name (e.g., "The Cobweb Hotel (1936) — flies trapped by a spider-innkeeper" not "Fleischer Color Classics collection"). The cartoon must metaphorically serve the narrative beat.
 - **`broll_atmospheric` shots get 1-2 documentary/footage leads** from archive.org that match the mood and era.
-- This step does NOT download anything — URLs only. Asset-analyzer handles downloads and clip extraction downstream.
 - `match_reasoning` must explain the conceptual link between the footage and the specific narrative beat, not just restate the title.
 
 ### Step 7 — Write Outputs

@@ -1,0 +1,64 @@
+{
+  "skill_name": "asset-analyzer",
+  "evals": [
+    {
+      "id": "E01",
+      "name": "search-workflow",
+      "prompt": "Analyze staging videos for Duplessis Orphans",
+      "expected_output": "Full search workflow: embed, extract queries from shotlist, search, refine weak queries, present segment table",
+      "assertions": [
+        {"text": "Shotlist loaded and shot IDs referenced", "type": "functional"},
+        {"text": "embed.py invoked with --pool project", "type": "functional"},
+        {"text": "search.py invoked and candidates produced", "type": "functional"},
+        {"text": "Weak queries identified and refinement attempted", "type": "functional"},
+        {"text": "Segment table presented with Video/Shot/Timestamps columns", "type": "functional"}
+      ]
+    },
+    {
+      "id": "E02",
+      "name": "discovery-workflow",
+      "prompt": "Discover what's in the Duplessis footage",
+      "expected_output": "Discovery workflow: auto-generate taxonomy, classify, cluster, present inventory",
+      "assertions": [
+        {"text": "Project taxonomy auto-generated from project context (not manual)", "type": "functional"},
+        {"text": "Categories are project-specific (orphanage, Quebec, religious, etc.)", "type": "quality"},
+        {"text": "discover.py invoked with --taxonomy-global and --taxonomy-project", "type": "functional"},
+        {"text": "Category inventory presented with frame counts", "type": "functional"},
+        {"text": "Unknown clusters mentioned or shown", "type": "functional"}
+      ]
+    },
+    {
+      "id": "E03",
+      "name": "evaluation-template",
+      "prompt": "Generate a ground truth template for Duplessis",
+      "expected_output": "Template generated with correct video list, user instructed to fill in DaVinci Resolve",
+      "assertions": [
+        {"text": "evaluate.py --generate-template invoked", "type": "functional"},
+        {"text": "Output mentions number of videos", "type": "functional"},
+        {"text": "User instructed about DaVinci Resolve or manual review", "type": "functional"}
+      ]
+    },
+    {
+      "id": "E04",
+      "name": "adhoc-search",
+      "prompt": "Search the footage for scenes of institutional buildings and religious ceremonies",
+      "expected_output": "User queries used directly (not extracted from shotlist), search executed",
+      "assertions": [
+        {"text": "Queries derived from user input, not shotlist", "type": "functional"},
+        {"text": "Search executed and candidates returned", "type": "functional"},
+        {"text": "Results presented in a readable format", "type": "functional"}
+      ]
+    },
+    {
+      "id": "E05",
+      "name": "query-refinement",
+      "prompt": "The search for 'bureaucratic menace' scored 0.12. Can you refine and retry?",
+      "expected_output": "Concrete visual alternatives generated, re-search attempted",
+      "assertions": [
+        {"text": "At least 2 alternative phrasings generated", "type": "functional"},
+        {"text": "Alternatives are concrete visual descriptions (not abstract)", "type": "quality"},
+        {"text": "Re-search attempted with refined queries", "type": "functional"}
+      ]
+    }
+  ]
+}

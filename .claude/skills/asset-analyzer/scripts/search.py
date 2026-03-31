@@ -36,7 +36,7 @@ def detect_scene_boundaries(
     if threshold < 0.01:
         return []
 
-    cut_indices = np.where(deltas > threshold)[0]
+    cut_indices = np.where(deltas >= threshold)[0]
     boundaries = []
     for idx in cut_indices:
         mid = (timestamps[idx] + timestamps[idx + 1]) / 2

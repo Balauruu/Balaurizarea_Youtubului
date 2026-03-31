@@ -34,6 +34,8 @@ def evaluate_segments(
         best_iou = 0
         best_pi = -1
         for pi, pred in enumerate(predictions):
+            if pi in pred_matched:
+                continue
             iou = compute_iou(gt["start_sec"], gt["end_sec"], pred["start_sec"], pred["end_sec"])
             if iou > best_iou:
                 best_iou = iou

@@ -3,14 +3,19 @@
 ## Model Loading
 
 ```python
-from perception_models import pe_core
+import sys
+sys.path.insert(0, "C:/Users/iorda/repos/perception_models")
+import core.vision_encoder.pe as pe
+import core.vision_encoder.transforms as transforms
 
-model = pe_core.load_model("PE-Core-L14-336")
+model = pe.CLIP.from_config("PE-Core-L14-336", pretrained=True)
 model = model.to("cuda").eval()
 
-tokenizer = pe_core.get_tokenizer("PE-Core-L14-336")
-preprocess = pe_core.get_preprocess("PE-Core-L14-336")
+tokenizer = transforms.get_text_tokenizer(model.context_length)
+preprocess = transforms.get_image_transform(model.image_size)
 ```
+
+Note: The repo is cloned to `C:/Users/iorda/repos/perception_models` and installed in editable mode in the conda env. The `from embed import load_model` function in the scripts wraps this.
 
 ## Image Encoding
 

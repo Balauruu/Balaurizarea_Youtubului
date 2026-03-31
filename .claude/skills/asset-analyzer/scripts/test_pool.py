@@ -120,11 +120,11 @@ def test_pool_root_project_no_dir():
 
 
 def test_pool_index_empty_load_all():
-    """Empty pool returns (0, 768) shaped array and empty lists."""
+    """Empty pool returns (0, 0) shaped array and empty lists."""
     with tempfile.TemporaryDirectory() as tmpdir:
         idx = PoolIndex(tmpdir)
         emb, ts, info = idx.load_all_embeddings()
-        assert emb.shape == (0, 768)
+        assert emb.shape == (0, 0)
         assert len(ts) == 0
         assert len(info) == 0
 
@@ -145,13 +145,13 @@ def test_pool_index_put_overwrites():
 
 
 def test_pool_index_corrupt_json():
-    """Corrupt index.json raises an exception on access."""
+    """Corrupt index.json raises ValueError on access."""
     with tempfile.TemporaryDirectory() as tmpdir:
         index_path = os.path.join(tmpdir, "index.json")
         with open(index_path, "w") as f:
             f.write("{corrupt json!!")
         idx = PoolIndex(tmpdir)
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             idx.has("anything")
 
 

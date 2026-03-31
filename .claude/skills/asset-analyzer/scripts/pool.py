@@ -46,7 +46,10 @@ class PoolIndex:
     def _load(self) -> dict:
         if self._index is None:
             if self.index_path.exists():
-                self._index = json.loads(self.index_path.read_text(encoding="utf-8"))
+                try:
+                    self._index = json.loads(self.index_path.read_text(encoding="utf-8"))
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"Corrupt index.json at {self.index_path}: {e}") from e
             else:
                 self._index = {}
         return self._index
@@ -94,8 +97,14 @@ class PoolIndex:
     def load_embeddings(self, fhash: str) -> tuple[np.ndarray, np.ndarray]:
         """Return (embeddings, timestamps) for a cached video."""
         entry_dir = self.root / fhash
-        emb = np.load(str(entry_dir / "embeddings.npy"))
-        ts = np.load(str(entry_dir / "timestamps.npy"))
+        emb_path = entry_dir / "embeddings.npy"
+        ts_path = entry_dir / "timestamps.npy"
+        if not emb_path.exists():
+            raise FileNotFoundError(f"Missing embeddings.npy for hash {fhash} at {emb_path}")
+        if not ts_path.exists():
+            raise FileNotFoundError(f"Missing timestamps.npy for hash {fhash} at {ts_path}")
+        emb = np.load(str(emb_path))
+        ts = np.load(str(ts_path))
         return emb, ts
 
     def load_all_embeddings(self) -> tuple[np.ndarray, np.ndarray, list[dict]]:
@@ -118,7 +127,7 @@ class PoolIndex:
             all_ts.append(ts)
 
         if not all_emb:
-            return np.empty((0, 768), dtype=np.float16), np.empty(0), []
+            return np.empty((0, 0), dtype=np.float16), np.empty(0), []
 
         return np.vstack(all_emb), np.concatenate(all_ts), all_info
 

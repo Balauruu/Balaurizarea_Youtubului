@@ -9,6 +9,9 @@ from pathlib import Path
 
 import numpy as np
 
+SCORE_NO_MATCH = 0.15    # Below this, skip entirely
+SCORE_WEAK_QUERY = 0.20  # Below this, flag for refinement
+
 sys.path.insert(0, os.path.dirname(__file__))
 from pool import PoolIndex, get_pool_root
 
@@ -145,6 +148,7 @@ def search(
     tokenizer=None,
     pool_only: str | None = None,
     boundary_percentile: int = 90,
+    segment_threshold: float = 0.15,
 ) -> dict:
     """Run shotlist queries against both pools. Returns candidates.json structure."""
     pools_searched = {}
@@ -207,7 +211,7 @@ def search(
         q_scores = scores[:, qi]
         peak = float(q_scores.max())
 
-        if peak < 0.15:
+        if peak < SCORE_NO_MATCH:
             weak_queries.append(q["shot_id"])
             query_results.append({
                 "shot_id": q["shot_id"],
@@ -225,7 +229,7 @@ def search(
             vid_boundaries = scene_boundaries.get(src, [])
             pool = all_info_list[indices[0]]["pool"] if indices else "project"
 
-            segments = group_into_segments(vid_scores, vid_ts, vid_boundaries, threshold=0.15)
+            segments = group_into_segments(vid_scores, vid_ts, vid_boundaries, threshold=segment_threshold)
             for seg in segments:
                 seg["video"] = os.path.basename(src)
                 seg["video_path"] = src
@@ -241,7 +245,7 @@ def search(
             "candidates": candidates[:10],
         })
 
-        if peak < 0.20:
+        if peak < SCORE_WEAK_QUERY:
             weak_queries.append(q["shot_id"])
 
     return {
@@ -259,6 +263,7 @@ def main():
     parser.add_argument("--project-dir", default=".")
     parser.add_argument("--pool-only", choices=["project", "global"])
     parser.add_argument("--boundary-percentile", type=int, default=90)
+    parser.add_argument("--segment-threshold", type=float, default=0.15)
     args = parser.parse_args()
 
     with open(args.queries, encoding="utf-8") as f:
@@ -274,6 +279,7 @@ def main():
         tokenizer=tokenizer,
         pool_only=args.pool_only,
         boundary_percentile=args.boundary_percentile,
+        segment_threshold=args.segment_threshold,
     )
 
     with open(args.output, "w", encoding="utf-8") as f:

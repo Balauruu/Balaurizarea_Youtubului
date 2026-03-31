@@ -48,7 +48,7 @@ PE wins on every metric. The video classification gap is massive (73.4 vs 65.3) 
                                │
                       ┌────────▼────────┐
                       │    EMBED         │  PE-Core-L14-336
-                      │    embed.py      │  frame → 768-dim vector
+                      │    embed.py      │  frame → 1024-dim vector
                       └────────┬────────┘  Writes to pool cache
                                │
                ┌───────────────┴───────────────┐
@@ -118,7 +118,7 @@ Keyed by video file hash (SHA-256 of first 64KB + file size) so the same file is
 <pool-root>/
 ├── index.json                   # hash → metadata mapping
 ├── <hash>/
-│   ├── embeddings.npy           # [N, 768] float16
+│   ├── embeddings.npy           # [N, 1024] float16
 │   ├── timestamps.npy           # [N] float64 — second offset per frame
 │   └── meta.json                # source path, duration, resolution, embed date,
 │                                # file hash, original absolute path

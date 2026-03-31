@@ -115,6 +115,7 @@ def discover(
     eps: float = 0.3,
     min_samples: int = 3,
     confidence_threshold: float = 0.15,
+    time_merge_gap: float = 2.0,
 ) -> dict:
     """Run discovery on a pool. Returns discovery.json structure."""
     pool_root = get_pool_root(pool, project_dir=project_dir)
@@ -183,7 +184,7 @@ def discover(
                 start = times[0]
                 end = times[0]
                 for t in times[1:]:
-                    if t - end <= 2:
+                    if t - end <= time_merge_gap:
                         end = t
                     else:
                         ranges.append([start, end])
@@ -220,6 +221,7 @@ def main():
     parser.add_argument("--eps", type=float, default=0.3)
     parser.add_argument("--min-samples", type=int, default=3)
     parser.add_argument("--confidence-threshold", type=float, default=0.15)
+    parser.add_argument("--time-merge-gap", type=float, default=2.0)
     args = parser.parse_args()
 
     from embed import load_model
@@ -235,6 +237,7 @@ def main():
         eps=args.eps,
         min_samples=args.min_samples,
         confidence_threshold=args.confidence_threshold,
+        time_merge_gap=args.time_merge_gap,
     )
 
     with open(args.output, "w", encoding="utf-8") as f:

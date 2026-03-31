@@ -1,0 +1,35 @@
+# Global taxonomy for video content classification.
+# Derived from VISUAL_STYLE_GUIDE forms and variants.
+# Grows over time as new patterns are discovered across projects.
+
+atmospheric:
+  atmospheric_institutional: "Institutional interior, ward, lobby, dim hallway"
+  atmospheric_industrial: "Factory, machinery, smokestack, mechanical process"
+  atmospheric_urban: "City texture, street, infrastructure, building at night"
+  atmospheric_interior: "Generic indoor space, room, stairwell"
+
+environment:
+  environment_nature: "Forest, mountain, river, weather, landscape"
+  environment_urban: "Cityscape, skyline, aerial city view"
+  environment_rural: "Farmland, small town, open countryside"
+  environment_water: "Ocean, lake, coastline, rain"
+
+cartoon:
+  cartoon_authority: "Authority figure, power dynamic, boss, ruler"
+  cartoon_confinement: "Trap, cage, enclosure, locked room"
+  cartoon_deception: "Trickery, disguise, hidden motive, con artist"
+  cartoon_mechanical: "Machine, conveyor belt, labor, factory process"
+
+archival_video:
+  archival_news: "News broadcast, press footage, reporter on scene"
+  archival_institutional: "Documentary footage of institution, hospital, school"
+
+landscape:
+  landscape_aerial: "Drone footage, aerial establishing shot, birds-eye view"
+  landscape_rural: "Wide rural establishing shot, open field, countryside road"
+  landscape_urban: "Wide urban establishing shot, city approach, downtown"
+
+skip:
+  talking_head: "Person speaking to camera, interview, talking head"
+  title_graphic: "Title card, lower third, graphic overlay, channel logo"
+  black_blank: "Black frame, blank screen, color bars, test pattern"

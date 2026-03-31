@@ -34,14 +34,16 @@ def extract_frames(
     Returns list of np.ndarray with shape (size, size, 3), dtype uint8.
     """
     hwaccel_args = []
+    hwdownload_filter = ""
     if use_hwaccel and _check_nvdec():
         hwaccel_args = ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"]
+        hwdownload_filter = "hwdownload,format=nv12,"
 
     cmd = [
         "ffmpeg",
         *hwaccel_args,
         "-i", video_path,
-        "-vf", f"fps={fps},scale={size}:{size}:force_original_aspect_ratio=decrease,pad={size}:{size}:(ow-iw)/2:(oh-ih)/2",
+        "-vf", f"{hwdownload_filter}fps={fps},scale={size}:{size}:force_original_aspect_ratio=decrease,pad={size}:{size}:(ow-iw)/2:(oh-ih)/2",
         "-pix_fmt", "rgb24",
         "-f", "rawvideo",
         "-v", "error",

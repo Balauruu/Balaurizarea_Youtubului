@@ -150,6 +150,7 @@ Every shot has these **common fields**:
 | `vector_silhouette` | generate | ComfyUI compositions — figures, scenes, symbolic imagery |
 | `broll_atmospheric` | curate | Non-specific mood footage (empty corridors, industrial textures, environmental) |
 | `broll_cartoon` | curate | Public domain cartoons used metaphorically (Fleischer-era, early PD animation) |
+| `broll_environment` | curate | Wide establishing/scenic footage — nature, cityscapes, rural landscapes, water |
 
 ### Visual Register Definitions
 

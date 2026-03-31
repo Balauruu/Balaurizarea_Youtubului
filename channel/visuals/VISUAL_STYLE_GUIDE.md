@@ -81,6 +81,17 @@ Non-specific footage that sets mood without depicting the subject directly. Empt
 - B-roll is atmospheric, never literal. "Institutional corridor footage" works for any story about institutions — it doesn't need to be the specific institution from the subject.
 - Avoid bright, modern, or clean-looking footage. B-roll should feel aged, heavy, or desaturated even before any post-production treatment.
 
+### Environment B-Roll
+Wide establishing and scenic footage that orients the viewer geographically. Nature, cityscapes, rural landscapes, bodies of water.
+
+**When to use:** When the narration moves to a new location or needs a geographic anchor — establishing shots, transitions between settings, or scene-setting before specific content.
+
+**Shot planner guidance:**
+- Use `action: "curate"` with form `broll_environment`
+- Preferred for `atmospheric` and `transitional` visual registers
+- Distinct from `broll_atmospheric`: environment shots establish location, atmospheric shots establish mood
+- Source the same way as atmospheric — archive.org footage with aged, documentary quality
+
 ### Documents & Screenshots
 Web page captures, newspaper clippings, report pages, Wikipedia sections — evidence and context presented as visual assets.
 
@@ -124,8 +135,9 @@ The canonical vocabulary of visual forms used in `shotlist.json`. Every shot mus
 
 | Form | Description | Example Variants |
 |------|-------------|------------------|
-| `broll_atmospheric` | Non-specific mood footage — empty spaces, textures, environments | institutional_corridor, industrial, nature, urban_decay |
+| `broll_atmospheric` | Non-specific mood footage — empty spaces, textures, environments | institutional, industrial, urban, interior |
 | `broll_cartoon` | Public domain cartoon used metaphorically | authority_figure, confinement, deception, mechanical_process |
+| `broll_environment` | Wide establishing or scenic footage — geographic and environmental context | nature, urban, rural, water |
 
 **Note:** Map generation is intentionally excluded from the pipeline. Maps are handled manually in DaVinci Resolve.
 

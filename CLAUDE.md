@@ -12,6 +12,7 @@ Agentic documentary video generation pipeline for a YouTube channel focused on d
 Channel-automation V4/
 ├── CLAUDE.md                     # You are here (always loaded)
 ├── CONTEXT.md                    # Task router — start here for any task
+├── LEARNINGS.md                  # Cross-skill pipeline patterns (read at session start)
 ├── channel/                      # Channel identity: voice, style, visual rules
 │   ├── channel.md                # Channel DNA: voice, tone, pillars, audience
 │   ├── past_topics.md            # Previously covered topics (dedup safety)
@@ -39,7 +40,7 @@ Channel-automation V4/
 │           └── screenshots/
 ├── .claude/
 │   ├── Architecture.md           # Pipeline architecture, infrastructure
-│   ├── SKILL_CRAFTING_GUIDE.md   # Handbook for creating/improving skills
+│   ├── references/               # Persistent reference docs for agent behavior
 │   ├── skills/                   # Agent skills
 │   └── scratch/                  # Transient data (gitignored)
 └── data/
@@ -49,20 +50,20 @@ Channel-automation V4/
 
 ## Skill Routing
 
-| Task | Skill | Entry Point |
-|------|-------|-------------|
-| Add/scrape/analyze competitors | channel-assistant | `add`, `scrape`, `analyze` |
-| Generate topic ideas | channel-assistant | `topics` + Claude heuristic |
-| Initialize video project | channel-assistant | `init_project()` |
-| Research a topic | researcher | `survey` → evaluate → `deepen` → `write` |
-| Extract channel voice style | style-extraction | SKILL.md (heuristic, no CLI) |
-| Write script | writer | `load` + Claude heuristic |
-| Create shot list | shot-planner | SKILL.md (heuristic, no CLI) |
-| Discover media assets | media-scout | Manual workflow (crawl4ai + yt-dlp) |
-| Find b-roll candidates | shot-planner | B-roll discovery step in shotlist generation |
-| Download video assets | asset-downloader | `download.py` via SKILL.md |
-| Analyze/catalog video assets | asset-analyzer | two-pass: scene_detect → vision triage → full analysis |
-| Compile edit sheet | edit-sheet-compiler | SKILL.md (heuristic) + `organize_assets.py` |
+| Task | Skill | Entry Point | DO NOT USE for |
+|------|-------|-------------|----------------|
+| Add/scrape/analyze competitors | channel-assistant | `add`, `scrape`, `analyze` | Writing scripts, researching topics in depth |
+| Generate topic ideas | channel-assistant | `topics` + Claude heuristic | — |
+| Initialize video project | channel-assistant | `init_project()` | — |
+| Research a topic | researcher | `survey` → evaluate → `deepen` → `write` | Finding media assets, writing narration |
+| Extract channel voice style | style-extraction | SKILL.md (heuristic, no CLI) | Writing scripts (use writer instead) |
+| Write script | writer | `load` + Claude heuristic | Research gathering (use researcher first) |
+| Create shot list | shot-planner | SKILL.md (heuristic, no CLI) | Downloading or analyzing video files |
+| Discover media assets | media-scout | Manual workflow (crawl4ai + yt-dlp) | Downloading video files (use asset-downloader), analyzing already-downloaded videos (use asset-analyzer) |
+| Find b-roll candidates | shot-planner | B-roll discovery step in shotlist generation | — |
+| Download video assets | asset-downloader | `download.py` via SKILL.md | Discovering new URLs (use media-scout/shot-planner), analyzing video content (use asset-analyzer) |
+| Analyze/catalog video assets | asset-analyzer | two-pass: scene_detect → vision triage → full analysis | Downloading videos (use asset-downloader), compiling edit sheets (use edit-sheet-compiler) |
+| Compile edit sheet | edit-sheet-compiler | SKILL.md (heuristic) + `organize_assets.py` | Downloading or analyzing assets (those must be done upstream first) |
 
 **For detailed task routing with load/skip tables, read `CONTEXT.md`.**
 
@@ -84,6 +85,19 @@ video analysis (asset-analyzer)
 edit sheet compilation (edit-sheet-compiler)
     ↓ edit_sheet.md + organized assets/ folder
 ```
+
+## Pipeline Quality Thresholds
+
+At high-cost handoff points, assess whether the output is good enough to proceed. If quality is below the threshold, fix the current phase — don't push garbage downstream where it compounds.
+
+| Checkpoint | After | Threshold | If below threshold |
+|------------|-------|-----------|-------------------|
+| Research completeness | researcher | Key claims sourced, no major gaps in narrative arc | Re-survey or deepen weak sections before writing |
+| Script coherence | writer | Narrative flows, voice matches style profile, no unsourced claims | Revise script — bad scripts waste all downstream asset work |
+| Shotlist coverage | shot-planner | Every script section has visual coverage, shot types are varied | Fill gaps before asset discovery/download |
+| Asset fitness | asset-analyzer | Clips match shotlist intent, sufficient coverage per shot type | Re-search or download additional assets |
+
+**When uncertain:** If you can't confidently say the output meets the threshold, flag it for human review with a specific note on what's weak. Don't silently proceed.
 
 ## Conventions
 
@@ -116,7 +130,7 @@ Every piece of information has ONE home. Other files point to it — they don't 
 Plans are session-scoped coordination tools. They should use **tasks** (TaskCreate/TaskUpdate), not files. A 15KB plan file that gets re-read 3 times burns 45KB of context for information that fits in 10 task entries.
 
 - **Simple plans** (< 10 steps): Use tasks directly, no file needed
-- **Complex plans** (needs human review before execution): Write a short bullet-point plan to the **project directory** (it's a project artifact), present it for approval, then convert approved steps to tasks. Do not re-read the plan file — tasks track position from that point forward
+- **Complex plans** (needs human review before execution): Write a short bullet-point plan, present it for approval, then convert approved steps to tasks.
 - **Never write plans to scratch** — if a plan is worth writing, it's a project artifact; if it's not, use tasks
 
 ## Architecture Rules

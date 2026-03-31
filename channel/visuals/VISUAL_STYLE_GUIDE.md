@@ -36,7 +36,7 @@ Photographs, archival video, document scans, screenshots, press clippings — an
 ### Vector Generations
 Flat silhouette compositions generated via ComfyUI. These depict scenes, actions, and interactions described in the narration. The pipeline generates the composition only — subject, pose, framing, spatial arrangement. All post-production treatment (inversion, glow, color fills, effects) is handled by the editor.
 
-**Generate → Edit workflow:** Each vector starts as a base generation from a composition brief. The editor may request up to **2 edits** per base generation (pose adjustment, spatial rearrangement, element addition/removal). If the composition isn't working after 2 edits, generate a new base instead of continuing to iterate.
+**ComfyUI generation flow:** Each vector starts as a base generation from a composition brief, then gets refined through up to **2 edit-model passes** (pose adjustment, spatial rearrangement, element addition/removal). If the composition isn't working after 2 edit passes, regenerate a new base instead of continuing to iterate.
 
 **Composition-only briefs:** The `composition_brief` field describes ONLY the composition — subjects, poses, spatial relationships, and scene framing. Never include color, lighting, effects, texture, or post-production treatment. The brief answers: "Who is in the frame, what are they doing, and where are they relative to each other?"
 
@@ -113,14 +113,14 @@ The canonical vocabulary of visual forms used in `shotlist.json`. Every shot mus
 
 | Form | Description | Example Variants |
 |------|-------------|------------------|
-| `text_card` | Any text overlay — quotes, dates, names, locations, character intros, statistics | survivor_quote, date_location, character_intro, statistic, official_statement |
-| `diagram` | Animated diagram showing relationships, timelines, comparisons, or hierarchies | relationship, timeline, comparison, process, hierarchy, financial_flow |
+| `text_card` | Any text overlay — quotes, dates, names, locations, character intros, statistics | quote, date_location, character_intro, statistic, statement |
+| `diagram` | Animated diagram showing relationships, timelines, comparisons, or hierarchies | relationship, timeline, comparison, process, hierarchy, flow |
 
 ### Found Asset Forms (`action: "find"`)
 
 | Form | Description | Example Variants |
 |------|-------------|------------------|
-| `archival_photo` | Real photograph from the relevant era — portraits, crime scenes, mugshots, institutional interiors/exteriors, missing person cards | portrait, crime_scene, mugshot, interior, group, missing_person_profile |
+| `archival_photo` | Real photograph from the relevant era — portraits, scenes, mugshots, institutional interiors/exteriors | portrait, scene, mugshot, interior, group, profile |
 | `archival_video` | Real archival video footage | news_broadcast, home_video, institutional, street_level |
 | `document` | Screenshot of a real document, newspaper, webpage, or text artifact | newspaper_clipping, official_document, encyclopedia_entry, book_cover |
 | `landscape` | Wide geographic or environmental shot (can also be `curate` if using b-roll) | aerial, street_level, rural, urban |
@@ -151,7 +151,7 @@ B-roll is matched directly to individual shots based on each shot's narrative be
 - **archive.org only** — no stock footage sites (Pixabay, Pexels, etc.). The channel aesthetic demands aged, archival material.
 - **Cartoon shots get specific episodes** — point to a particular film by name (e.g., "The Cobweb Hotel (1936)") not a collection. The cartoon must metaphorically serve the narrative beat.
 - **Atmospheric shots get documentary/archival footage** — Prelinger Archives films, asylum documentaries, institutional footage from the relevant era.
-- Leads are URLs only — asset-analyzer handles downloads and clip extraction downstream.
+- Leads are URLs only — asset-downloader handles downloads and asset-analyzer handles clip extraction downstream.
 
 ---
 

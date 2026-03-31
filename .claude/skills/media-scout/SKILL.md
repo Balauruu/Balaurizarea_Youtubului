@@ -84,7 +84,6 @@ Two-pass media discovery: web images/documents with downloads (Pass 1) → YouTu
    - When crawling a page with many images (e.g., a Wikipedia biography), do not bulk-import everything. Select only images directly relevant to the documentary topic
    - Keep at most 2-3 portraits of any single person — pick the most iconic ones for the documentary era
    - Infrastructure named after the subject (highways, bridges, parks, street signs) is not relevant
-   - Aerial/geographic photos of cities or regions are not relevant unless they show a specific institution involved in the events
    - If multiple images from the same source have identical or near-identical descriptions, you are bulk-importing — stop and evaluate each individually
 
    | Source Type | Priority |
@@ -128,7 +127,7 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 3. **[HEURISTIC] Pre-filter from crawl metadata** — Before spending yt-dlp API calls, apply hard filters using the titles and durations extracted from crawl4ai in the previous step. This typically eliminates 60-80% of results and is essential to avoid YouTube rate limiting.
 
    Discard immediately if:
-   - **Wrong topic** — The title clearly has nothing to do with the documentary subject. YouTube search returns many false positives — a query for a specific historical event will also return similarly-named TV shows, unrelated news, or tangential content from other regions.
+   - **Wrong topic** — The title clearly has nothing to do with the documentary subject (e.g., a TV show, a different country's orphanages, unrelated news). YouTube search returns many false positives — a query for "Duplessis Orphans survivor" will also return videos about the TV show "Survivor".
    - **Duration < 30 seconds** — If duration was parsed from the crawl results.
    - **AI content farm signals** — Channel names matching known patterns (see `youtube_evaluation.md`), sensationalist title reformulations.
    - **Reaction/commentary format** — Titles like "Top 10", "REACTION", "REACTS TO".
@@ -149,7 +148,7 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
 
 5. **[HEURISTIC] Evaluate YouTube results** — Read `@.claude/skills/media-scout/prompts/youtube_evaluation.md` for detailed scoring criteria, hard filters, and AI content detection. Key rules:
 
-   - **Discard videos with < 1,000 views** (exception: verified first-person accounts from personal channels of people directly involved in the events)
+   - **Discard videos with < 1,000 views** (exception: verified survivor personal channels)
    - **Discard AI-generated content** — new channels + clickbait titles + very low views
    - **Discard wrong-topic matches** — videos that mention the search terms but aren't actually about the documentary subject
    - **Score 1 is rare** — reserve it for 3-7 videos maximum. It requires: the video is primarily about the topic, contains original footage, and comes from a credible producer

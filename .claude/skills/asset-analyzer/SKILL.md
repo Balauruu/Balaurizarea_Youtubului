@@ -1,237 +1,206 @@
 ---
 name: asset-analyzer
-description: Use when analyzing video files for documentary asset extraction — identifying relevant segments, cataloging clips in SQLite, and extracting approved clips. Triggers on 'analyze assets', 'analyze staging videos', 'catalog this video', 'find usable segments', 'extract clips from [video]', or any request to process downloaded footage for the channel.
+description: "Analyze and catalog video assets for documentary projects using PE-Core CLIP embeddings. Use when the user says 'analyze assets', 'analyze staging videos', 'discover footage', 'search footage for [topic]', 'find clips matching shotlist', 'evaluate asset selection', or any request to process downloaded video footage."
 ---
 
-# Asset Analyzer
+# Asset Analyzer V2
 
-Two-pass video analysis pipeline: PySceneDetect triage filters irrelevant footage cheaply, then full vision analysis runs only on relevant scenes. Approved segments are extracted as clips and cataloged in SQLite.
+PE-Core CLIP embedding pipeline for video asset analysis. Embeds footage locally on GPU, matches against shotlist queries via cosine similarity, discovers content via auto-taxonomy, and evaluates selections against ground truth.
+
+**Spec:** `docs/superpowers/specs/2026-03-31-asset-analyzer-v2-design.md`
 
 ## Modes
 
-**Project mode** (default) — User references a project: "Analyze staging videos for Duplessis Orphans"
-- Resolve project dir (case-insensitive substring match against `projects/`)
-- Load `visuals/download_manifest.json` for video context + `visuals/shotlist.json` for visual needs
-- Process all videos in `assets/staging/`
-- Clips route to project or global assets based on scope
+**Search mode** (default) — User references a project: "Analyze staging videos for Duplessis Orphans"
+- Matches shotlist queries against embedded footage
+- Searches both project and global pools
+- Claude reviews top candidates adaptively (Sonnet subagent)
 
-**Standalone mode** — User provides a video path: "Analyze this video D:/path/to/video.mp4"
-- No project context — Claude describes what it sees
-- User specifies clip destination
-- Skip manifest/shotlist loading, use standalone vision prompts
+**Discovery mode** — "Discover what's in the Duplessis footage"
+- Auto-generates project taxonomy from shotlist + script + research
+- Classifies all frames against merged taxonomy (global + project)
+- Clusters unknown frames via DBSCAN
+- User browses and selects what to extract
 
----
+**Evaluation mode** — "Evaluate asset selections for Duplessis"
+- Compares skill selections against user-created ground truth
+- Reports precision, recall, F1, boundary accuracy
+- Suggests specific parameter adjustments
 
-## Workflow
+## Conda Environment
+
+All scripts run via:
+```
+C:/Users/iorda/miniconda3/envs/perception-models/python.exe
+```
+
+## Search Workflow
 
 ### Step 1: Resolve context
 
-**Project mode:**
-1. Resolve project directory
-2. Read `visuals/download_manifest.json` — extract entries with `local_path`, `source_url`, `title`, `context`, `shot_refs`
-3. Read `visuals/shotlist.json` — extract visual needs from shots referenced by `shot_refs`
-4. Build context brief: pair each staged video with its manifest entry
+1. Resolve project directory (case-insensitive substring match against `projects/`)
+2. Read `visuals/download_manifest.json` — filter to video entries only (`.mp4`, `.webm`, `.mkv`)
+3. Read `visuals/shotlist.json` — extract `search_query` fields from shots with `action: "curate"`
 
-**Standalone:** Skip to Step 2.
-
-### Step 2: Probe and detect scenes
-
-For each video:
+### Step 2: Embed staging videos
 
 ```bash
-python .claude/skills/asset-analyzer/scripts/probe_video.py <video_path>
-python .claude/skills/asset-analyzer/scripts/scene_detect.py --input <video> --output <temp_dir>
+C:/Users/iorda/miniconda3/envs/perception-models/python.exe .claude/skills/asset-analyzer/scripts/embed.py --input-dir "<project>/assets/staging" --pool project --project-dir "<project>"
 ```
 
-Probe returns duration, resolution, FPS. Scene detection outputs `scenes.json` (boundaries) and `triage_manifest.json` (one mid-scene frame per scene at 512px).
+Skips already-cached videos. First run ~15-20 min for 22h of footage, subsequent runs instant.
 
-Show the user a two-pass token estimate:
-```bash
-python .claude/skills/asset-analyzer/scripts/estimate_cost.py --video-name <name> --duration <sec> --scenes <count>
+### Step 3: Build and run queries
+
+Extract queries from shotlist — one per `curate` shot:
+```json
+[{"shot_id": "S006", "text": "Empty institutional corridor with dim lighting"}]
 ```
-**Wait for approval before proceeding.**
 
-### Step 3: Triage vision analysis (Pass 1)
-
-Send triage frames in batches of 15 to Claude vision using the **triage prompt** from `references/vision_prompts.md`. Prepend the **batch context template** to each batch.
-
-Template variables:
-- `[PROJECT_NAME]` — project name or "Standalone Analysis"
-- `[CONTEXT]` — manifest `context` field or user-provided description
-- `[SHOT_REFS_OR_GENERAL_NEEDS]` — shotlist entries from `shot_refs` or "Describe what you see"
-
-Claude classifies each scene: **relevant** / **irrelevant** / **maybe**.
-
-Present triage summary:
-
-| Video | Total Scenes | Relevant | Maybe | Irrelevant | Relevant Duration |
-|-------|-------------|----------|-------|------------|-------------------|
-
-Show per-scene detail. User can override classifications. Show token estimate for Pass 2 based on relevant+maybe scene duration.
-
-### Step 4: Full analysis (Pass 2)
-
-For each relevant/maybe scene:
+Write to `.claude/scratch/queries.json`, then:
 
 ```bash
-python .claude/skills/asset-analyzer/scripts/extract_frames.py \
-  --input <video> --output <temp_dir> --mode full \
-  --start <scene_start> --end <scene_end> --max-width 512
+C:/Users/iorda/miniconda3/envs/perception-models/python.exe .claude/skills/asset-analyzer/scripts/search.py --queries .claude/scratch/queries.json --project-dir "<project>" --output .claude/scratch/candidates.json
 ```
 
-Send frame batches to Claude vision using the **full analysis prompt** (project or standalone) from `references/vision_prompts.md`.
+### Step 4: Refine weak queries
 
-From the analysis, identify **usable segments** — contiguous frame ranges showing useful content. For each segment:
+Read `candidates.json`. For queries in `weak_queries` (peak < 0.20), generate 2-3 alternative phrasings with concrete visual descriptions. Re-run search with refined queries.
 
-| Field | Description |
-|-------|------------|
-| `id` | `SEG-001` sequential |
-| `start_sec` / `end_sec` | Timestamp boundaries |
-| `description` | What the segment shows |
-| `mood` | Atmospheric quality |
-| `era` | Time period depicted |
-| `relevance` | Why useful — cite shot IDs in project mode |
-| `scope` | `project` (interviews, named people, specific locations) or `global` (generic corridors, nature, industrial) |
-| `category` | `archival`, `broll`, or `cartoon_broll` |
-| `tags` | Comma-separated searchable terms |
+Up to 3 refinement iterations. No vision needed — Claude sees only score reports.
 
-**Scope assignment rules:**
+### Step 5: Adaptive Claude review
 
-Assign `scope: "project"` (default) unless ALL of these are true:
-- Content is generic — no named people, specific locations, or topic-specific events from this documentary
-- Clearly reusable across multiple unrelated projects
-- Falls into a recognizable global category: atmospheric footage (corridors, weather, textures, urban/rural environments), cartoon clips with broad metaphorical use, generic institutional or industrial footage
+Extract candidate frames to `.claude/scratch/frames/`:
 
-When in doubt, assign `project`. Global scope is strict — the clip must be useful to a documentary about a completely different topic.
+```bash
+C:/Users/iorda/miniconda3/envs/perception-models/python.exe .claude/skills/asset-analyzer/scripts/ingest.py --input "<video>" --output-dir .claude/scratch/frames --start <sec> --end <sec> --fps 1 --size 512
+```
 
-### Step 5: Write analysis + catalog + present for review
+Send frames to Sonnet subagent (use `model: "sonnet"` in Agent tool):
 
-1. **Write `video_analysis.json`** — project mode: `visuals/video_analysis.json`; standalone: `.claude/scratch/video_analysis_{filename}.json`
+| Score Range | Candidates Sent |
+|-------------|-----------------|
+| > 0.25 | Top 1 per shot |
+| 0.15 – 0.25 | Top 3 per shot |
+| < 0.15 | Skip — report to user |
+
+Sonnet writes per-segment: description, mood, era, tags, scope, relevance.
+
+### Step 6: Present for review
+
+Present segment table:
+
+| Video | Shot | Timestamps | Description | Score | Scope | Pool |
+|-------|------|------------|-------------|-------|-------|------|
+
+User approves/rejects, adjusts timestamps or scope.
+
+### Step 7: Extract + Catalog
+
+For each approved segment, use existing `export_clips.py`:
+
+```bash
+python .claude/skills/asset-analyzer/scripts/export_clips.py --input "<source>" --output "<dest>" --clips '[{"start": "<s>", "end": "<e>", "label": "<name>"}]'
+```
+
+Catalog in SQLite:
+```python
+from data.catalog import get_connection, insert_clip
+conn = get_connection()
+insert_clip(conn, path=clip_path, source_type="youtube", scope=scope,
+            source_url=url, project=project_name, category=category,
+            description=desc, mood=mood, era=era, tags=tags,
+            duration_sec=duration)
+```
+
+**Output paths:**
+- `scope: "project"` → `projects/N/assets/{category}/`
+- `scope: "global"` → `D:/Youtube/D. Mysteries Channel/3. Assets/{category}/`
+
+## Discovery Workflow
+
+### Step 1: Embed (same as search, skips if cached)
+
+### Step 2: Generate project taxonomy
+
+Read `shotlist.json`, `script/Script.md`, and research docs. Generate 5-15 project-specific categories with CLIP-friendly descriptions. Write to `.claude/scratch/project_taxonomy.json`:
 
 ```json
 {
-  "project": "The Duplessis Orphans",
-  "analyzed_at": "2026-03-25T14:30:00Z",
-  "videos": [
-    {
-      "source_file": "assets/staging/cbc_documentary.mp4",
-      "source_url": "https://youtube.com/...",
-      "duration_sec": 2847,
-      "segments": [
-        {
-          "id": "SEG-001",
-          "start_sec": 22.0, "end_sec": 35.5,
-          "description": "Exterior shot of grey institutional building, overcast sky",
-          "mood": "oppressive, cold", "era": "1950s",
-          "relevance": "Matches shotlist S003 — institutional establishing shot",
-          "scope": "project", "category": "archival",
-          "tags": "institution, exterior, 1950s, quebec",
-          "approved": null
-        }
-      ]
-    }
-  ]
+  "project_specific": {
+    "quebec_institutional": "Quebec orphanage exterior, Catholic institution, grey stone building",
+    "religious_ceremony": "Catholic mass, nuns in habit, church interior, crucifix"
+  }
 }
 ```
 
-2. **Catalog in SQLite** — insert each segment into `data/asset_catalog.db`:
+### Step 3: Run discovery
 
-```python
-from data.catalog import get_connection, insert_clip
-
-conn = get_connection()
-insert_clip(conn, path=source_file_path, source_type="youtube",
-            scope="project", source_url=source_url,
-            project="The Duplessis Orphans", category="archival",
-            description=segment_description, mood=segment_mood,
-            era=segment_era, tags=segment_tags,
-            duration_sec=end_sec - start_sec)
-```
-
-3. **Present for review** in two tiers:
-
-**Tier 1 — Shot-matched segments** (segments whose `relevance` cites a specific shot ID):
-
-| Video | Segment | Shot | Timestamps | Description | Scope |
-|-------|---------|------|------------|-------------|-------|
-
-**Tier 2 — Unmatched global candidates** (segments with `scope: "global"` that don't cite any shot ID):
-
-| Video | Segment | Timestamps | Description | Category | Tags |
-|-------|---------|------------|-------------|----------|------|
-
-Present Tier 1 first — these are the clips the shotlist needs. Tier 2 follows — these are potential additions to the global asset library. User approves/rejects from both tiers, adjusts timestamps or scope/category.
-
-### Step 6: Extract approved clips
-
-For each segment where user approved:
-
-Build a clips JSON and run extraction:
 ```bash
-python .claude/skills/asset-analyzer/scripts/export_clips.py \
-  --input "<source_file>" \
-  --output "<output_dir>" \
-  --clips '[{"start": "<start_sec>", "end": "<end_sec>", "label": "<descriptive_name>"}]'
+C:/Users/iorda/miniconda3/envs/perception-models/python.exe .claude/skills/asset-analyzer/scripts/discover.py --pool project --project-dir "<project>" --taxonomy-global .claude/skills/asset-analyzer/references/taxonomy_global.yaml --taxonomy-project .claude/scratch/project_taxonomy.json --output .claude/scratch/discovery.json
 ```
 
-**Output path:**
-- `scope: "project"` → `projects/N/assets/{category}/`
-- `scope: "global"` → `D:/Youtube/D. Mysteries Channel/3. Assets/{subject_category}/{subcategory}/`
+### Step 4: Present results
 
-For global clips, determine the subject category from the segment's description and tags:
-- Locations (urban, rural, interiors, aerial)
-- Nature (weather, water, forests, landscapes)
-- People (crowds, silhouettes, hands_details)
-- Objects (documents, artifacts, symbols)
-- Textures (film_grain, light, particles, surfaces)
-- Cartoons (PD animation clips)
-- Transitions (establishing, time_passage, movement)
+Show category inventory (minutes per category) + unknown clusters with representative frames.
 
-**Filename:** `{source_slug}_{start_sec}s_{brief_description}.mp4`
+For unknown clusters, extract 1 representative frame per cluster and view it (Sonnet subagent) to propose a name.
 
-After extraction, update catalog status:
-```python
-from data.catalog import get_connection, update_clip
-conn = get_connection()
-update_clip(conn, clip_id, path=new_clip_path, status="extracted")
+### Step 5: User selects what to extract
+
+### Step 6: Extract + Catalog (same as search)
+
+### Step 7: Taxonomy growth
+
+If user approves unknown cluster names, append them to `references/taxonomy_global.yaml` with a date comment:
+
+```yaml
+# Added 2026-04-15 from "The Duplessis Orphans" project
+  atmospheric_religious: "Church interior, chapel, stained glass, religious iconography"
 ```
 
-### Step 7: Clean staging
+## Evaluation Workflow
 
-After all clips extracted from a staging video, offer to delete the source:
-> "All approved clips extracted from cbc_documentary.mp4. Delete staging file? (Y/n)"
+### Step 1: Generate ground truth template
 
-Only delete with user confirmation.
+```bash
+C:/Users/iorda/miniconda3/envs/perception-models/python.exe .claude/skills/asset-analyzer/scripts/evaluate.py --generate-template --videos "<project>/assets/staging/*.mp4" --project-name "<name>" --output "<project>/visuals/ground_truth.json"
+```
 
----
+Give template to user. They fill in segments in DaVinci Resolve.
+
+### Step 2: Run evaluation
+
+After user completes ground truth:
+
+```bash
+C:/Users/iorda/miniconda3/envs/perception-models/python.exe .claude/skills/asset-analyzer/scripts/evaluate.py --ground-truth "<project>/visuals/ground_truth.json" --predictions "<project>/visuals/video_analysis.json" --output "<project>/visuals/eval_report.json"
+```
+
+### Step 3: Review and apply calibration
+
+Present metrics and calibration suggestions. Apply approved parameter changes for the next run.
+
+## Project Lifecycle
+
+When a new project is initialized (channel-assistant `init_project()`):
+
+1. Check if `./.broll-index/` exists from a previous project
+2. If yes: prompt user to promote keepers via `promote.py`
+3. After promotion: delete `./.broll-index/`
 
 ## Checkpoints
 
 | After | Agent Presents | Human Decides |
 |-------|---------------|---------------|
-| Step 2 (estimate) | Two-pass token/cost estimate | Approve or stop |
-| Step 3 (triage) | Scene classification table, Pass 2 token estimate | Override classifications, approve deep analysis |
-| Step 5 (analysis) | Segment table with timestamps | Approve/reject segments, adjust scope/category |
+| Step 2 (embed) | Embedding summary (videos, frames, time) | Continue |
+| Step 4 (refine) | Weak queries + proposed alternatives | Approve alternatives |
+| Step 6 (present) | Segment table with scores | Approve/reject segments |
 | Step 7 (cleanup) | Extraction complete | Delete staging files or keep |
 
----
+## Model Routing
 
-## Catalog Query
-
-Search the catalog at any time:
-
-```python
-from data.catalog import get_connection, search_clips, list_clips
-conn = get_connection()
-search_clips(conn, "institutional corridor")           # text search
-list_clips(conn, scope="global", category="broll")     # filter by scope+category
-list_clips(conn, project="The Duplessis Orphans")      # all clips for project
-```
-
----
-
-## Dependencies
-
-- `scenedetect` (venv: `C:\Users\iorda\venvs\scenedetect`) — scene boundary detection
-- `ffmpeg` — probing, frame extraction, clip cutting
-- `data/catalog.py` — SQLite CRUD for asset catalog
+- **Haiku:** Not used in V2 (CLIP handles triage locally)
+- **Sonnet:** Claude review of candidate frames (Step 5)
+- **Opus:** Orchestration only — query refinement, taxonomy generation, presentation

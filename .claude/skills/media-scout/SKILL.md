@@ -132,6 +132,30 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
    - **AI content farm signals** — Channel names matching known patterns (see `youtube_evaluation.md`), sensationalist title reformulations.
    - **Reaction/commentary format** — Titles like "Top 10", "REACTION", "REACTS TO".
 
+   **Upstream filtering rules (prevent unusable videos from reaching asset-analyzer):**
+
+   These filters exist because downstream analysis is expensive. A video that passes media-scout but fails in asset-analyzer wastes download bandwidth, GPU time, and pipeline slots. Catch these here.
+
+   **A. AI-generated content detection** — Flag and deprioritize videos from channels that primarily produce AI-narrated compilations. Indicators:
+   - Channel name combines generic dark/mystery keywords ("Dark History", "Gothic Ledger", "Mystery Documentary", "Suppressed Shadows", "Silent Century")
+   - High volume output (many uploads in a short period, visible from channel page or yt-dlp metadata)
+   - AI voice narration (detectable from comments, description language, or channel "about" page)
+   - Burned-in text templates, kinetic typography overlays, stock footage compilations
+   - When a video shows these indicators, mark it as `"ai_generated_risk": true` in the youtube_urls entry in media_leads.json and add a `"warning"` field explaining the signals detected. Deprioritize to Score 3-4 at best. If confidence is high (multiple indicators), discard entirely.
+
+   **B. Topical relevance scoring** — Evaluate whether the video specifically covers the documentary's topic vs. being only tangentially related by shared keywords. This is stricter than the "wrong topic" filter above — that catches obvious mismatches, this catches subtle ones.
+   - A video about "Duplessis the politician" is NOT the same as "Duplessis Orphans" — shared name does not equal shared topic
+   - A 1948 propaganda film featuring Duplessis has zero relevance to the orphans story even though the name appears in the title
+   - Historical footage from the correct era but wrong subject (e.g., general Quebec politics vs. institutional abuse) should be excluded
+   - Score relevance to the specific narrative arc from the project's Research.md, not just keyword overlap
+   - Videos below the relevance threshold should be excluded with a note in the discard log explaining the mismatch (e.g., "Political propaganda film — covers Duplessis as premier, not the orphans scandal")
+
+   **C. Content quality signals** — Check for signs of unusable content beyond AI detection:
+   - Very low view counts (< 1,000) from unknown channels with no track record
+   - AI-generated thumbnails (uncanny faces, text-heavy collages, horror-aesthetic stock imagery)
+   - Sensationalist titles with no specific sourcing or factual claims ("THE MOST DISTURBING SECRET EVER HIDDEN")
+   - Compilation/aggregation channels that repackage others' footage with new narration — these add no original material and the footage quality degrades through re-encoding
+
    Keep the crawl4ai-extracted title and duration for each surviving candidate — these will be verified against yt-dlp metadata in the next step.
 
 4. **Validate remaining candidates with yt-dlp** — Run `yt-dlp --dump-json --no-download "URL"` on the pre-filtered set to confirm each video is live and extract authoritative metadata (title, duration, channel, view_count, upload_date). Drop dead URLs. Never use `yt-dlp` for search/discovery.
@@ -215,7 +239,9 @@ YouTube video discovery uses **crawl4ai for search, yt-dlp for validation only**
       "score": 2,
       "description": "What usable footage exists — briefing for video editor",
       "relevance": "Score N — brief justification",
-      "validated": true
+      "validated": true,
+      "ai_generated_risk": false,
+      "warning": "Optional — signals detected (e.g., 'AI compilation channel, burned-in text templates')"
     }
   ]
 }

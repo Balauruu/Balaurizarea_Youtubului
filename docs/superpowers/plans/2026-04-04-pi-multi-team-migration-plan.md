@@ -24,7 +24,6 @@
 ## Target File Structure
 
 ```
-Channel-automation V4/
 +-- .pi/
 |   +-- multi-team/
 |       +-- multi-team-config.yaml
@@ -131,44 +130,12 @@ Channel-automation V4/
 +-- CONTEXT.md                  REWRITTEN (Phase 3+)
 ```
 
----
-
-## Phase 0: Pre-Migration Setup
-
-### Task 1: Install and verify Pi CLI
-
-- [ ] **Step 1: Install Pi CLI**
-```bash
-npm install -g @anthropic-ai/pi-cli
-```
-
-- [ ] **Step 2: Verify Pi CLI version and multi-team support**
-```bash
-pi --version
-pi multi-team --help
-```
-
-- [ ] **Step 3: Verify delegate tool availability**
-```bash
-pi tools list | grep delegate
-```
-
-- [ ] **Step 4: Create migration branch**
-```bash
-cd "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4"
-git add -A && git commit -m "pre-migration baseline"
-git checkout -b migration
-```
-
----
-
 ## Phase 1: Foundation
 
 ### Task 2: Create directory structure
 
 - [ ] **Step 1: Create all directories**
 ```bash
-cd "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4"
 mkdir -p .pi/multi-team/agents
 mkdir -p .pi/multi-team/expertise/read-only
 mkdir -p .pi/multi-team/skills
@@ -220,9 +187,10 @@ paths:
   logs: .pi/multi-team/logs/
 
 shared_context:
+  - README.md
   - CLAUDE.md
   - channel/channel.md
-  - channel/visuals/VISUAL_STYLE_GUIDE.md
+
 
 teams:
 
@@ -362,20 +330,18 @@ teams:
 
 - [ ] **Step 1: Copy all template skills**
 ```bash
-cp "D:/AI/PI/PI-MIGRATION/.pi/multi-team/skills/active-listener.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/active-listener.md"
-cp "D:/AI/PI/PI-MIGRATION/.pi/multi-team/skills/conversational-response.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/conversational-response.md"
-cp "D:/AI/PI/PI-MIGRATION/.pi/multi-team/skills/high-autonomy.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/high-autonomy.md"
-cp "D:/AI/PI/PI-MIGRATION/.pi/multi-team/skills/mental-model.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/mental-model.md"
-cp "D:/AI/PI/PI-MIGRATION/.pi/multi-team/skills/precise-worker.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/precise-worker.md"
-cp "D:/AI/PI/PI-MIGRATION/.pi/multi-team/skills/structured-output.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/structured-output.md"
-cp "D:/AI/PI/PI-MIGRATION/.pi/multi-team/skills/verification-first.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/verification-first.md"
-cp "D:/AI/PI/PI-MIGRATION/.pi/multi-team/skills/zero-micro-management.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/zero-micro-management.md"
+cp '.pi/multi-team/skills/active-listener.md'
+cp '.pi/multi-team/skills/conversational-response.md'
+cp '.pi/multi-team/skills/high-autonomy.md'
+cp '.pi/multi-team/skills/mental-model.md'
+cp '.pi/multi-team/skills/precise-worker.md'
+cp '.pi/multi-team/skills/structured-output.md'
+cp '.pi/multi-team/skills/verification-first.md'
+cp '.pi/multi-team/skills/zero-micro-management.md'
 ```
 
 - [ ] **Step 2: Verify 8 files copied**
-```bash
-ls "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/" | wc -l
-```
+
 Expected: `8`
 
 ### Task 5: Write pipeline skill -- data-analysis.md
@@ -385,13 +351,7 @@ Expected: `8`
 ```yaml
 ---
 name: data-analysis
-description: >-
-  Statistical methods, NLP text processing, and data visualization
-  for YouTube competitor intelligence and trend discovery.
-use-when: >-
-  Performing statistical analysis on competitor data, clustering video
-  titles, detecting outliers, generating dashboards, or building
-  trend visualizations.
+description: Performs statistical analysis on competitor data, clustering videotitles, detecting outliers, generating dashboards, or building trend visualizations.
 ---
 ```
 
@@ -436,14 +396,7 @@ You apply quantitative methods to YouTube competitor and channel data. Your anal
 ```yaml
 ---
 name: documentary-research
-description: >-
-  Multi-pass research methodology for documentary video topics,
-  including source triangulation, primary source prioritization,
-  and structured dossier compilation.
-use-when: >-
-  Researching a documentary topic through the three-pass pipeline
-  (survey, deep-dive, synthesis), evaluating source reliability,
-  or building research dossiers.
+description: Researching a documentary topic through the three-pass pipeline (survey, deep-dive, synthesis), evaluating source reliability, or building research dossiers.
 ---
 ```
 
@@ -504,13 +457,7 @@ You research topics for documentary narration. Your output is a structured dossi
 ```yaml
 ---
 name: visual-narrative
-description: >-
-  Mood-to-visual mapping, era-specific aesthetics, and the channel's
-  visual format vocabulary for documentary video production.
-use-when: >-
-  Defining visual intent for script chapters, selecting visual
-  registers for scenes, mapping emotional tone to visual choices,
-  or gathering primary visual resources for a documentary topic.
+description: Defining visual intent for script chapters, selecting visual registers for scenes, mapping emotional tone to visual choices, or gathering primary visual resources for a documentary topic.
 ---
 ```
 
@@ -526,30 +473,20 @@ The channel uses five distinct visual formats. Every shot in a video uses exactl
 | Format | Description | When To Use |
 |--------|-------------|-------------|
 | **First-hand footage** | Real footage of locations, objects, documents relevant to the story | Establishing shots, evidence presentation, location reveals |
-| **Old movie b-roll** | Pre-1970s film clips (public domain, archive.org) providing atmospheric texture | Mood-setting, era establishment, transitions between narrative beats |
+| **Old movie b-roll** | Film clips (public domain, archive.org) providing atmospheric texture | Mood-setting, era establishment, transitions between narrative beats |
 | **Archive.org media** | Newsreels, educational films, government footage from Internet Archive | Historical context, period-accurate illustration, institutional sequences |
 | **Cartoon b-roll** | Animated clips (vintage cartoons, educational animations) for tonal contrast | Dark humor beats, ironic juxtaposition, lighter transitional moments |
-| **Silhouette illustrations** | Custom dark silhouette art against moody backgrounds | Crime reconstructions, scenes with no available footage, abstract concepts |
+| **Silhouette illustrations** | Custom dark silhouette art against moody backgrounds | Scene reconstruction, abstract concepts |
 
 ## Mood-to-Visual Mapping
 
 | Emotional Register | Visual Choices | Pacing |
 |-------------------|----------------|--------|
-| **Dread / Tension** | Desaturated tones, tight framing, slow zooms, grainy texture | Slow cuts, lingering holds |
-| **Revelation / Shock** | High contrast, quick cuts, archival document close-ups | Fast cuts at the reveal, then slow hold |
+| **Dread / Tension** | Tight framing, slow zooms | Slow cuts, lingering holds |
+| **Revelation / Shock** | Quick cuts, archival document close-ups | Fast cuts at the reveal, then slow hold |
 | **Investigation / Discovery** | Warm tones, document montages, map overlays, timeline graphics | Medium pace, methodical |
-| **Melancholy / Loss** | Muted colors, wide empty landscapes, slow dissolves | Very slow, lots of breathing room |
-| **Institutional / Authority** | Clean framing, government buildings, official seals, newsreels | Steady, measured, authoritative |
+| **Melancholy / Loss** | Wide empty landscapes | Very slow, lots of breathing room |
 | **Chaos / Breakdown** | Handheld feel, overlapping images, rapid montage | Accelerating pace, disorienting |
-
-## Era-Specific Aesthetics
-
-- **Pre-1920s:** Sepia-toned photographs, newspaper clippings, hand-drawn maps, illustration plates. No video exists — lean on documents and silhouettes.
-- **1920s-1940s:** Grainy newsreels, Art Deco typography, noir lighting. Prelinger Archives has strong industrial film coverage.
-- **1950s-1960s:** Technicolor educational films, Cold War propaganda footage, suburban Americana. Archive.org coverage is excellent.
-- **1970s-1980s:** VHS texture, fluorescent lighting, institutional beige. News footage becomes more available.
-- **1990s-2000s:** Early digital video, cable news aesthetic, emerging internet culture. YouTube sources become viable.
-- **2010s+:** HD footage abundant. Challenge is selection, not scarcity.
 
 ## Primary vs. B-Roll Resources
 
@@ -570,8 +507,6 @@ B-roll is curated per-shot with specific search queries. Quality over quantity.
 
 ## Visual Continuity
 
-- Maintain consistent color temperature within a chapter.
-- Don't mix eras of footage within a single sequence unless the contrast is intentional.
 - Establish a visual "home base" format per chapter (the dominant format) and use others as accents.
 - Transitions between visual formats should align with narrative transitions, not happen mid-sentence.
 ```
@@ -583,14 +518,7 @@ B-roll is curated per-shot with specific search queries. Quality over quantity.
 ```yaml
 ---
 name: archive-search
-description: >-
-  Search strategies for Internet Archive, Prelinger Archives,
-  British Pathe, AP Archive, and YouTube, including rate limiting
-  awareness and AI content detection.
-use-when: >-
-  Searching for b-roll footage on archive.org, Prelinger Archives,
-  British Pathe, YouTube, or other video archives. Also when
-  evaluating YouTube search results for AI-generated content.
+description: Searching for b-roll footage on archive.org, Prelinger Archives, British Pathe, YouTube, or other video archives. Also when evaluating YouTube search results for AI-generated content.
 ---
 ```
 
@@ -612,18 +540,16 @@ You find and evaluate archival footage for documentary b-roll. You know the majo
 - **Navigation:** Browse by decade first, then by category (industrial, educational, advertising, amateur). The decade index at `archive.org/details/prelinger` is the best entry point.
 - **Strengths:** 1940s-1970s American industrial and educational films. Excellent for: suburban life, factory footage, Cold War imagery, classroom settings, atomic age aesthetics.
 - **Weaknesses:** Limited international coverage. Poor for: pre-1930s, post-1980s, non-American subjects.
-- **Film categories:** Industrial films (corporate sponsors), educational films (classroom use), advertising (product promotion), ephemeral (one-time-use: training, PSAs).
 
 ## British Pathe / AP Archive
 
 - **Search interface:** Both use keyword + date range. British Pathe covers 1896-1976 (strong UK/Europe). AP Archive covers 1895-present (strong US/international news).
 - **Query formulation:** Use period-appropriate terminology. "Aeroplane" not "airplane" for British Pathe pre-1950. Use event names, not modern retronyms.
-- **Access:** Preview clips available online. Full resolution requires licensing. For documentary use, capture search results and metadata — note the clip ID for potential licensing if the project reaches production quality.
 
 ## YouTube Search
 
 - **Query formulation:** Use specific historical terms + "footage" or "documentary" or "newsreel." Add year ranges in the query. Example: `"Chicago 1968 riots footage"` not `"1968 protests."`
-- **AI content detection:** Flag and skip videos that show signs of AI generation: unnaturally smooth motion, inconsistent shadows, morphing faces, text artifacts, "dreamlike" quality. When uncertain, note the concern in your evaluation.
+- **AI content detection:** Flag and skip videos that show signs of AI generation. When uncertain, note the concern in your evaluation.
 - **Scoring criteria (1-4 scale):**
   - 4: Authentic period footage, good quality, highly relevant to shot intent
   - 3: Authentic footage, acceptable quality, moderately relevant
@@ -636,16 +562,6 @@ You find and evaluate archival footage for documentary b-roll. You know the majo
 - **yt-dlp:** Maximum 10 metadata fetches per batch, then pause 30 seconds. Stop immediately on HTTP 429. Do not retry for at least 5 minutes after a 429.
 - **archive.org downloads:** One file at a time, 2-second pause between downloads. For metadata-only queries, batch up to 50 per request.
 - **Budget awareness:** Track total yt-dlp calls per session. Report usage against budget to your lead. Default budget: 50 calls per session unless lead specifies otherwise.
-
-## Search Strategy by Era
-
-| Era | Primary Source | Fallback | Notes |
-|-----|---------------|----------|-------|
-| Pre-1920 | British Pathe | Archive.org photographs | Very limited video exists |
-| 1920-1950 | Prelinger + British Pathe | YouTube (newsreel channels) | Silent/early sound era |
-| 1950-1970 | Prelinger + Archive.org | YouTube | Golden age of archival footage |
-| 1970-1990 | YouTube (news archives) | AP Archive | VHS-era footage quality varies |
-| 1990+ | YouTube | Direct news sources | Abundant but rights-complex |
 ```
 
 ### Task 9: Write pipeline skill -- media-evaluation.md
@@ -655,13 +571,7 @@ You find and evaluate archival footage for documentary b-roll. You know the majo
 ```yaml
 ---
 name: media-evaluation
-description: >-
-  Video quality assessment, relevance scoring, scoring calibration,
-  and query refinement strategies for documentary asset evaluation.
-use-when: >-
-  Evaluating downloaded video assets against shotlist intent, scoring
-  footage for relevance and quality, calibrating scores from user
-  feedback, or refining search queries based on evaluation results.
+description: Evaluating downloaded video assets against shotlist intent, scoring footage for relevance and quality, calibrating scores from user feedback, or refining search queries based on evaluation results.
 ---
 ```
 
@@ -673,15 +583,13 @@ You evaluate video footage for documentary use. Your scoring determines which cl
 ## Quality Assessment
 
 ### Technical Quality
-- **Resolution:** Minimum 480p for usable footage. 720p+ preferred. Below 360p is reject unless the content is irreplaceable.
-- **Stability:** Excessive camera shake, rolling shutter, or interlacing artifacts reduce usability. Note severity (minor/moderate/severe).
-- **Compression:** Heavy compression artifacts (macroblocking, banding) reduce quality. Footage will be re-encoded for the timeline — artifacts compound.
+- **Resolution:** Minimum 480p for usable footage. 720p+ preferred.
 - **Audio:** Not relevant for b-roll evaluation. Only assess audio for footage intended as primary/sync content.
 
 ### Content Quality
 - **Blank frames:** Detect and skip sections with solid black/white frames, color bars, or countdown leaders. These are common at the start/end of archival footage.
 - **Watermarks:** Note watermarked footage. Watermarks on archival footage may indicate it's a preview copy — check if a clean version exists.
-- **Text overlays:** Period-appropriate text (title cards, intertitles) can be valuable. Modern overlays (YouTube annotations, channel branding) reduce usability.
+- **Text overlays:** Period-appropriate text (title cards, intertitles) can be valuable. Modern overlays (YouTube annotations, channel branding) is not.
 
 ## Relevance Scoring
 
@@ -730,7 +638,7 @@ When presenting clips for user review:
 
 - [ ] **Step 1: List skills directory and verify count**
 ```bash
-ls "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/skills/"
+ls ".pi/multi-team/skills/"
 ```
 
 Expected output (13 files):
@@ -758,50 +666,50 @@ zero-micro-management.md
 
 - [ ] **Step 1: Copy channel-assistant package to strategy team**
 ```bash
-cp -r "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/channel-assistant/scripts/channel_assistant" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/strategy/channel_assistant"
+cp -r ".claude/skills/channel-assistant/scripts/channel_assistant" ".pi/multi-team/scripts/strategy/channel_assistant"
 ```
 
 - [ ] **Step 2: Remove __pycache__ from copied package**
 ```bash
-rm -rf "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/strategy/channel_assistant/__pycache__"
+rm -rf ".pi/multi-team/scripts/strategy/channel_assistant/__pycache__"
 ```
 
 - [ ] **Step 3: Copy media-scout scripts to media team**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/media-scout/scripts/crawl_images.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/crawl_images.py"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/media-scout/scripts/wiki_screenshots.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/wiki_screenshots.py"
+cp ".claude/skills/media-scout/scripts/crawl_images.py" ".pi/multi-team/scripts/media/crawl_images.py"
+cp ".claude/skills/media-scout/scripts/wiki_screenshots.py" ".pi/multi-team/scripts/media/wiki_screenshots.py"
 ```
 
 - [ ] **Step 4: Copy shot-planner script to media team**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/shot-planner/scripts/ia_search.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/ia_search.py"
+cp ".claude/skills/shot-planner/scripts/ia_search.py" ".pi/multi-team/scripts/media/ia_search.py"
 ```
 
 - [ ] **Step 5: Copy asset-downloader script to media team**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-downloader/scripts/download.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/download.py"
+cp ".claude/skills/asset-downloader/scripts/download.py" ".pi/multi-team/scripts/media/download.py"
 ```
 
 - [ ] **Step 6: Copy asset-analyzer scripts to media team (production scripts only, skip tests)**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/scripts/embed.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/embed.py"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/scripts/search.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/search.py"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/scripts/ingest.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/ingest.py"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/scripts/export_clips.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/export_clips.py"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/scripts/pool.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/pool.py"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/scripts/discover.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/discover.py"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/scripts/evaluate.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/evaluate.py"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/scripts/promote.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/promote.py"
+cp ".claude/skills/asset-analyzer/scripts/embed.py" ".pi/multi-team/scripts/media/embed.py"
+cp ".claude/skills/asset-analyzer/scripts/search.py" ".pi/multi-team/scripts/media/search.py"
+cp ".claude/skills/asset-analyzer/scripts/ingest.py" ".pi/multi-team/scripts/media/ingest.py"
+cp ".claude/skills/asset-analyzer/scripts/export_clips.py" ".pi/multi-team/scripts/media/export_clips.py"
+cp ".claude/skills/asset-analyzer/scripts/pool.py" ".pi/multi-team/scripts/media/pool.py"
+cp ".claude/skills/asset-analyzer/scripts/discover.py" ".pi/multi-team/scripts/media/discover.py"
+cp ".claude/skills/asset-analyzer/scripts/evaluate.py" ".pi/multi-team/scripts/media/evaluate.py"
+cp ".claude/skills/asset-analyzer/scripts/promote.py" ".pi/multi-team/scripts/media/promote.py"
 ```
 
 - [ ] **Step 7: Copy edit-sheet-compiler script to media team**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/edit-sheet-compiler/scripts/organize_assets.py" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/organize_assets.py"
+cp ".claude/skills/edit-sheet-compiler/scripts/organize_assets.py" ".pi/multi-team/scripts/media/organize_assets.py"
 ```
 
 - [ ] **Step 8: Verify all scripts present**
 ```bash
-echo "=== Strategy scripts ===" && ls "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/strategy/channel_assistant/" | grep -v __pycache__ && echo "=== Media scripts ===" && ls "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/scripts/media/"
+echo "=== Strategy scripts ===" && ls ".pi/multi-team/scripts/strategy/channel_assistant/" | grep -v __pycache__ && echo "=== Media scripts ===" && ls ".pi/multi-team/scripts/media/"
 ```
 
 Expected strategy scripts (11 files):
@@ -840,44 +748,44 @@ organize_assets.py
 
 - [ ] **Step 1: Copy researcher prompts**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/researcher/prompts/survey_evaluation.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/survey-evaluation.md"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/researcher/prompts/synthesis.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/synthesis.md"
+cp ".claude/skills/researcher/prompts/survey_evaluation.md" ".pi/multi-team/expertise/read-only/survey-evaluation.md"
+cp ".claude/skills/researcher/prompts/synthesis.md" ".pi/multi-team/expertise/read-only/synthesis.md"
 ```
 
 - [ ] **Step 2: Copy writer prompt**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/writer/prompts/generation.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/generation.md"
+cp ".claude/skills/writer/prompts/generation.md" ".pi/multi-team/expertise/read-only/generation.md"
 ```
 
 - [ ] **Step 3: Copy media-scout prompts**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/media-scout/prompts/search_queries.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/search-queries.md"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/media-scout/prompts/youtube_evaluation.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/youtube-evaluation.md"
+cp ".claude/skills/media-scout/prompts/search_queries.md" ".pi/multi-team/expertise/read-only/search-queries.md"
+cp ".claude/skills/media-scout/prompts/youtube_evaluation.md" ".pi/multi-team/expertise/read-only/youtube-evaluation.md"
 ```
 
 - [ ] **Step 4: Copy channel-assistant prompts**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/channel-assistant/prompts/topic_generation.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/topic-generation.md"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/channel-assistant/prompts/trends_analysis.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/trends-analysis.md"
+cp ".claude/skills/channel-assistant/prompts/topic_generation.md" ".pi/multi-team/expertise/read-only/topic-generation.md"
+cp ".claude/skills/channel-assistant/prompts/trends_analysis.md" ".pi/multi-team/expertise/read-only/trends-analysis.md"
 ```
 
 - [ ] **Step 5: Copy style-extraction prompt**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/style-extraction/prompts/extraction.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/extraction.md"
+cp ".claude/skills/style-extraction/prompts/extraction.md" ".pi/multi-team/expertise/read-only/extraction.md"
 ```
 
 - [ ] **Step 6: Copy asset-analyzer references**
 ```bash
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/references/OPERATIONAL_GUIDE.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/operational-guide.md"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/references/KNOWN_ISSUES.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/known-issues.md"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/references/SCORING_GUIDE.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/scoring-guide.md"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/references/PE_CORE_USAGE.md" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/pe-core-usage.md"
-cp "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.claude/skills/asset-analyzer/references/taxonomy_global.yaml" "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/taxonomy-global.yaml"
+cp ".claude/skills/asset-analyzer/references/OPERATIONAL_GUIDE.md" ".pi/multi-team/expertise/read-only/operational-guide.md"
+cp ".claude/skills/asset-analyzer/references/KNOWN_ISSUES.md" ".pi/multi-team/expertise/read-only/known-issues.md"
+cp ".claude/skills/asset-analyzer/references/SCORING_GUIDE.md" ".pi/multi-team/expertise/read-only/scoring-guide.md"
+cp ".claude/skills/asset-analyzer/references/PE_CORE_USAGE.md" ".pi/multi-team/expertise/read-only/pe-core-usage.md"
+cp ".claude/skills/asset-analyzer/references/taxonomy_global.yaml" ".pi/multi-team/expertise/read-only/taxonomy-global.yaml"
 ```
 
 - [ ] **Step 7: Verify all read-only expertise files present (13 files)**
 ```bash
-ls "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4/.pi/multi-team/expertise/read-only/"
+ls ".pi/multi-team/expertise/read-only/"
 ```
 
 Expected output:
@@ -2800,54 +2708,3 @@ Verify all agents accumulated observations from the run. Check Media Lead expert
 
 ---
 
-## Phase 6: Cleanup
-
-### Task 25: Archive Old System
-
-- [ ] **Step 1: Archive .claude/skills/ directory**
-
-```bash
-cd "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4"
-mkdir -p _archive
-cp -r .claude/skills _archive/skills-v4-pre-migration
-```
-
-- [ ] **Step 2: Remove old system references**
-
-Update any remaining files that reference `.claude/skills/` paths. Check:
-
-```bash
-cd "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4"
-grep -r "\.claude/skills" --include="*.md" --include="*.yaml" --include="*.json" . 2>/dev/null | grep -v _archive | grep -v ".git"
-```
-
-- [ ] **Step 3: Update CLAUDE.md folder map**
-
-Update the Folder Map in `CLAUDE.md` to reflect the final state with `.pi/multi-team/` replacing `.claude/skills/`. Remove references to the old skill routing table.
-
-- [ ] **Step 4: Commit cleanup**
-
-```bash
-cd "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4"
-git add -A
-git commit -m "chore: archive old skill system, update docs for Pi migration"
-```
-
-- [ ] **Step 5: Merge migration branch**
-
-```bash
-cd "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4"
-git checkout main
-git merge migration
-```
-
-- [ ] **Step 6: Delete archive after 2 successful runs**
-
-After completing 2 full pipeline runs successfully on Pi:
-
-```bash
-cd "D:/Youtube/D. Mysteries Channel/1.2 Agents/Channel-automation V4"
-rm -rf _archive/skills-v4-pre-migration
-git add -A
-git commit -m "chore: remove pre-migration archive after successful validation"
-```

@@ -51,15 +51,14 @@ def extract_frames(
     ]
 
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    raw_bytes = proc.stdout.read()
-    proc.wait()
-
-    if proc.returncode != 0:
-        err = proc.stderr.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"FFmpeg failed (exit {proc.returncode}): {err}")
+    raw_bytes, stderr_bytes = proc.communicate()
 
     frame_size = size * size * 3
     n_frames = len(raw_bytes) // frame_size
+
+    if proc.returncode != 0 and n_frames == 0:
+        err = stderr_bytes.decode("utf-8", errors="replace")
+        raise RuntimeError(f"FFmpeg failed (exit {proc.returncode}): {err}")
     frames = []
     for i in range(n_frames):
         offset = i * frame_size

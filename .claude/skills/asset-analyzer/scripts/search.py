@@ -12,6 +12,16 @@ import numpy as np
 SCORE_NO_MATCH = 0.15    # Below this, skip entirely
 SCORE_WEAK_QUERY = 0.20  # Below this, flag for refinement
 
+
+def fmt_ts(seconds: float) -> str:
+    """Format seconds as H:MM:SS or M:SS."""
+    s = int(seconds)
+    h, s = divmod(s, 3600)
+    m, s = divmod(s, 60)
+    if h > 0:
+        return f"{h}:{m:02d}:{s:02d}"
+    return f"{m}:{s:02d}"
+
 sys.path.insert(0, os.path.dirname(__file__))
 from pool import PoolIndex, get_pool_root
 
@@ -84,9 +94,12 @@ def group_into_segments(
             segments.append({
                 "start_sec": float(current_start),
                 "end_sec": float(timestamps[i - 1]),
+                "start_ts": fmt_ts(current_start),
+                "end_ts": fmt_ts(timestamps[i - 1]),
                 "peak_score": float(max(current_scores)),
                 "mean_score": float(np.mean(current_scores)),
                 "best_frame_sec": float(current_best_sec),
+                "best_frame_ts": fmt_ts(current_best_sec),
             })
             current_start = None
             current_scores = []
@@ -104,9 +117,12 @@ def group_into_segments(
                 segments.append({
                     "start_sec": float(current_start),
                     "end_sec": float(timestamps[i - 1]),
+                    "start_ts": fmt_ts(current_start),
+                    "end_ts": fmt_ts(timestamps[i - 1]),
                     "peak_score": float(max(current_scores)),
                     "mean_score": float(np.mean(current_scores)),
                     "best_frame_sec": float(current_best_sec),
+                    "best_frame_ts": fmt_ts(current_best_sec),
                 })
                 current_start = None
                 current_scores = []
@@ -116,9 +132,12 @@ def group_into_segments(
         segments.append({
             "start_sec": float(current_start),
             "end_sec": float(timestamps[-1]),
+            "start_ts": fmt_ts(current_start),
+            "end_ts": fmt_ts(timestamps[-1]),
             "peak_score": float(max(current_scores)),
             "mean_score": float(np.mean(current_scores)),
             "best_frame_sec": float(current_best_sec),
+            "best_frame_ts": fmt_ts(current_best_sec),
         })
 
     return segments

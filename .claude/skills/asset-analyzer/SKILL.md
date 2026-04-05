@@ -27,6 +27,16 @@ PE-Core CLIP embedding pipeline for video asset analysis. Embeds footage locally
 - Reports precision, recall, F1, boundary accuracy
 - Suggests specific parameter adjustments
 
+## Reference Files
+
+| File | When to Read |
+|------|-------------|
+| `references/OPERATIONAL_GUIDE.md` | Before running embed.py — covers subprocess safety, monitoring, performance expectations, memory budget |
+| `references/KNOWN_ISSUES.md` | When debugging failures or planning improvements — prioritized backlog with file:line references |
+| `references/SCORING_GUIDE.md` | When interpreting search results — score ranges, content type effects, query refinement tips |
+| `references/PE_CORE_USAGE.md` | When modifying model loading or encoding — API reference for PE-Core-L14-336 |
+| `references/taxonomy_global.yaml` | Discovery mode — global category definitions for frame classification |
+
 ## Conda Environment
 
 All scripts run via:
@@ -77,7 +87,9 @@ Extract candidate frames to `.claude/scratch/frames/`:
 C:/Users/iorda/miniconda3/envs/perception-models/python.exe .claude/skills/asset-analyzer/scripts/ingest.py --input "<video>" --output-dir .claude/scratch/frames --start <sec> --end <sec> --fps 1 --size 512
 ```
 
-Send frames to Sonnet subagent (use `model: "sonnet"` in Agent tool):
+**Pre-filter: blank/empty frame detection.** After extracting candidate frames, check if frames are near-blank (mostly a single color — e.g., black, white, or solid fill). If >50% of extracted frames for a segment are near-blank, auto-reject the segment without sending to Sonnet. This saves vision calls on title cards, fade-outs, and leader footage.
+
+Send remaining frames to Sonnet subagent (use `model: "sonnet"` in Agent tool):
 
 | Score Range | Candidates Sent |
 |-------------|-----------------|
@@ -87,14 +99,112 @@ Send frames to Sonnet subagent (use `model: "sonnet"` in Agent tool):
 
 Sonnet writes per-segment: description, mood, era, tags, scope, relevance.
 
+**Auto-reject and refinement.** If Sonnet gives a candidate `relevance <= 2` or `recommendation: "reject"`, do NOT include it in the review file. Instead:
+1. Generate 2-3 alternative search queries with different visual descriptions for that shot
+2. Re-run search.py with the alternative queries
+3. Extract and review the new candidates through the same pipeline
+4. Repeat up to 3 refinement rounds per shot
+5. If after 3 rounds no candidate achieves `relevance >= 3`, report the gap to the user with the best attempt and why it was insufficient
+
+Only segments with `relevance >= 3` and `recommendation: "keep"` or `"maybe"` proceed to the review file.
+
 ### Step 6: Present for review
 
-Present segment table:
+**Always display timestamps in H:MM:SS or M:SS format** (use `start_ts`/`end_ts` fields from candidates.json, never raw seconds).
 
-| Video | Shot | Timestamps | Description | Score | Scope | Pool |
-|-------|------|------------|-------------|-------|-------|------|
+Assign each recommendation a unique `rec_id` in sequential format: `R001`, `R002`, etc. Only segments that passed the Step 5 filters (relevance >= 3, recommendation "keep" or "maybe") appear here.
 
-User approves/rejects, adjusts timestamps or scope.
+Present results in conversation AND generate `<project>/visuals/asset_review.json` for the user to edit:
+
+```json
+{
+  "segments": [
+    {
+      "rec_id": "R001",
+      "shot_id": "S006",
+      "shot_description": "Children born to unmarried women were classified as illegitimate...",
+      "video": "ia_EducationForDeathTheMakingOfTheNazi.mp4",
+      "start_ts": "6:43",
+      "end_ts": "6:45",
+      "score": 0.217,
+      "sonnet_description": "1940s animated child in dunce cap...",
+      "relevance": 5,
+      "recommendation": "keep",
+      "decision": "",
+      "adjusted_start": "",
+      "adjusted_end": "",
+      "user_comment": ""
+    }
+  ]
+}
+```
+
+User fills in:
+- `decision`: `"approve"`, `"reject"`, or leave empty (= approve recommendation)
+- `adjusted_start` / `adjusted_end`: If different from proposed timestamps, write new values in `M:SS` or `H:MM:SS` format
+- `user_comment`: Optional free-text feedback on the recommendation
+
+Include the **shot description** from `shotlist.json` (`narrative_context` field) so the user can instantly see what the shot is for.
+
+Present a summary table in conversation:
+
+| Rec | Shot | Shot Description | Video | Timestamps | Sonnet Description | Score | Rec |
+|-----|------|-----------------|-------|------------|-------------------|-------|-----|
+
+Tell the user: "Edit `visuals/asset_review.json` — fill `decision`, `adjusted_start`/`adjusted_end`, and optionally `user_comment` fields, then tell me to proceed."
+
+### Step 6b: Process review file
+
+Read `<project>/visuals/asset_review.json`. For each segment:
+- If `decision` is `"reject"`: skip
+- If `decision` is `"approve"` or empty with recommendation `"keep"`: extract
+- If `adjusted_start` or `adjusted_end` is set: use those timestamps instead of the proposed ones
+
+Parse user timestamps: accept `M:SS`, `H:MM:SS`, or raw seconds.
+
+### Step 6c: Process calibration data
+
+After processing the review file, compare each segment's user decisions against the original recommendations. For any segment where the user's input differs from the recommendation, log to `<project>/visuals/calibration_log.json`:
+
+```json
+{
+  "entries": [
+    {
+      "rec_id": "R001",
+      "shot_id": "S006",
+      "video": "...",
+      "proposed_start": "6:43",
+      "proposed_end": "6:45",
+      "adjusted_start": "",
+      "adjusted_end": "",
+      "recommendation": "keep",
+      "decision": "keep",
+      "user_comment": "a more appropriate shot could've been found",
+      "delta_type": "comment_only"
+    },
+    {
+      "rec_id": "R004",
+      "shot_id": "S017",
+      "video": "ia_Wastageo1947.mp4",
+      "proposed_start": "6:38",
+      "proposed_end": "6:50",
+      "adjusted_start": "6:45",
+      "adjusted_end": "7:00",
+      "recommendation": "keep",
+      "decision": "keep",
+      "user_comment": "perfect recommendation",
+      "delta_type": "timestamp_adjusted"
+    }
+  ]
+}
+```
+
+**Delta types:**
+- `timestamp_adjusted` — user changed `adjusted_start` or `adjusted_end` from proposed values
+- `recommendation_overridden` — user's `decision` contradicts the `recommendation` (e.g., recommendation was "keep" but decision is "reject", or vice versa)
+- `comment_only` — user left a `user_comment` but did not change timestamps or override the recommendation
+
+**Timestamp offset tracking.** When `delta_type` is `timestamp_adjusted`, calculate the offset in seconds between proposed and adjusted timestamps (for both start and end). Track whether the user typically widens segments (adjusted range > proposed range) or narrows them (adjusted range < proposed range). This data can later inform segment boundary detection thresholds in search.py.
 
 ### Step 7: Extract + Catalog
 

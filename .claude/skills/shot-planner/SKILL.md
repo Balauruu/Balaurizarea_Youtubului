@@ -78,6 +78,14 @@ For each `curate` shot, find specific archive.org footage that serves that shot'
 - **`broll_atmospheric` shots get 1-2 documentary/footage leads** from archive.org that match the mood and era.
 - `match_reasoning` must explain the conceptual link between the footage and the specific narrative beat, not just restate the title.
 
+**B-roll lead filtering criteria — apply before adding any `broll_leads` entry:**
+
+1. **Visual concreteness over thematic abstraction.** When recommending cartoons or animations as conceptual b-roll, the source must contain concrete scenes that a viewer would associate with the narrative concept *without explanation*. The visual metaphor must be immediately legible. A cartoon about a spider trapping flies works for "institutional entrapment" because the visual itself depicts entrapment. A cartoon about vegetables being processed through a machine does NOT work for "children trapped in a bureaucratic system" — the connection requires a caption to make sense. If you have to explain the metaphor, the b-roll fails.
+
+2. **Scene availability assessment.** Before recommending an archive.org source, assess whether it likely contains at least 5-10 seconds of footage directly matching the shot intent. A 7-minute cartoon with ONE potentially relevant moment is a poor recommendation — the asset-analyzer will spend time embedding and searching the entire video for minimal return. Prefer sources where the relevant visual concept is central to the content (e.g., the entire premise involves the concept), not incidental to it.
+
+3. **Tone compatibility.** Comedy and slapstick cartoons should be deprioritized for documentary b-roll about serious topics (institutional abuse, child suffering, death) unless the specific scenes clearly transcend the comedic context. A dunce cap scene from *Education for Death* works because the scene itself is somber despite being animated. A slapstick chase scene from a cartoon about vegetables does not — the comedic framing undermines the gravity of the narrative. The test: would a viewer feel the tonal shift as jarring or as intentional juxtaposition?
+
 ### Step 7 — Write Outputs
 
 Write two files (full overwrite on re-run):
